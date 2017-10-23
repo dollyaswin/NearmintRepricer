@@ -9,5 +9,9 @@ return [
     'password' => getenv('CRYSTAL_COMMERCE_PASS'),
     'cookieFile' => __DIR__ . '/../../../data/cookiefile',
     'referer' => 'https://nearmintgames-admin.crystalcommerce.com',
+    // Everything before .crystalcommerce.com on the admin panel URL, instead of www is the adminDomain
+    'adminDomain' => 'nearmintgames-admin',
+    'sleepBetweenFileReportChecks' => 30,
+    'attmptsToGetFileReportBeforeError' => 30,
 
 ];

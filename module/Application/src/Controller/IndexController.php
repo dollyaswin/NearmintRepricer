@@ -21,11 +21,6 @@ class IndexController extends AbstractActionController
 
         $crystal = new CrystalCommerce();
 
-        $testPageResult = $crystal->loadTestPage();
-        print("<pre>" . $testPageResult . "</pre>");
-        $testPageResult = $crystal->loadTestPage();
-        print("<pre>" . $testPageResult . "</pre>");
-        exit();
         return new ViewModel();
     }
 }
