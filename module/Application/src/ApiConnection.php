@@ -28,17 +28,49 @@ abstract class ApiConnection
         curl_setopt($ch, CURLOPT_COOKIEFILE, $this->config['cookieFile'] );
         curl_setopt($ch, CURLOPT_REFERER, $this->config['baseUrl']);
 
+        curl_setopt($ch, CURLOPT_VERBOSE, 1);
+        curl_setopt($ch, CURLOPT_HEADER, 1);
+
+
         // $output contains the output string
-        $output = curl_exec($ch);
-        if ($output === false) {
+        $response = curl_exec($ch);
+
+        if ($response === false) {
             echo 'Curl error: ' . curl_error($ch) . PHP_EOL;
         }
 
+        $header_size = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
+        $headers = substr($response, 0, $header_size);
+        $body = substr($response, $header_size);
+        $this->headers = $headers;
+
         // close curl resource to free up system resources
         curl_close($ch);
-        return $output;
+        return $body;
     }
 
+    protected function downloadToFile($remoteUrl, $localFileLocation)
+    {
+        $ch = curl_init($remoteUrl);
+        $fp = fopen($localFileLocation, "w");
+
+        curl_setopt($ch, CURLOPT_FILE, $fp);
+        curl_setopt($ch, CURLOPT_HEADER, 0);
+        curl_setopt($ch, CURLOPT_COOKIESESSION, true );
+        curl_setopt($ch, CURLOPT_COOKIEJAR, $this->config['cookieFile'] );
+        curl_setopt($ch, CURLOPT_COOKIEFILE, $this->config['cookieFile'] );
+        curl_exec($ch);
+        curl_close($ch);
+        fclose($fp);
+    }
+
+    /**********************************
+     * Make the Curl, handle setting the post variables, storing the cookies, and checking the curl error object.
+     *
+     * @param string $url
+     * @param bool|array $postVariables optional array
+     * @return bool|string Output from the cURL
+     */
     protected function transmit($url, $postVariables = false)
     {
         // create curl resource

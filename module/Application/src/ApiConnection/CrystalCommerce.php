@@ -7,6 +7,12 @@ class CrystalCommerce extends ApiConnection
 {
     protected $authorizePostVariables;
 
+
+    /**
+     * @var array
+     */
+    protected $config;
+
     public function getConfig()
     {
         return include(__DIR__ . '/../../config/crystal-commerce.config.php');
@@ -28,8 +34,13 @@ class CrystalCommerce extends ApiConnection
 
     protected function setAuthorizeVariables()
     {
-        $result = $this->transmit('https://accounts.crystalcommerce.com/users/sign_in');
+        $url = 'https://accounts.crystalcommerce.com/users/sign_in';
+        $result = $this->transmit($url);
         if (strpos($result, 'You are already signed in.') !== false) {
+            //already signed in
+            return false;
+        }
+        if (strpos($result, 'AdminPanel: Dashboard') !== false) {
             //already signed in
             return false;
         }
@@ -39,7 +50,11 @@ class CrystalCommerce extends ApiConnection
         preg_match('/value="(.+)"/', $truncatedPage, $matches);
         $authenticityToken = $matches[1];
         if (strlen($authenticityToken) < 10 ) {
-            throw new \Exception("Authenticity Token not found. The page may have changed");
+            $debugInfo = "Page returned: $result";
+
+            throw new \Exception("Authenticity Token not found. The page may have changed. URL: $url \n 
+            Headers : {$this->headers} \n
+            Output: $debugInfo");
         }
         $this->authorizePostVariables['authenticity_token'] = $authenticityToken;
         $this->authorizePostVariables['user[email]'] = $this->config['useremail'];
@@ -112,24 +127,49 @@ class CrystalCommerce extends ApiConnection
 
     public function downloadCsv($inStockOnly = 'true')
     {
-        $url = 'https://' . $this->config['adminDomain'] . '.crystalcommerce.com/inventory/quick_search';
+        $url = 'https://' . $this->config['adminDomain'] . '.crystalcommerce.com/inventory/update';
         if ($inStockOnly) {
             // Search quantity gte = Greater than or Equals, lte = Less than or equals
             $postVariables['search[total_qty_gte]'] = 1;
             $postVariables['search[total_qty_lte]'] = '';
         }
-        $postVariables['utf8'] = "✓";
+
+        $postVariables['search[product_type_id_eq]'] = 1453; //  Just setting this in case the page is erroring without it.
+
+        $postVariables['utf8'] = '&#x2713;';  //"✓";
         $postVariables['search[any_product_type]'] = 1;
         $postVariables['commit'] = 'Export to CSV';
 
-        $result = $this->transmit($url, $postVariables);
+        print("Post Variables: ");
+        print_r ($postVariables);
+        /*
+        $getVars = '';
+        $start = true;
+        foreach ($postVariables as $label => $value) {
+            if ($start) {
+                $getVars .= '?';
+                $start = false;
+            } else {
+                $getVars .= '&';
+            }
+            $getVars .= urlencode($label) . '=' . urlencode($value);
+        }
+        $url .= $getVars;
+        */
+
+        $result = $this->transmit($url);
         // TODO add error handling here
+
+        print($url . PHP_EOL);
+        print($result);
+        exit();
+
 
         $pageHtml = $this->getFileReportPageHtml();
 
         $downloadId = $this->parsePageForLatestDownloadId($pageHtml);
         if (!$downloadId) {
-            throw new \Exception("Something went wrong. There are no new downloads available.");
+            throw new \Exception("Something went wrong. There are no new downloads available. $pageHtml ");
         }
 
         $isReady = $this->checkForLinkForDownloadId($downloadId);
@@ -159,7 +199,7 @@ class CrystalCommerce extends ApiConnection
         $parts = explode('<h1>File Reports</h1>', $pageHtml);
         $tableAreaHTML = explode('<script>', $parts[1]);
         $dom = new \DOMDocument();
-        $dom->loadHTML($tableAreaHTML);
+        $dom->loadHTML($tableAreaHTML[0]);
         $domNode = $dom->getElementsByTagName('td');
         foreach ($domNode as $node) {
             if (is_numeric($node->nodeValue) && $node->nodeValue > $downloadId) {
@@ -182,6 +222,7 @@ class CrystalCommerce extends ApiConnection
                 return true;
             }
             $attempts++;
+            print ("File not ready.  Sleeping for {$this->config['sleepBetweenFileReportChecks']} Seconds." . PHP_EOL);
             sleep($this->config['sleepBetweenFileReportChecks']);
         }
         return false;

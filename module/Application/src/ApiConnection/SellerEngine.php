@@ -50,21 +50,6 @@ class SellerEngine extends ApiConnection
 
     }
 
-    protected function downloadToFile($remoteUrl, $localFileLocaiton)
-    {
-        $ch = curl_init($remoteUrl);
-        $fp = fopen($localFileLocaiton, "w");
-
-        curl_setopt($ch, CURLOPT_FILE, $fp);
-        curl_setopt($ch, CURLOPT_HEADER, 0);
-        curl_setopt($ch, CURLOPT_COOKIESESSION, true );
-        curl_setopt($ch, CURLOPT_COOKIEJAR, $this->config['cookieFile'] );
-        curl_setopt($ch, CURLOPT_COOKIEFILE, $this->config['cookieFile'] );
-        curl_exec($ch);
-        curl_close($ch);
-        fclose($fp);
-    }
-
     protected function findNextFile()
     {
         $nextFileUrl = 'https://sellery.sellerengine.com/export/getContents?userId=' . $this->config['userIdForExport'] . '&exportId=9';

@@ -6,3 +6,4 @@ data/cache/*
 phpunit.xml
 .idea/
 public/.htaccess
+data/cookiefile

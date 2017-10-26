@@ -16,11 +16,18 @@ class IndexController extends AbstractActionController
 {
     public function indexAction()
     {
-        $sellery = new SellerEngine();
-        $priceArray = $sellery->downloadReportAndReturnArray();
+        //$sellery = new SellerEngine();
+        //$priceArray = $sellery->downloadReportAndReturnArray();
+
+        print("<pre>");
 
         $crystal = new CrystalCommerce();
-
-        return new ViewModel();
+        $csvFile = $crystal->downloadCsv();
+        if ($csvFile) {
+            print ("Successfully downloaded a CSV File." . PHP_EOL);
+            print ($csvFile);
+        }
+        print("</pre>");
+        //return new ViewModel();
     }
 }
