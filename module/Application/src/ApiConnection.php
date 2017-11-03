@@ -71,32 +71,43 @@ abstract class ApiConnection
      * @param bool|array $postVariables optional array
      * @return bool|string Output from the cURL
      */
-    protected function transmit($url, $postVariables = false)
+    protected function transmit($url, $postVariables = false, $headers = false)
     {
         // create curl resource
         $ch = curl_init();
 
-        // set url
-        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt_array($ch, [
+            CURLOPT_URL => $url,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => "",
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 30,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            ]
+        );
 
-        //return the transfer as a string
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-        curl_setopt($ch, CURLOPT_FAILONERROR, true);
-        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
         if ($postVariables) {
             curl_setopt($ch, CURLOPT_POST, true);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, $this->authorizePostVariables);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $postVariables);
         }
-        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+
+        // cookies!!!
         curl_setopt($ch, CURLOPT_COOKIESESSION, true );
         curl_setopt($ch, CURLOPT_COOKIEJAR, $this->config['cookieFile'] );
         curl_setopt($ch, CURLOPT_COOKIEFILE, $this->config['cookieFile'] );
         curl_setopt($ch, CURLOPT_REFERER, $this->config['referer']);
 
+        if ($headers) {
+            curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        }
+        // This would add the header to the returned page
+        //curl_setopt($ch, CURLOPT_HEADER, true);
+
         // $output contains the output string
         $output = curl_exec($ch);
-        if ($output === false) {
+        $error = curl_error($ch);
+        if ($error) {
             echo 'Curl error: ' . curl_error($ch) . PHP_EOL;
         }
 

@@ -38,10 +38,12 @@ class CrystalCommerce extends ApiConnection
         $result = $this->transmit($url);
         if (strpos($result, 'You are already signed in.') !== false) {
             //already signed in
+            //print "already signed in";
             return false;
         }
         if (strpos($result, 'AdminPanel: Dashboard') !== false) {
             //already signed in
+            //print "already on dashboard";
             return false;
         }
         $splitPage = explode('authenticity_token', $result);
@@ -127,40 +129,81 @@ class CrystalCommerce extends ApiConnection
 
     public function downloadCsv($inStockOnly = 'true')
     {
+        //$result = $this->loadTestPage();
+
+        //print $result;
+
         $url = 'https://' . $this->config['adminDomain'] . '.crystalcommerce.com/inventory/update';
+
+        $postVariables = [
+            'commit' => 'Export to CSV',
+            'form_action' => '',
+            'metrics_search[avg_price_perc]' => '',
+            'metrics_search[avg_price_perc_operator]' => 'within',
+            'metrics_search[perc_of]' => 'avg',
+            'page' => '1',
+            'per_page_number' => '20',
+            'search[any_product_type]' => '0',
+            'search[any_product_type]' => '1',
+            'search[buy_price_gte]' => '',
+            'search[buy_price_lte]' => '',
+            'search[buy_price_sell_price_operator]' => '',
+            'search[buy_price_sell_price_perc]' => '',
+            'search[category_ids_with_descendants][]' => '',
+            'search[manufacturer_sku_eq]' => '',
+            'search[msrp_gte]' => '',
+            'search[msrp_lte]' => '',
+            'search[name_like]' => 'cat',
+            'search[order_qty_is][action]' => 'bought',
+            'search[order_qty_is][days]' => '',
+            'search[order_qty_is][operator]' => '>',
+            'search[order_qty_is][qty]' => '',
+            'search[pos_barcode_eq]' => '',
+            'search[product_type_id_eq]' => '',
+            'search[qty_and_opt_qty_operator]' => '',
+            'search[sell_price_gte]' => '',
+            'search[sell_price_lte]' => '',
+            'search[tags_name_eq]' => '',
+            'search[total_qty_gte]' => '0',
+            'search[total_qty_lte]' => '',
+            'search[variants_has_reserved_qty]' => '0',
+            'search[variants_locked_by_reserved_qty]' => '0',
+            'search[variants_on_buylist]' => '0',
+            'search[variants_opt_qty_gte]' => '',
+            'search[variants_opt_qty_lte]' => '',
+            'search[variants_qty_gte]' => '',
+            'search[variants_qty_lte]' => '',
+            'search[variants_use_defaults_eq]' => '',
+            'search[wishes_count_gte]' => '',
+            'search[wishes_count_lte]' => '',
+            //'utf8' => "✓",   // '&#x2713;'
+        ];
+
         if ($inStockOnly) {
             // Search quantity gte = Greater than or Equals, lte = Less than or equals
             $postVariables['search[total_qty_gte]'] = 1;
             $postVariables['search[total_qty_lte]'] = '';
         }
 
-        $postVariables['search[product_type_id_eq]'] = 1453; //  Just setting this in case the page is erroring without it.
+        $headers = [
+            "accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
+            "accept-encoding: gzip, deflate, br",
+            "accept-language: en-US,en;q=0.9",
+            "cache-control: no-cache",
+            "content-type: multipart/form-data",
+            //"cookie: liveagent_oref=https://accounts.crystalcommerce.com/users/sign_in; liveagent_ptid=4f90aec1-ce86-4d23-b382-f24512cd4f87; liveagent_sid=4c4bff96-fe60-4704-a2d9-34a7d7dedf27; liveagent_vc=43; __utmt=1; __utma=250373076.1858490364.1508204602.1508976759.1509666949.6; __utmb=250373076.13.10.1509666949; __utmc=250373076; __utmz=250373076.1508785118.3.2.utmcsr=accounts.crystalcommerce.com|utmccn=(referral)|utmcmd=referral|utmcct=/users/sign_in; intercom-session-iq6g9kms=M0R4QkdsUjFqdzk5dUVOalpHa1pyNGd2ZlZQU2hlUmtHQ1BGS3RjSVNUMW9JalhlV2UxVkt6U0k3QXpkQTlBdi0tUmlnTURlRWJRRE90bFZsTisrRUl4QT09--6e36da0ae9ce351a217a306e75b076ecb1a5bb06; _admin_session=40239ff170a5f3ecb2e8533df97b221e",
+            "origin: https://nearmintgames-admin.crystalcommerce.com",
+            //"postman-token: 73f0bc93-e4be-97f3-d667-799fe002af0f",
+            "referer: https://nearmintgames-admin.crystalcommerce.com/inventory?overview=1",
+            "upgrade-insecure-requests: 1",
+            "user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/62.0.3202.75 Safari/537.36"
+        ];
 
-        $postVariables['utf8'] = '&#x2713;';  //"✓";
-        $postVariables['search[any_product_type]'] = 1;
-        $postVariables['commit'] = 'Export to CSV';
-
-        print("Post Variables: ");
-        print_r ($postVariables);
-        /*
-        $getVars = '';
-        $start = true;
-        foreach ($postVariables as $label => $value) {
-            if ($start) {
-                $getVars .= '?';
-                $start = false;
-            } else {
-                $getVars .= '&';
-            }
-            $getVars .= urlencode($label) . '=' . urlencode($value);
-        }
-        $url .= $getVars;
-        */
-
-        $result = $this->transmit($url);
+        $result = $this->transmit($url, $postVariables, $headers);
         // TODO add error handling here
 
-        print($url . PHP_EOL);
+        //print($url . PHP_EOL);
+        print '<meta http-equiv="content-type" content="text/html; charset=utf-8">';
         print($result);
         exit();
 

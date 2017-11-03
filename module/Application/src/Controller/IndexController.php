@@ -19,7 +19,7 @@ class IndexController extends AbstractActionController
         //$sellery = new SellerEngine();
         //$priceArray = $sellery->downloadReportAndReturnArray();
 
-        print("<pre>");
+        //print("<pre>");
 
         $crystal = new CrystalCommerce();
         $csvFile = $crystal->downloadCsv();
