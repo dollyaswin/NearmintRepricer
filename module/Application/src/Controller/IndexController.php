@@ -21,11 +21,11 @@ class IndexController extends AbstractActionController
 
         //print("<pre>");
 
+        set_time_limit(0);
         $crystal = new CrystalCommerce();
         $csvFile = $crystal->downloadCsv();
         if ($csvFile) {
             print ("Successfully downloaded a CSV File." . PHP_EOL);
-            print ($csvFile);
         }
         print("</pre>");
         //return new ViewModel();

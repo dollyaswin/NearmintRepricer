@@ -36,7 +36,9 @@ class CrystalCommerce extends ApiConnection
     {
         $url = 'https://accounts.crystalcommerce.com/users/sign_in';
         $result = $this->transmit($url);
-        if (strpos($result, 'You are already signed in.') !== false) {
+        // Look for strings in the sign in page which indicate that you are still signed in from last time.
+        if (strpos($result, 'You are already signed in.') !== false ||
+            strpos($result, 'Signed in!') !== false) {
             //already signed in
             //print "already signed in";
             return false;
@@ -202,19 +204,13 @@ class CrystalCommerce extends ApiConnection
         $result = $this->transmit($url, $postVariables, $headers);
         // TODO add error handling here
 
-        //print($url . PHP_EOL);
-        print '<meta http-equiv="content-type" content="text/html; charset=utf-8">';
-        print($result);
-        exit();
-
-
         $pageHtml = $this->getFileReportPageHtml();
 
         $downloadId = $this->parsePageForLatestDownloadId($pageHtml);
         if (!$downloadId) {
             throw new \Exception("Something went wrong. There are no new downloads available. $pageHtml ");
         }
-
+        sleep(10);
         $isReady = $this->checkForLinkForDownloadId($downloadId);
 
         $result = false;
@@ -224,6 +220,7 @@ class CrystalCommerce extends ApiConnection
             $result = $this->transmit($url);
         }
 
+        file_put_contents($this->config['tempFileName'],$result);
         return $result;
 
     }

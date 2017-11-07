@@ -13,5 +13,6 @@ return [
     'adminDomain' => 'nearmintgames-admin',
     'sleepBetweenFileReportChecks' => 30,
     'attmptsToGetFileReportBeforeError' => 30,
+    'tempFileName' => __DIR__ . '/../../../data/mostRecentDownloadCrystalCommerce.csv',
 
 ];
