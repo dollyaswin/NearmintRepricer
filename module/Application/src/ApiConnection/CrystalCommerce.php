@@ -155,7 +155,7 @@ class CrystalCommerce extends ApiConnection
             'search[manufacturer_sku_eq]' => '',
             'search[msrp_gte]' => '',
             'search[msrp_lte]' => '',
-            'search[name_like]' => 'cat',
+            'search[name_like]' => 'dog',
             'search[order_qty_is][action]' => 'bought',
             'search[order_qty_is][days]' => '',
             'search[order_qty_is][operator]' => '>',
@@ -223,6 +223,17 @@ class CrystalCommerce extends ApiConnection
         file_put_contents($this->config['tempFileName'],$result);
         return $result;
 
+    }
+
+    public function getMostRecentCsvAsArray()
+    {
+        $fp = fopen($this->config['tempFileName'], 'r');
+        $headerRow = fgetcsv($fp);
+        $csvArray = [];
+        while ($line = fgetcsv($fp)) {
+            $csvArray[] = array_combine($headerRow, $line);
+        }
+        return $csvArray;
     }
 
     protected function getFileReportPageHtml()

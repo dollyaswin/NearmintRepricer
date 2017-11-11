@@ -3,6 +3,7 @@
 namespace Application\ApiConnection;
 
 use Application\ApiConnection;
+use Application\Databases\PricesRepository;
 
 class SellerEngine extends ApiConnection
 {
@@ -50,9 +51,29 @@ class SellerEngine extends ApiConnection
 
     }
 
-    protected function findNextFile()
+    private function findNextFile()
     {
-        $nextFileUrl = 'https://sellery.sellerengine.com/export/getContents?userId=' . $this->config['userIdForExport'] . '&exportId=9';
+        $repo = new PricesRepository();
+        $downloadNumber = $repo->getMostRecentSelleryDownloadNumber();
+        if (!$downloadNumber) {
+            $downloadNumber = 10;
+        }
+        // move ahead a few numbers then work backwards
+        $downloadNumber += 5;
+        $highestDownload = false;
+
+        do {
+            $nextFileUrl = 'https://sellery.sellerengine.com/export/getContents?userId=' . $this->config['userIdForExport'] . '&exportId=' . $downloadNumber;
+            if ($this->transmit($nextFileUrl)) {
+                $highestDownload = $downloadNumber;
+            } else {
+                //keep sellery from banning us too quickly
+                sleep(5);
+                $downloadNumber--;
+            }
+        } while (!$highestDownload);
+
+        $repo->setMostRecentSelleryDownloadNumber($highestDownload);
         return $nextFileUrl;
     }
 
@@ -75,20 +96,15 @@ class SellerEngine extends ApiConnection
 
     public function downloadReportAndReturnArray()
     {
-        $hasPriceArray = [];
+        $priceArray = [];
         $fileName = $this->download();
         $fileAsArray = $this->createArrayfromFile($fileName);
-        $count =0;
         foreach ($fileAsArray as $priceLine) {
             if ($priceLine['Live price on Near Mint Games'] > 0) {
-                $hasPriceArray[] = $priceLine;
-            }
-            $count++;
-            if ($count > 30) {
-                break;
+                $priceArray[] = $priceLine;
             }
         }
-        return $hasPriceArray;
+        return $priceArray;
     }
 
 

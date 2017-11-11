@@ -7,6 +7,9 @@ abstract class ApiConnection
     protected $authorizePostVariables;
     protected $config;
 
+    // @var string
+    public $mostRecentCurlError;
+
     protected function authorize()
     {
         // create curl resource
@@ -62,6 +65,11 @@ abstract class ApiConnection
         curl_exec($ch);
         curl_close($ch);
         fclose($fp);
+        $returnCode = true;
+        if (curl_error($ch)) {
+            $returnCode = false;
+        }
+        return $returnCode;
     }
 
     /**********************************
@@ -108,9 +116,9 @@ abstract class ApiConnection
         $output = curl_exec($ch);
         $error = curl_error($ch);
         if ($error) {
-            echo 'Curl error: ' . curl_error($ch) . PHP_EOL;
+            $this->mostRecentCurlError = 'Curl error: ' . curl_error($ch);
+            return false;
         }
-
         // close curl resource to free up system resources
         curl_close($ch);
         return $output;

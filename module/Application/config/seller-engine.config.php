@@ -10,5 +10,6 @@ return [
     'cookieFile' => __DIR__ . '/../../../data/cookiefile',
     'userIdForExport' => '5593',
     'localFileLocation' => __DIR__ . '/../../../data/mostRecentDownloadSellerEngine.csv',
+    'referer' => '',
 
 ];
