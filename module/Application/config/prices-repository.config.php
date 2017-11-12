@@ -13,7 +13,7 @@ return [
         'Total Qty'        => 'total_qty',
         'Wishlists'        => 'wishlists',
         'Buy Price'        => 'buy_price',
-        'Sell Price'       => 'sell_price',
+        //'Sell Price'       => 'sell_price',
         'URL'              => 'product_url',
         'Barcode'          => 'barcode',
         'Manufacturer SKU' => 'manufacturer_sku',
@@ -26,4 +26,10 @@ return [
         'Domestic Only'    => 'domestic_only',
         'Tax Exempt'       => 'tax_exempt',
     ],
+    // Name on Sellery Download => database Column Name
+    'selleryMapping'  => [
+        'ASIN on amazon.com'             => 'asin',
+        'Live price on Near Mint Games'  => 'sell_price',
+    ],
+
 ];

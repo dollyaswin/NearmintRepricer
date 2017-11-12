@@ -46,6 +46,7 @@ class PricesRepository
         $this->checkSettingsTable();
 
         $this->crystalCommerceMapping = $this->config['crystalCommerceMapping'];
+        $this->selleryMapping = $this->config['selleryMapping'];
     }
 
     protected function checkPricesTable()
@@ -54,7 +55,7 @@ class PricesRepository
         $result = $this->conn->query("SHOW TABLES LIKE 'PRICES';");
         if ($result->rowCount() == 0) {
             print ("Prices table doesn't exist, building now." . PHP_EOL);
-            if ($this->buildSettingsTable() == false) {
+            if ($this->buildPricesTable() == false) {
                 print ("Unable to prices table." . PHP_EOL);
                 exit();
             }
@@ -125,7 +126,7 @@ class PricesRepository
             date_created datetime DEFAULT CURRENT_TIMESTAMP,
             last_updated timestamp DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             unique key (product_name, category_name),
-            key amazon_id (asin)
+            unique key amazon_id (asin)
         );";
         $result = $this->conn->exec($createTableQuery);
         if ($result === false) {
@@ -151,7 +152,19 @@ class PricesRepository
         return true;
     }
 
+    public function importPricesFromSellery($pricesArray)
+    {
+        return $this->importPrices($pricesArray, $this->selleryMapping);
+    }
+
     public function importPricesFromCC($pricesArray)
+    {
+        return $this->importPrices($pricesArray, $this->crystalCommerceMapping);
+    }
+
+
+
+    protected function importPrices($pricesArray, $dataMapping)
     {
         $warning = false;
         if(count($pricesArray) < 1) {
@@ -162,8 +175,8 @@ class PricesRepository
         $columnArray = [];
         $headerRow = array_keys(array_values($pricesArray)[0]);
         foreach ($headerRow as $headerName) {
-            if (isset($this->crystalCommerceMapping[$headerName])) {
-                $columnArray[$headerName] = $this->crystalCommerceMapping[$headerName];
+            if (isset($dataMapping[$headerName])) {
+                $columnArray[$headerName] = $dataMapping[$headerName];
             }
         }
 

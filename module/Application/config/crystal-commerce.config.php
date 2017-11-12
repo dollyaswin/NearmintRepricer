@@ -14,5 +14,6 @@ return [
     'sleepBetweenFileReportChecks' => 30,
     'attmptsToGetFileReportBeforeError' => 30,
     'tempFileName' => __DIR__ . '/../../../data/mostRecentDownloadCrystalCommerce.csv',
+    'fileToUploadPath' => '/../../../data/fileToUploadToCrystalCommerce.csv'
 
 ];

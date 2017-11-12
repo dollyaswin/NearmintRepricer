@@ -107,27 +107,60 @@ class CrystalCommerce extends ApiConnection
     /*********************************************************************************
      * Uploads the file into Crystal Commerce.  Assumes file is in the correct format.
      *
-     * @param string $filePath - path to file which should be uploaded.
      * @param string $mode must be either 'update_only', 'only_create', or empty for both update and create
      *
      * @return bool success or failure to upload the file.
      ********************************************************/
-    public function uploadFileToImportForm($filePath, $mode = '')
+    public function uploadFileToImportForm($mode = 'only_update')
     {
+        if (!file_exists($this->config['fileToUploadPath'])) {
+            print("File to Upload doesn't exist" . PHP_EOL);
+            return false;
+        }
+
         $url = 'https://' . $this->config['adminDomain'] . '.crystalcommerce.com/mass_imports';
 
-        $postVariables['multiple_categories'] = 1;
-        $postVariables['import'] = $filePath;
-        $postVariables['match_by'] = 'manufacturer_sku';
-        $postVariables['mode'] = $mode;
-        $postVariables['commit'] = 'Mass Import';
+        $postVariables = [
+            'commit'              => 'Mass Import',
+            'multiple_categories' => 1,
+            'import'              =>  '@' . $this->config['fileToUploadPath'],  // This is where the file goes.
+            'match_products_by'   =>  'name',
+            'mode'                =>  $mode,
+            'category_id'         =>  '',
+        ];
 
-        $result = $this->transmit($url, $postVariables);
-        // TODO add error handling here
+        $headers = [
+            "accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
+            "accept-encoding: gzip, deflate, br",
+            "accept-language: en-US,en;q=0.9",
+            "cache-control: no-cache",
+            "content-type: multipart/form-data; boundary=----WebKitFormBoundaryu052zkDMXuGAmHgC",
+            "origin: https://nearmintgames-admin.crystalcommerce.com",
+            "referer: https://nearmintgames-admin.crystalcommerce.com/mass_imports",
+            "upgrade-insecure-requests: 1",
+            "user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/62.0.3202.75 Safari/537.36"
+        ];
 
-        return true;
+        $result = $this->transmit($url, $postVariables, $headers);
+
+        return $result;
 
     }
+
+    public function createFileForImport($dataArray)
+    {
+        if (file_exists($this->config['fileToUploadPath'])) {
+            unlink($this->config['fileToUploadPath']);
+        }
+        $fp = fopen($this->config['fileToUploadPath'], 'r');
+        fputcsv($fp, array_keys($dataArray)); // write headers
+        foreach ($dataArray as $record) {
+            fputcsv($fp, $record);
+        }
+        fclose($fp);
+    }
+
+
 
     public function downloadCsv($inStockOnly = 'true')
     {
@@ -146,7 +179,7 @@ class CrystalCommerce extends ApiConnection
             'page' => '1',
             'per_page_number' => '20',
             'search[any_product_type]' => '0',
-            'search[any_product_type]' => '1',
+            'search[any_product_type]' => '1',  // I know this value does nothing, but the website sets it twice.
             'search[buy_price_gte]' => '',
             'search[buy_price_lte]' => '',
             'search[buy_price_sell_price_operator]' => '',
@@ -278,6 +311,8 @@ class CrystalCommerce extends ApiConnection
         }
         return false;
     }
+
+
 
 
 

@@ -63,12 +63,12 @@ abstract class ApiConnection
         curl_setopt($ch, CURLOPT_COOKIEJAR, $this->config['cookieFile'] );
         curl_setopt($ch, CURLOPT_COOKIEFILE, $this->config['cookieFile'] );
         curl_exec($ch);
-        curl_close($ch);
-        fclose($fp);
         $returnCode = true;
         if (curl_error($ch)) {
             $returnCode = false;
         }
+        curl_close($ch);
+        fclose($fp);
         return $returnCode;
     }
 
