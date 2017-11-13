@@ -41,11 +41,32 @@ class IndexController extends AbstractActionController
     public function testAction()
     {
         print "Test Action";
+
     }
 
     public function updateCrystalCommercePricesAction()
     {
-        print ("Update Crystal Commerce Prices " . PHP_EOL);
+        set_time_limit(0);
+        print("<pre>");
+
+        $pricesRepo = new PricesRepository();
+        $pricesArray = $pricesRepo->getRecordsWithPriceChanges();
+
+        if ($pricesArray) {
+            print "There are " . count($pricesArray) . " prices to be uploaded" . PHP_EOL;
+            $crystal = new CrystalCommerce();
+            $crystal->createFileForImport($pricesArray);
+
+            if($ouput = $crystal->uploadFileToImportForm()) {
+                print ("Successfully uploaded CSV File." . PHP_EOL);
+            } else {
+                print ("Failed to upload CSV File." . PHP_EOL);
+            }
+        } else {
+            print ("There are no prices which need to be updated" . PHP_EOL);
+        }
+        print("</pre>");
+
     }
 
     public function getSelleryPricingAction()
@@ -56,7 +77,6 @@ class IndexController extends AbstractActionController
 
         $sellery = new SellerEngine();
         $pricesArray = $sellery->downloadReportAndReturnArray();
-
 
         print ("There are " . count($pricesArray) . " prices to be updated" . PHP_EOL);
 
@@ -69,6 +89,19 @@ class IndexController extends AbstractActionController
         print("</pre>");
     }
 
+    /******************************************
+     * Request a new data download from Crystal Commerce
+     * Wait for the download to be ready.
+     * Download it into a temporary file.
+     *
+     * Load that temporary file into an array.
+     * Load that array into the database using the mapping in the config file.
+     * Currently that means everything but sale price (which comes from Sellery
+     *
+     * Note: This method uses a LOT of RAM as the file gets bigger
+     * However, if you try to use mysql command LOAD DATA INFILE to import directly
+     * you are open to errors from the product descriptions.
+     ****************************************/
     public function getCrystalCommerceDataAction()
     {
         print("<pre>");
@@ -80,6 +113,7 @@ class IndexController extends AbstractActionController
         if ($csvFile) {
             print ("Successfully downloaded a CSV File." . PHP_EOL);
         }
+
         $pricesArray = $crystal->getMostRecentCsvAsArray();
 
         print ("There are " . count($pricesArray) . " prices to be updated" . PHP_EOL);

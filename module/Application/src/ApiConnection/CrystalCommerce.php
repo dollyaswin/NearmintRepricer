@@ -107,23 +107,30 @@ class CrystalCommerce extends ApiConnection
     /*********************************************************************************
      * Uploads the file into Crystal Commerce.  Assumes file is in the correct format.
      *
+     * This saves the page returned from the upload to a file.
+     *
      * @param string $mode must be either 'update_only', 'only_create', or empty for both update and create
      *
      * @return bool success or failure to upload the file.
      ********************************************************/
     public function uploadFileToImportForm($mode = 'only_update')
     {
-        if (!file_exists($this->config['fileToUploadPath'])) {
+        // This string replace handles testing on windows but running on linux
+        $filePath = str_replace(['\\','/'],DIRECTORY_SEPARATOR, $this->config['fileToUploadPath']);
+
+        if (!file_exists($filePath)) {
             print("File to Upload doesn't exist" . PHP_EOL);
             return false;
         }
 
         $url = 'https://' . $this->config['adminDomain'] . '.crystalcommerce.com/mass_imports';
 
+        $curlFile = curl_file_create($filePath ,'text/csv');
+
         $postVariables = [
             'commit'              => 'Mass Import',
             'multiple_categories' => 1,
-            'import'              =>  '@' . $this->config['fileToUploadPath'],  // This is where the file goes.
+            'import'              =>  $curlFile,  // This is where the file goes.
             'match_products_by'   =>  'name',
             'mode'                =>  $mode,
             'category_id'         =>  '',
@@ -143,17 +150,30 @@ class CrystalCommerce extends ApiConnection
 
         $result = $this->transmit($url, $postVariables, $headers);
 
+        if ($result) {
+            $filePath = str_replace(['\\', '/'], DIRECTORY_SEPARATOR, $this->config['fileUploadOutputLoggingPath']);
+            file_put_contents($filePath, $result);
+        }
+
         return $result;
 
     }
 
+    /**********************
+     * Creates a CSV file from an array
+     * using the keys as headers.
+     *
+     * @param array $dataArray array of records, which are arrays with keys that match Crystal Commerce Column Names.
+     */
     public function createFileForImport($dataArray)
     {
-        if (file_exists($this->config['fileToUploadPath'])) {
-            unlink($this->config['fileToUploadPath']);
+        // This string replace handles testing on windows but running on linux
+        $filePath = str_replace(['\\','/'],DIRECTORY_SEPARATOR, $this->config['fileToUploadPath']);
+        if (file_exists($filePath)) {
+            unlink($filePath);
         }
-        $fp = fopen($this->config['fileToUploadPath'], 'r');
-        fputcsv($fp, array_keys($dataArray)); // write headers
+        $fp = fopen($filePath, 'w');
+        fputcsv($fp, array_keys(array_values($dataArray)[0])); // write headers
         foreach ($dataArray as $record) {
             fputcsv($fp, $record);
         }
@@ -188,7 +208,7 @@ class CrystalCommerce extends ApiConnection
             'search[manufacturer_sku_eq]' => '',
             'search[msrp_gte]' => '',
             'search[msrp_lte]' => '',
-            'search[name_like]' => 'dog',
+            'search[name_like]' => '',
             'search[order_qty_is][action]' => 'bought',
             'search[order_qty_is][days]' => '',
             'search[order_qty_is][operator]' => '>',
@@ -199,7 +219,7 @@ class CrystalCommerce extends ApiConnection
             'search[sell_price_gte]' => '',
             'search[sell_price_lte]' => '',
             'search[tags_name_eq]' => '',
-            'search[total_qty_gte]' => '0',
+            'search[total_qty_gte]' => '1',
             'search[total_qty_lte]' => '',
             'search[variants_has_reserved_qty]' => '0',
             'search[variants_locked_by_reserved_qty]' => '0',

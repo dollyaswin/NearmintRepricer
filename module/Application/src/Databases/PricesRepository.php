@@ -6,6 +6,9 @@ namespace Application\Databases;
 class PricesRepository
 {
 
+    protected $debug = true;
+    protected $debugImportLimit = 500;
+
     /**
      * @var \PDO
      */
@@ -42,13 +45,60 @@ class PricesRepository
             exit();
         }
 
-        $this->checkPricesTable();
+        if (!$this->checkPricesTable()) {
+            throw new \Exception("Unable to create prices table.");
+        }
         $this->checkSettingsTable();
 
         $this->crystalCommerceMapping = $this->config['crystalCommerceMapping'];
         $this->selleryMapping = $this->config['selleryMapping'];
     }
 
+
+    /*********************************************
+     * Get Prices updated in the last # hours
+     *
+     * The aliases for the columns in this query are very important.  They must match the
+     * expected column names for uploading into Crystal Commerce.
+     *
+     * IF THIS FUNCTION IS USED FOR ANOTHER SERVICE, you must leave the column aliases alone
+     * or introduce a mapping for the crystal commerce update.
+     *
+     * @param int $hoursFrequency default 2
+     * @return array|bool false on failure, an associative array on success
+     *********************************************/
+    public function getRecordsWithPriceChanges($hoursFrequency = 2)
+    {
+        $query = "SELECT product_name as 'Product Name', 
+                category_name as 'Category', 
+                sell_price as 'Sell Price' 
+            FROM PRICES
+            WHERE last_updated > DATE_SUB(now(), interval $hoursFrequency hour)
+            AND sell_price is NOT NULL
+            AND product_name is NOT NULL
+            ORDER BY last_updated DESC
+        ";
+        if ($this->debug) {
+            $query .= "LIMIT 10";
+        }
+        $statement = $this->conn->prepare($query);
+        $statement->execute();
+        $result = $statement->fetchAll(\PDO::FETCH_ASSOC);
+
+        if (count($result) == 0) {
+            print "No prices to update" . PHP_EOL;
+            return false;
+        }
+        return $result;
+    }
+
+    /**********************************
+     *  Check if the prices table exists in the default database
+     *  if not create it.
+     *
+     *  Ensures that after this function is run, there is a prices table.
+     * @return bool success or failure
+     */
     protected function checkPricesTable()
     {
         // test if table exists, if not then create table
@@ -57,9 +107,10 @@ class PricesRepository
             print ("Prices table doesn't exist, building now." . PHP_EOL);
             if ($this->buildPricesTable() == false) {
                 print ("Unable to prices table." . PHP_EOL);
-                exit();
+                return false;
             }
         }
+        return true;
     }
 
     protected function checkSettingsTable()
@@ -102,6 +153,11 @@ class PricesRepository
     }
 
 
+    /****************************************
+     * Creates prices table.  Contains table definition.
+     *
+     * @return bool success or failure
+     ******************************/
     private function buildPricesTable()
     {
         $createTableQuery = "CREATE TABLE PRICES (
@@ -152,18 +208,43 @@ class PricesRepository
         return true;
     }
 
+    /******************************************************
+     * This is a wrapper functions for  importPrices()
+     * which add the mapping.
+     *
+     * @param array $pricesArray - and array of records, which are arrays with keys which match the mapping keys
+     * @return bool success or failure.
+     **************************************/
     public function importPricesFromSellery($pricesArray)
     {
         return $this->importPrices($pricesArray, $this->selleryMapping);
     }
 
+    /******************************************************
+     * This is a wrapper functions for  importPrices()
+     * which add the mapping.
+     *
+     * @param array $pricesArray - and array of records, which are arrays with keys which match the mapping keys
+     * @return bool success or failure.
+     **************************************/
     public function importPricesFromCC($pricesArray)
     {
         return $this->importPrices($pricesArray, $this->crystalCommerceMapping);
     }
 
-
-
+    /****************************************
+     * Import / Update records from in the PRICES table
+     * Using an array of values and a mapping array of array keys to column names.
+     *
+     * If the record matches on any of the unique or primary keys it will update the record instead.
+     *
+     * There is a last updated field, which will be set to the current timestamp
+     * If all the data matches, the last updated field will not be updated.
+     *
+     * @param array $pricesArray - and array of records, which are arrays with keys which match the mapping keys
+     * @param array $dataMapping - key match the keys from the pricesArray and values match the columns in the Prices table.
+     * @return bool success or failure.
+     *************************************/
     protected function importPrices($pricesArray, $dataMapping)
     {
         $warning = false;
@@ -186,7 +267,7 @@ class PricesRepository
             $duplicateKeyClause = '';
             foreach ($columnArray as $columnName) {
                 $insertQuery .= "\n :$columnName,";
-                $duplicateKeyClause .= "\n $columnName=$columnName,";
+                $duplicateKeyClause .= "\n $columnName=VALUES($columnName),";
             }
             $insertQuery = trim($insertQuery,','); // trim off last comma
             $duplicateKeyClause = trim($duplicateKeyClause,','); // trim off last comma
@@ -197,6 +278,8 @@ class PricesRepository
 
             $stmt = $this->conn->prepare($insertQuery);
 
+            $debugCounter = 0;
+
             foreach ($pricesArray as $priceLine) {
                 foreach ($columnArray as $arrayIndex => $columnName) {
                     if (isset($priceLine[$arrayIndex])) {
@@ -206,6 +289,11 @@ class PricesRepository
                 if(!$stmt->execute()){
                     print(implode('\n', $stmt->errorInfo()) . PHP_EOL);
                     $warning = true;
+                }
+                $debugCounter++;
+                if ($this->debug && $debugCounter > $this->debugImportLimit) {
+                    print ("There have been $debugCounter prices imported. Stopping" . PHP_EOL);
+                    break;
                 }
 
             }

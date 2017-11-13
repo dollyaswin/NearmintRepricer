@@ -13,7 +13,8 @@ return [
     'adminDomain' => 'nearmintgames-admin',
     'sleepBetweenFileReportChecks' => 30,
     'attmptsToGetFileReportBeforeError' => 30,
-    'tempFileName' => __DIR__ . '/../../../data/mostRecentDownloadCrystalCommerce.csv',
-    'fileToUploadPath' => '/../../../data/fileToUploadToCrystalCommerce.csv'
+    'tempFileName'     => __DIR__ . '/../../../data/mostRecentDownloadCrystalCommerce.csv',
+    'fileToUploadPath' => __DIR__ . '/../../../data/fileToUploadToCrystalCommerce.csv',
+    'fileUploadOutputLoggingPath' => __DIR__ . '/../../../data/uploadOutput.html',
 
 ];
