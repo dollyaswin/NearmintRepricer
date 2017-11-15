@@ -77,9 +77,12 @@ abstract class ApiConnection
      *
      * @param string $url
      * @param bool|array $postVariables optional array
+     * @param bool|array $headers optional array
+     * @param bool|string $refererOverride optional URL of referring page.
+     *
      * @return bool|string Output from the cURL
      */
-    protected function transmit($url, $postVariables = false, $headers = false)
+    protected function transmit($url, $postVariables = false, $headers = false, $refererOverride = false)
     {
         // create curl resource
         $ch = curl_init();
@@ -88,7 +91,7 @@ abstract class ApiConnection
             CURLOPT_URL => $url,
             CURLOPT_FOLLOWLOCATION => true,
             CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_ENCODING => "",
+//            CURLOPT_ENCODING => "",
             CURLOPT_MAXREDIRS => 10,
             CURLOPT_TIMEOUT => 30,
             CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
@@ -104,7 +107,12 @@ abstract class ApiConnection
         curl_setopt($ch, CURLOPT_COOKIESESSION, true );
         curl_setopt($ch, CURLOPT_COOKIEJAR, $this->config['cookieFile'] );
         curl_setopt($ch, CURLOPT_COOKIEFILE, $this->config['cookieFile'] );
-        curl_setopt($ch, CURLOPT_REFERER, $this->config['referer']);
+        if ($refererOverride) {
+            curl_setopt($ch, CURLOPT_REFERER, $refererOverride);
+            curl_setopt($ch, CURLOPT_SAFE_UPLOAD, true);
+        } else {
+            curl_setopt($ch, CURLOPT_REFERER, $this->config['referer']);
+        }
 
         if ($headers) {
             curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
