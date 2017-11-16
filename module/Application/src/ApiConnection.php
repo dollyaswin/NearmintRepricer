@@ -1,5 +1,13 @@
 <?php
 
+/***************************************
+ * This class exists in order to house functions commonly used
+ * by all API connections.
+ *
+ * API Connection classes are meant to extend this one.
+ *
+ *****************************************/
+
 namespace Application;
 
 abstract class ApiConnection

@@ -1,5 +1,13 @@
 <?php
 
+/************************************************
+ * This class is handles all functions related to connecting to https://sellery.sellerengine.com
+ *  Sometimes referred to in the code as 'Sellery'
+ *
+ *  Sellery is an app which will update your products' price on Amazon Marketplace automatically
+ *  Based on your preferences set on the site.
+ *************************************************/
+
 namespace Application\ApiConnection;
 
 use Application\ApiConnection;
@@ -7,11 +15,6 @@ use Application\Databases\PricesRepository;
 
 class SellerEngine extends ApiConnection
 {
-    protected $baseUrl = 'https://sellery.sellerengine.com/';
-    protected $authorizeUrl = 'https://sellery.sellerengine.com/login';
-
-
-
 
     public function getConfig()
     {
@@ -28,6 +31,10 @@ class SellerEngine extends ApiConnection
         $this->setConfig();
         $this->setAuthorizeVariables();
         $apiResult = $this->authorize();
+
+        if (!$apiResult) {
+            throw new \Exception("Unable to authorize Seller Engine");
+        }
     }
 
     protected function setAuthorizeVariables()
@@ -36,38 +43,49 @@ class SellerEngine extends ApiConnection
             'userName' => $this->config['username'],
             'user_name' => $this->config['username'],
             'password' => $this->config['password'],
-            //'forward_url' => 'https://sellery.sellerengine.com/se2/',
             'login' => 'Login',
         ];
     }
 
-    public function download()
+    protected function download()
     {
         $remoteUrl = $this->findNextFile();
         $this->downloadToFile($remoteUrl, $this->config['localFileLocation']);
+        // Todo Need to decide if we should keep historic files or not.
         //$newFileName = dirname($this->config['localFileLocation']) . '/download' . date('Y-m-d.H.i.s') . '.csv';
         //copy ($this->config['localFileLocation'],  $newFileName);
         return($this->config['localFileLocation']);
 
     }
 
+
+    /*****************************************************
+     * The sellery Repricing engine can be configured to create a new report on a daily schedule.
+     * These reports all have the same URL except for their key which is a simple auto incremented number.
+     *
+     * This code generates and tests the next URL to try
+     *
+     * @return string
+     */
     private function findNextFile()
     {
         $repo = new PricesRepository();
         $downloadNumber = $repo->getMostRecentSelleryDownloadNumber();
         if (!$downloadNumber) {
-            $downloadNumber = 10;
+            $downloadNumber = 50;
         }
         // move ahead a few numbers then work backwards
-        $downloadNumber += 5;
+        $downloadNumber += 10;
         $highestDownload = false;
 
         do {
             $nextFileUrl = 'https://sellery.sellerengine.com/export/getContents?userId=' . $this->config['userIdForExport'] . '&exportId=' . $downloadNumber;
+            // Downloads which do not exists yet will return a 500 internal server error,
+            // which causes trasmit to return false.
             if ($this->transmit($nextFileUrl)) {
                 $highestDownload = $downloadNumber;
             } else {
-                //keep sellery from banning us too quickly
+                //keep sellery from noticing we are scraping, and banning us.
                 sleep(5);
                 $downloadNumber--;
             }
@@ -77,7 +95,14 @@ class SellerEngine extends ApiConnection
         return $nextFileUrl;
     }
 
-    public function createArrayfromFile($fileName)
+    /*********************************
+     * Read the CSV file downloaded from Sellery and turn it into a PHP Array
+     * This is not scalable to over 1 million rows, but works for any normal number of products.
+     *
+     * @param string $fileName
+     * @return array of arrays with keys of the header row
+     ********************************/
+    protected function createArrayfromFile($fileName)
     {
         $headerArray = [];
         $resultArray = [];
@@ -94,6 +119,12 @@ class SellerEngine extends ApiConnection
 
     }
 
+    /**************************************************
+     * Wrapper function for both downloading the most recent price file
+     * and loading it into an array
+     *
+     * @return array of arrays with keys of the header row
+     ***************************************************/
     public function downloadReportAndReturnArray()
     {
         $priceArray = [];
@@ -106,9 +137,6 @@ class SellerEngine extends ApiConnection
         }
         return $priceArray;
     }
-
-
-
 
 }
 

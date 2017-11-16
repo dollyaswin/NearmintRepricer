@@ -1,5 +1,13 @@
 <?php
 
+/***********************************************
+ * This class handles all connections to the local MySQL database
+ * Prices table and settings table.
+ *
+ * There should be no other class which updates the table PRICES.
+ *
+ *************************************************/
+
 namespace Application\Databases;
 
 
@@ -113,6 +121,10 @@ class PricesRepository
         return true;
     }
 
+    /**********************************************
+     * Check if the settings table exists in the default database.
+     * If not create it.
+     *********************************************/
     protected function checkSettingsTable()
     {
         // test if table exists, if not then create table
@@ -127,6 +139,14 @@ class PricesRepository
     }
 
 
+    /***************************************
+     * The sellery Repricing engine can be configured to create a new report on a daily schedule.
+     * These reports all have the same URL except for their key which is a simple auto incremented number.
+     *
+     * This method gets the last known number for use in searching for the most recent download.
+     *
+     * @return bool|integer false on failure, or the last known download number on success.
+     */
     public function getMostRecentSelleryDownloadNumber()
     {
         $query = "SELECT setting_value FROM REPRICER_SETTINGS WHERE setting_name = 'sellery_download_number';";
@@ -139,6 +159,12 @@ class PricesRepository
         return $result['setting_value'];
     }
 
+    /*********************************
+     * This method updates the database after the latest download number has been found
+     *
+     * @param integer $downloadNumber
+     * @return bool success or failure
+     */
     public function setMostRecentSelleryDownloadNumber($downloadNumber)
     {
         $query = "REPLACE INTO REPRICER_SETTINGS (setting_value, setting_name)  
@@ -191,6 +217,11 @@ class PricesRepository
         return true;
     }
 
+    /****************************
+     * Creates settings table. Contains table definition
+     *
+     * @return bool success or failure
+     */
     private function buildSettingsTable()
     {
         $createTableQuery = "CREATE TABLE REPRICER_SETTINGS (

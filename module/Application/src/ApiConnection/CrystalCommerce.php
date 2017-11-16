@@ -1,4 +1,13 @@
 <?php
+
+/************************************************
+ * This class is handles all functions related to connecting to https://www.crystalcommerce.com/
+ *  Sometimes referred to in the code as 'CC'
+ *
+ *  Crystal Commerce is a shopping cart, but it is mostly used for it's inventory controls and native
+ *  integration with Ebay, Amazon Marketplace and TCGPlayer (another price comparison engine).
+ *************************************************/
+
 namespace Application\ApiConnection;
 
 use Application\ApiConnection;
