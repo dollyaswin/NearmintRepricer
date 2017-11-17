@@ -247,16 +247,16 @@
         },
         {
             "name": "zendframework/zend-component-installer",
-            "version": "1.0.0",
+            "version": "1.1.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/zendframework/zend-component-installer.git",
-                "reference": "0ca44807dbcf356b75a869c61b533f917ccbc5ae"
+                "reference": "ca728bb1fcff9b0e945ac472bf8d6031e25edf28"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/zendframework/zend-component-installer/zipball/0ca44807dbcf356b75a869c61b533f917ccbc5ae",
-                "reference": "0ca44807dbcf356b75a869c61b533f917ccbc5ae",
+                "url": "https://api.github.com/repos/zendframework/zend-component-installer/zipball/ca728bb1fcff9b0e945ac472bf8d6031e25edf28",
+                "reference": "ca728bb1fcff9b0e945ac472bf8d6031e25edf28",
                 "shasum": ""
             },
             "require": {
@@ -264,16 +264,17 @@
                 "php": "^5.6 || ^7.0"
             },
             "require-dev": {
-                "composer/composer": "^1.3.2",
-                "malukenho/docheader": "^0.1.5",
-                "mikey179/vfsstream": "^1.6",
-                "phpunit/phpunit": "^6.0.7 || ^5.7.14",
+                "composer/composer": "^1.5.2",
+                "malukenho/docheader": "^0.1.6",
+                "mikey179/vfsstream": "^1.6.5",
+                "phpunit/phpunit": "^5.7.23 || ^6.4.3",
                 "zendframework/zend-coding-standard": "~1.0.0"
             },
             "type": "composer-plugin",
             "extra": {
                 "branch-alias": {
-                    "dev-master": "1.0-dev"
+                    "dev-master": "1.1-dev",
+                    "dev-develop": "1.2-dev"
                 },
                 "class": "Zend\\ComponentInstaller\\ComponentInstaller"
             },
@@ -287,7 +288,14 @@
                 "BSD-3-Clause"
             ],
             "description": "Composer plugin for automating component registration in zend-mvc and Expressive applications",
-            "time": "2017-04-25T16:43:54+00:00"
+            "keywords": [
+                "ZendFramework",
+                "component installer",
+                "composer",
+                "plugin",
+                "zf"
+            ],
+            "time": "2017-11-06T22:50:20+00:00"
         },
         {
             "name": "zendframework/zend-config",
@@ -862,16 +870,16 @@
         },
         {
             "name": "zendframework/zend-inputfilter",
-            "version": "2.7.4",
+            "version": "2.7.5",
             "source": {
                 "type": "git",
                 "url": "https://github.com/zendframework/zend-inputfilter.git",
-                "reference": "699ab4916e0aa73104e1f9ff068ef6d33c5f5fe4"
+                "reference": "02bbc6b5fc54991e43e7471e54e2173077708d7b"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/zendframework/zend-inputfilter/zipball/699ab4916e0aa73104e1f9ff068ef6d33c5f5fe4",
-                "reference": "699ab4916e0aa73104e1f9ff068ef6d33c5f5fe4",
+                "url": "https://api.github.com/repos/zendframework/zend-inputfilter/zipball/02bbc6b5fc54991e43e7471e54e2173077708d7b",
+                "reference": "02bbc6b5fc54991e43e7471e54e2173077708d7b",
                 "shasum": ""
             },
             "require": {
@@ -913,7 +921,7 @@
                 "inputfilter",
                 "zf2"
             ],
-            "time": "2017-05-18T14:20:56+00:00"
+            "time": "2017-11-07T17:08:00+00:00"
         },
         {
             "name": "zendframework/zend-json",
@@ -1082,16 +1090,16 @@
         },
         {
             "name": "zendframework/zend-modulemanager",
-            "version": "2.8.0",
+            "version": "2.8.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/zendframework/zend-modulemanager.git",
-                "reference": "c2c5b52ad9741e0b9a9c01a0ee72ab63e5b494b9"
+                "reference": "710c13353b1ff0975777dbeb39bbf1c85e3353a3"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/zendframework/zend-modulemanager/zipball/c2c5b52ad9741e0b9a9c01a0ee72ab63e5b494b9",
-                "reference": "c2c5b52ad9741e0b9a9c01a0ee72ab63e5b494b9",
+                "url": "https://api.github.com/repos/zendframework/zend-modulemanager/zipball/710c13353b1ff0975777dbeb39bbf1c85e3353a3",
+                "reference": "710c13353b1ff0975777dbeb39bbf1c85e3353a3",
                 "shasum": ""
             },
             "require": {
@@ -1136,7 +1144,7 @@
                 "modulemanager",
                 "zf2"
             ],
-            "time": "2017-07-11T19:39:57+00:00"
+            "time": "2017-11-01T18:30:41+00:00"
         },
         {
             "name": "zendframework/zend-mvc",
@@ -2533,16 +2541,16 @@
         },
         {
             "name": "phpunit/php-code-coverage",
-            "version": "5.2.2",
+            "version": "5.2.3",
             "source": {
                 "type": "git",
                 "url": "https://github.com/sebastianbergmann/php-code-coverage.git",
-                "reference": "8ed1902a57849e117b5651fc1a5c48110946c06b"
+                "reference": "8e1d2397d8adf59a3f12b2878a3aaa66d1ab189d"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/php-code-coverage/zipball/8ed1902a57849e117b5651fc1a5c48110946c06b",
-                "reference": "8ed1902a57849e117b5651fc1a5c48110946c06b",
+                "url": "https://api.github.com/repos/sebastianbergmann/php-code-coverage/zipball/8e1d2397d8adf59a3f12b2878a3aaa66d1ab189d",
+                "reference": "8e1d2397d8adf59a3f12b2878a3aaa66d1ab189d",
                 "shasum": ""
             },
             "require": {
@@ -2551,7 +2559,7 @@
                 "php": "^7.0",
                 "phpunit/php-file-iterator": "^1.4.2",
                 "phpunit/php-text-template": "^1.2.1",
-                "phpunit/php-token-stream": "^1.4.11 || ^2.0",
+                "phpunit/php-token-stream": "^2.0",
                 "sebastian/code-unit-reverse-lookup": "^1.0.1",
                 "sebastian/environment": "^3.0",
                 "sebastian/version": "^2.0.1",
@@ -2593,7 +2601,7 @@
                 "testing",
                 "xunit"
             ],
-            "time": "2017-08-03T12:40:43+00:00"
+            "time": "2017-11-03T13:47:33+00:00"
         },
         {
             "name": "phpunit/php-file-iterator",
@@ -2783,16 +2791,16 @@
         },
         {
             "name": "phpunit/phpunit",
-            "version": "6.4.3",
+            "version": "6.4.4",
             "source": {
                 "type": "git",
                 "url": "https://github.com/sebastianbergmann/phpunit.git",
-                "reference": "06b28548fd2b4a20c3cd6e247dc86331a7d4db13"
+                "reference": "562f7dc75d46510a4ed5d16189ae57fbe45a9932"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/06b28548fd2b4a20c3cd6e247dc86331a7d4db13",
-                "reference": "06b28548fd2b4a20c3cd6e247dc86331a7d4db13",
+                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/562f7dc75d46510a4ed5d16189ae57fbe45a9932",
+                "reference": "562f7dc75d46510a4ed5d16189ae57fbe45a9932",
                 "shasum": ""
             },
             "require": {
@@ -2863,7 +2871,7 @@
                 "testing",
                 "xunit"
             ],
-            "time": "2017-10-16T13:18:59+00:00"
+            "time": "2017-11-08T11:26:09+00:00"
         },
         {
             "name": "phpunit/phpunit-mock-objects",
@@ -2971,30 +2979,30 @@
         },
         {
             "name": "sebastian/comparator",
-            "version": "2.0.2",
+            "version": "2.1.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/sebastianbergmann/comparator.git",
-                "reference": "ae068fede81d06e7bb9bb46a367210a3d3e1fe6a"
+                "reference": "1174d9018191e93cb9d719edec01257fc05f8158"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/comparator/zipball/ae068fede81d06e7bb9bb46a367210a3d3e1fe6a",
-                "reference": "ae068fede81d06e7bb9bb46a367210a3d3e1fe6a",
+                "url": "https://api.github.com/repos/sebastianbergmann/comparator/zipball/1174d9018191e93cb9d719edec01257fc05f8158",
+                "reference": "1174d9018191e93cb9d719edec01257fc05f8158",
                 "shasum": ""
             },
             "require": {
                 "php": "^7.0",
                 "sebastian/diff": "^2.0",
-                "sebastian/exporter": "^3.0"
+                "sebastian/exporter": "^3.1"
             },
             "require-dev": {
-                "phpunit/phpunit": "^6.0"
+                "phpunit/phpunit": "^6.4"
             },
             "type": "library",
             "extra": {
                 "branch-alias": {
-                    "dev-master": "2.0.x-dev"
+                    "dev-master": "2.1.x-dev"
                 }
             },
             "autoload": {
@@ -3025,13 +3033,13 @@
                 }
             ],
             "description": "Provides the functionality to compare PHP values for equality",
-            "homepage": "http://www.github.com/sebastianbergmann/comparator",
+            "homepage": "https://github.com/sebastianbergmann/comparator",
             "keywords": [
                 "comparator",
                 "compare",
                 "equality"
             ],
-            "time": "2017-08-03T07:14:59+00:00"
+            "time": "2017-11-03T07:16:52+00:00"
         },
         {
             "name": "sebastian/diff",
@@ -3746,16 +3754,16 @@
         },
         {
             "name": "zendframework/zend-test",
-            "version": "3.1.0",
+            "version": "3.1.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/zendframework/zend-test.git",
-                "reference": "9665205827ed6ee69f1ef82990362057c789250c"
+                "reference": "9976fb519851276d56e201bc6211b3a94e6c3b19"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/zendframework/zend-test/zipball/9665205827ed6ee69f1ef82990362057c789250c",
-                "reference": "9665205827ed6ee69f1ef82990362057c789250c",
+                "url": "https://api.github.com/repos/zendframework/zend-test/zipball/9976fb519851276d56e201bc6211b3a94e6c3b19",
+                "reference": "9976fb519851276d56e201bc6211b3a94e6c3b19",
                 "shasum": ""
             },
             "require": {
@@ -3798,7 +3806,10 @@
             "autoload": {
                 "psr-4": {
                     "Zend\\Test\\": "src/"
-                }
+                },
+                "files": [
+                    "autoload/phpunit-class-aliases.php"
+                ]
             },
             "notification-url": "https://packagist.org/downloads/",
             "license": [
@@ -3809,7 +3820,7 @@
                 "test",
                 "zf2"
             ],
-            "time": "2017-05-01T19:54:00+00:00"
+            "time": "2017-10-29T16:35:35+00:00"
         }
     ],
     "aliases": [],

@@ -26,7 +26,17 @@ class IndexController extends AbstractActionController
     public function indexAction()
     {
         // This just shows the user the default Zend Skeleton home page if they load http://localhost/
-        return new ViewModel();
+        //return new ViewModel();
+    }
+
+    public function testAction()
+    {
+        $crystal = new CrystalCommerce();
+        if($ouput = $crystal->uploadFileToImportForm()) {
+            print ("Successfully uploaded CSV File." . PHP_EOL);
+        } else {
+            print ("Failed to upload CSV File." . PHP_EOL);
+        }
     }
 
     public function updateCrystalCommercePricesAction()
