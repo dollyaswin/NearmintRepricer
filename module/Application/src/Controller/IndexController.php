@@ -18,6 +18,7 @@ namespace Application\Controller;
 use Application\ApiConnection\CrystalCommerce;
 use Application\ApiConnection\SellerEngine;
 use Application\Databases\PricesRepository;
+use Composer\Downloader\DownloadManager;
 use Zend\Mvc\Controller\AbstractActionController;
 use Zend\View\Model\ViewModel;
 
@@ -31,12 +32,7 @@ class IndexController extends AbstractActionController
 
     public function testAction()
     {
-        $crystal = new CrystalCommerce();
-        if($ouput = $crystal->uploadFileToImportForm()) {
-            print ("Successfully uploaded CSV File." . PHP_EOL);
-        } else {
-            print ("Failed to upload CSV File." . PHP_EOL);
-        }
+
     }
 
     public function updateCrystalCommercePricesAction()
