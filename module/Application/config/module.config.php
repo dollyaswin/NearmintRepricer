@@ -14,6 +14,7 @@ use Zend\ServiceManager\Factory\InvokableFactory;
 return [
     'router' => [
         'routes' => [
+
             'home' => [
                 'type' => Literal::class,
                 'options' => [
@@ -50,7 +51,7 @@ return [
     'controllers' => [
         'factories' => [
             Controller\IndexController::class => InvokableFactory::class,
-            Controller\DownloadController::class => InvokableFactory::class
+            Controller\DownloadController::class => InvokableFactory::class,
         ],
     ],
     'view_manager' => [

@@ -1,6 +1,8 @@
 <?php
 namespace Application\Controller;
 
+use Application\ApiConnection\CrystalCommerce;
+use Application\Databases\PricesRepository;
 use Zend\Mvc\Controller\AbstractActionController;
 use Zend\View\Model\ViewModel;
 
@@ -10,20 +12,42 @@ use Zend\View\Model\ViewModel;
 class DownloadController extends AbstractActionController
 {
 
+    protected $config;
+
+    public function getConfig()
+    {
+        return include __DIR__ . '/../../config/download.config.php';
+    }
 
     public function indexAction()
     {
+        print ("Download Controller Index in use");
         // Show list of possible downloads and options. Link to the actions below.
+        return new ViewModel();
     }
 
     public function pricesToUpdateAction()
     {
         // Get data from mysql
 
-        // Turn data into string
+        $pricesRepo = new PricesRepository();
+        $pricesArray = $pricesRepo->getRecordsWithPriceChanges();
+
+        $downloadPath = $this->config['tempDownloadName'];
+        $downloadPath = str_replace(['\\','/'],DIRECTORY_SEPARATOR, $downloadPath);
+        if (file_exists($downloadPath)) {
+            unlink($downloadPath);
+        }
+
+        if ($pricesArray) {
+            $crystal = new CrystalCommerce();
+            $crystal->createFileForImport($pricesArray, $downloadPath);
+        }
+        // Read data into string
+        $csvString = file_get_contents($downloadPath);
 
         // send data to browser with a filename.
-
+        return $this->returnFileFromString('pricesToUpdate.csv', $csvString);
     }
 
 
@@ -42,8 +66,12 @@ class DownloadController extends AbstractActionController
         $fileName = str_replace("/", "", $fileName);  // Remove slashes
         $fileName = str_replace("\\", "", $fileName); // Remove back-slashes
 
+
         // Try to open file
-        $path = './data/download/' . $fileName;
+        $path = __DIR__ . '/../../../../data/' . $fileName;
+
+        $path = str_replace(['\\','/'], DIRECTORY_SEPARATOR, $path);
+
         if (!is_readable($path)) {
             // Set 404 Not Found status code
             $this->getResponse()->setStatusCode(404);

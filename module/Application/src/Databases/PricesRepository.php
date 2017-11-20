@@ -14,7 +14,7 @@ namespace Application\Databases;
 class PricesRepository
 {
 
-    protected $debug = true;
+    protected $debug = false;
     protected $debugImportLimit = 500;
 
     /**
@@ -99,6 +99,45 @@ class PricesRepository
         }
         return $result;
     }
+
+
+    /*********************************************
+     * Get All Records
+     *
+     * The aliases for the columns in this query are very important.  They must match the
+     * expected column names for uploading into Crystal Commerce.
+     *
+     * IF THIS FUNCTION IS USED FOR ANOTHER SERVICE, you must leave the column aliases alone
+     * or introduce a mapping for the crystal commerce update.
+     *
+     * @param int $hoursFrequency default 2
+     * @return array|bool false on failure, an associative array on success
+     *********************************************/
+    public function getAllPriceRecords()
+    {
+        $query = "SELECT product_name as 'Product Name', 
+                category_name as 'Category', 
+                sell_price as 'Sell Price' 
+            FROM PRICES
+            WHERE last_updated > DATE_SUB(now(), interval $hoursFrequency hour)
+            AND sell_price is NOT NULL
+            AND product_name is NOT NULL
+            ORDER BY last_updated DESC
+        ";
+        if ($this->debug) {
+            $query .= "LIMIT 10";
+        }
+        $statement = $this->conn->prepare($query);
+        $statement->execute();
+        $result = $statement->fetchAll(\PDO::FETCH_ASSOC);
+
+        if (count($result) == 0) {
+            print "No prices to update" . PHP_EOL;
+            return false;
+        }
+        return $result;
+    }
+
 
     /**********************************
      *  Check if the prices table exists in the default database
@@ -205,11 +244,17 @@ class PricesRepository
             max_quantity integer,
             domestic_only boolean,
             tax_exempt boolean,
+            sellery_sku varchar(255),
+            amazon_title varchar(255),
+            sellery_cost numeric(9,2),
+            amazon_avg_price numeric(9,2),
+            amazon_num_offers integer,
+            amazon_sales_rank integer,
             date_created datetime DEFAULT CURRENT_TIMESTAMP,
             last_updated timestamp DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             unique key (product_name, category_name),
             unique key amazon_id (asin)
-        );";
+        )_;";
         $result = $this->conn->exec($createTableQuery);
         if ($result === false) {
             return false;
@@ -338,6 +383,40 @@ class PricesRepository
         return true;
     }
 
+
+    /*********************************************
+     * Convert an array into a CSV formatted string with it's keys as the
+     * header row of the CSV file.
+     *
+     * @param array $dataArray - associative array
+     *
+     *
+     * @return bool|string false on failure, a string on success
+     **********************************************/
+    public function convertAssociateiveArrayToCsvString($dataArray)
+    {
+        if(empty($dataArray)) {
+            return false;
+        }
+
+        $fp = tmpfile();
+        $firstRow = array_shift($dataArray);
+        array_unshift($dataArray, $firstRow);
+
+        $headers = array_keys($firstRow);
+        fputcsv($fp,$headers);
+        foreach ($dataArray as $row) {
+            fputcsv($fp,$row);
+        }
+        // Reset the pointer and read back the data.
+        fseek($fp,0);
+
+        $dataString = '';
+        while($line = fread($fp,8192)) {
+            $dataString .= $line;
+        }
+        return $dataString;
+    }
 
 
 

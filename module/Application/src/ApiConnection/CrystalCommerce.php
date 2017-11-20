@@ -184,11 +184,16 @@ class CrystalCommerce extends ApiConnection
      * using the keys as headers.
      *
      * @param array $dataArray array of records, which are arrays with keys that match Crystal Commerce Column Names.
-     */
-    public function createFileForImport($dataArray)
+     * @param string $filePath optional file name to avoid using the default.
+     **********************************/
+    public function createFileForImport($dataArray, $filePath = '')
     {
+        if (empty($filePath)) {
+            $filePath = $this->config['fileToUploadPath'];
+        }
+
         // This string replace handles testing on windows but running on linux
-        $filePath = str_replace(['\\','/'],DIRECTORY_SEPARATOR, $this->config['fileToUploadPath']);
+        $filePath = str_replace(['\\','/'],DIRECTORY_SEPARATOR, $filePath);
         if (file_exists($filePath)) {
             unlink($filePath);
         }
