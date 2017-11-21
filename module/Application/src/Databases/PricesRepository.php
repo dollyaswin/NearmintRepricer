@@ -117,8 +117,9 @@ class PricesRepository
     {
         $query = "SELECT product_name as 'Product Name', 
                 category_name as 'Category', 
-                sell_price as 'Sell Price' 
-            FROM PRICES
+                sell_price as 'Sell Price',
+                PR.*                
+            FROM PRICES as PR
             WHERE last_updated > DATE_SUB(now(), interval $hoursFrequency hour)
             AND sell_price is NOT NULL
             AND product_name is NOT NULL
@@ -244,17 +245,48 @@ class PricesRepository
             max_quantity integer,
             domestic_only boolean,
             tax_exempt boolean,
-            sellery_sku varchar(255),
             amazon_title varchar(255),
-            sellery_cost numeric(9,2),
+            amazon_avg_new_price numeric(9,2),
+            amazon_lowest_new_price numeric(9,2),
+            amazon_avg_used_price numeric(9,2),
             amazon_avg_price numeric(9,2),
-            amazon_num_offers integer,
+            amazon_buy_box_percentage numeric(9,8),
+            amazon_buy_box_price numeric (9,2),
+            amazon_num_new_offers integer,
             amazon_sales_rank integer,
+            sellery_estimated_profit numeric(9,2),
+            amazon_fees numeric(9,2),
+            amazon_competition_price numeric(9,2),
+            amazon_we_own_buy_box boolean,
+            sellery_last_reprice_date timestamp,
+            sellery_minimum_price numeric(9,2),
+            sellery_minimum_ship numeric(9,2),
+            sellery_minimum_price_plus_ship numeric(9,2),
+            sellery_pricing_rule varchar(255),
+            sellery_pricing_strategy varchar(255),
+            sellery_shipping_carrier varchar(255),
+            sellery_shipping_credit numeric(9,2),
+            sellery_smartlist_name varchar(2550,
+            amazon_sales_per_day NUMERIC(9,2),
+            amazon_sold_in_7 integer,
+            amazon_sold_in_15 integer,
+            amazon_sold_in_30 integer,
+            amazon_sold_in_60 integer,
+            amazon_sold_in_90 integer,
+            amazon_sold_in_120 integer,
+            amazon_sold_in_180 integer,
+            sellery_cost numeric(9,2),
+            sellery_cost_source varchar(255),
+            sellery_days_of_stock integer,
+            amazon_condition varchar(100),
+            amazon_last_restock_date timestamp,
+            amazon_buy_box_seller varchar(255),
+            amazon_num_offers integer,
             date_created datetime DEFAULT CURRENT_TIMESTAMP,
             last_updated timestamp DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             unique key (product_name, category_name),
             unique key amazon_id (asin)
-        )_;";
+        );";
         $result = $this->conn->exec($createTableQuery);
         if ($result === false) {
             return false;
