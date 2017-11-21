@@ -14,7 +14,7 @@ namespace Application\Databases;
 class PricesRepository
 {
 
-    protected $debug = false;
+    protected $debug = true;
     protected $debugImportLimit = 500;
 
     /**
@@ -266,7 +266,7 @@ class PricesRepository
             sellery_pricing_strategy varchar(255),
             sellery_shipping_carrier varchar(255),
             sellery_shipping_credit numeric(9,2),
-            sellery_smartlist_name varchar(2550,
+            sellery_smartlist_name varchar(255),
             amazon_sales_per_day NUMERIC(9,2),
             amazon_sold_in_7 integer,
             amazon_sold_in_15 integer,

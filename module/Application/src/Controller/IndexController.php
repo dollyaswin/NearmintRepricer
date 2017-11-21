@@ -66,10 +66,19 @@ class IndexController extends AbstractActionController
 
         set_time_limit(0);
 
-        $sellery = new SellerEngine();
-        $pricesArray = $sellery->downloadReportAndReturnArray();
+        $request = $this->getRequest();
+        $skipDownload = $request->getQuery('skipDownload', false);
 
-        print ("There are " . count($pricesArray) . " prices to be updated" . PHP_EOL);
+        $sellery = new SellerEngine();
+
+        // The downloader always saves to the same location.  You can skip the download
+        // while testing, or if you just made a download.
+        if (!$skipDownload) {
+            $pricesArray = $sellery->downloadReportAndReturnArray();
+            print ("There are " . count($pricesArray) . " prices to be updated" . PHP_EOL);
+        } else {
+            $pricesArray = $sellery->createArrayfromFile();
+        }
 
         $pricesRepo = new PricesRepository();
         if($pricesRepo->importPricesFromSellery($pricesArray)) {
@@ -99,10 +108,15 @@ class IndexController extends AbstractActionController
 
         set_time_limit(0);
 
+        $request = $this->getRequest();
+        $skipDownload = $request->getQuery('skipDownload', false);
+
         $crystal = new CrystalCommerce();
-        $csvFile = $crystal->downloadCsv();
-        if ($csvFile) {
-            print ("Successfully downloaded a CSV File." . PHP_EOL);
+        if (!$skipDownload) {
+            $csvFile = $crystal->downloadCsv();
+            if ($csvFile) {
+                print ("Successfully downloaded a CSV File." . PHP_EOL);
+            }
         }
 
         $pricesArray = $crystal->getMostRecentCsvAsArray();

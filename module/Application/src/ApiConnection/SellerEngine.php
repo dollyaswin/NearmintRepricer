@@ -102,8 +102,9 @@ class SellerEngine extends ApiConnection
      * @param string $fileName
      * @return array of arrays with keys of the header row
      ********************************/
-    protected function createArrayfromFile($fileName)
+    public function createArrayfromFile()
     {
+        $fileName = $this->config['localFileLocation'];
         $headerArray = [];
         $resultArray = [];
         $fp = fopen($fileName, 'r');
@@ -129,7 +130,7 @@ class SellerEngine extends ApiConnection
     {
         $priceArray = [];
         $fileName = $this->download();
-        $fileAsArray = $this->createArrayfromFile($fileName);
+        $fileAsArray = $this->createArrayfromFile();
         foreach ($fileAsArray as $priceLine) {
             if ($priceLine['Live price on Near Mint Games'] > 0) {
                 $priceArray[] = $priceLine;
