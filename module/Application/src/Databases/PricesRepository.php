@@ -381,6 +381,8 @@ class PricesRepository
             }
         }
 
+        $typeData = $this->getTypeInformation('PRICES');
+
         try {
             // Build query with :name in place of each variable.
             $insertQuery = "INSERT INTO PRICES (" . implode(',', $columnArray) . " ) VALUES ( ";
@@ -403,7 +405,9 @@ class PricesRepository
             foreach ($pricesArray as $priceLine) {
                 foreach ($columnArray as $arrayIndex => $columnName) {
                     if (isset($priceLine[$arrayIndex])) {
-                        $stmt->bindValue(':' . $columnName, $priceLine[$arrayIndex]);
+                        $cleanValue = $this->cleanValue($priceLine[$arrayIndex], $typeData[$columnName]);
+
+                        $stmt->bindValue(':' . $columnName, $cleanValue);
                     }
                 }
                 if(!$stmt->execute()){
@@ -425,6 +429,39 @@ class PricesRepository
             return false;
         }
         return true;
+    }
+
+    private function cleanValue($value, $mysqlInfoArray)
+    {
+        if ($value === '') {
+            return null;
+        }
+        switch ($mysqlInfoArray['DATA_TYPE']) {
+            case 'tinyvint':
+                if ($value) {
+                    return 1;
+                }
+                return 0;
+            default:
+                return $value;
+        }
+    }
+
+
+    private function getTypeInformation($tableName)
+    {
+        $returnArray = [];
+
+        $query = "SELECT * FROM information_schema.columns WHERE table_name='$tableName' AND table_schema = '{$this->config['defaultDb']}';";
+        $statement = $this->conn->prepare($query);
+        $statement->execute();
+        $result = $statement->fetchAll(\PDO::FETCH_ASSOC);
+
+        foreach($result as $data) {
+            $returnArray[$data['COLUMN_NAME']] = $data;
+        }
+        return $returnArray;
+
     }
 
 
