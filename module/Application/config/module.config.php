@@ -14,6 +14,7 @@ use Zend\ServiceManager\Factory\InvokableFactory;
 return [
     'router' => [
         'routes' => [
+
             'home' => [
                 'type' => Literal::class,
                 'options' => [
@@ -21,6 +22,17 @@ return [
                     'defaults' => [
                         'controller' => Controller\IndexController::class,
                         'action'     => 'index',
+                    ],
+                ],
+            ],
+            // Add this route for the DownloadController
+            'download' => [
+                'type'    => Segment::class,
+                'options' => [
+                    'route'    => '/download[/:action]',
+                    'defaults' => [
+                        'controller'    => Controller\DownloadController::class,
+                        'action'        => 'index',
                     ],
                 ],
             ],
@@ -39,6 +51,7 @@ return [
     'controllers' => [
         'factories' => [
             Controller\IndexController::class => InvokableFactory::class,
+            Controller\DownloadController::class => InvokableFactory::class,
         ],
     ],
     'view_manager' => [

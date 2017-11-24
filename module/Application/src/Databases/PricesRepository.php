@@ -11,11 +11,17 @@
 namespace Application\Databases;
 
 
+use Zend\Log\Logger;
+
 class PricesRepository
 {
 
-    protected $debug = true;
+    protected $debug;
     protected $debugImportLimit = 500;
+    /**
+     * @var Logger
+     */
+    protected $logger;
 
     /**
      * @var \PDO
@@ -38,8 +44,10 @@ class PricesRepository
         $this->config = $this->getConfig();
     }
 
-    public function __construct()
+    public function __construct(Logger $logger, $debug = false)
     {
+        $this->logger = $logger;
+
         $this->setConfig();
         $this->config['password'] = getenv('MYSQL_PASS');
 
@@ -49,7 +57,7 @@ class PricesRepository
                 $this->config['username'],
                 $this->config['password']);
         } catch (\PDOException $e) {
-            print "Error!: " . $e->getMessage() . PHP_EOL;
+            $this->logger->err("Error!: " . $e->getMessage() );
             exit();
         }
 
@@ -57,6 +65,7 @@ class PricesRepository
             throw new \Exception("Unable to create prices table.");
         }
         $this->checkSettingsTable();
+        $this->debug = $debug;
 
         $this->crystalCommerceMapping = $this->config['crystalCommerceMapping'];
         $this->selleryMapping = $this->config['selleryMapping'];
@@ -72,17 +81,65 @@ class PricesRepository
      * IF THIS FUNCTION IS USED FOR ANOTHER SERVICE, you must leave the column aliases alone
      * or introduce a mapping for the crystal commerce update.
      *
+     * @param int $daysFrequency default 1
+     * @return array|bool false on failure, an associative array on success
+     *********************************************/
+    public function getRecordsWithPriceChanges($quickUploadOnly, $daysLimit = false)
+    {
+        $timeLimitClause = '';
+        if ($daysLimit) {
+            $timeLimitClause = " AND last_updated > DATE_SUB(now(), interval $daysLimit day)";
+        }
+
+        $selectClause = "SELECT * ";
+        if ($quickUploadOnly) {
+            $selectClause = "SELECT product_name as 'Product Name', 
+                category_name as 'Category', 
+                sell_price as 'Sell Price' ";
+        }
+
+        $query = "$selectClause
+            FROM PRICES
+            WHERE sell_price is NOT NULL
+            AND product_name is NOT NULL
+            $timeLimitClause
+            ORDER BY last_updated DESC
+        ";
+        if ($this->debug) {
+            $query .= "LIMIT 10";
+        }
+        $statement = $this->conn->prepare($query);
+        $statement->execute();
+        $result = $statement->fetchAll(\PDO::FETCH_ASSOC);
+
+        if (count($result) == 0) {
+            $this->logger->info("No prices to update" );
+            return false;
+        }
+        return $result;
+    }
+
+
+    /*********************************************
+     * Get All Records
+     *
+     * The aliases for the columns in this query are very important.  They must match the
+     * expected column names for uploading into Crystal Commerce.
+     *
+     * IF THIS FUNCTION IS USED FOR ANOTHER SERVICE, you must leave the column aliases alone
+     * or introduce a mapping for the crystal commerce update.
+     *
      * @param int $hoursFrequency default 2
      * @return array|bool false on failure, an associative array on success
      *********************************************/
-    public function getRecordsWithPriceChanges($hoursFrequency = 2)
+    public function getAllPriceRecords()
     {
         $query = "SELECT product_name as 'Product Name', 
                 category_name as 'Category', 
-                sell_price as 'Sell Price' 
-            FROM PRICES
-            WHERE last_updated > DATE_SUB(now(), interval $hoursFrequency hour)
-            AND sell_price is NOT NULL
+                sell_price as 'Sell Price',
+                PR.*                
+            FROM PRICES as PR
+            WHERE sell_price is NOT NULL
             AND product_name is NOT NULL
             ORDER BY last_updated DESC
         ";
@@ -94,11 +151,12 @@ class PricesRepository
         $result = $statement->fetchAll(\PDO::FETCH_ASSOC);
 
         if (count($result) == 0) {
-            print "No prices to update" . PHP_EOL;
+            $this->logger->info("No prices to update");
             return false;
         }
         return $result;
     }
+
 
     /**********************************
      *  Check if the prices table exists in the default database
@@ -112,9 +170,9 @@ class PricesRepository
         // test if table exists, if not then create table
         $result = $this->conn->query("SHOW TABLES LIKE 'PRICES';");
         if ($result->rowCount() == 0) {
-            print ("Prices table doesn't exist, building now." . PHP_EOL);
+            $this->logger->info("Prices table doesn't exist, building now.");
             if ($this->buildPricesTable() == false) {
-                print ("Unable to prices table." . PHP_EOL);
+                $this->logger->err("Unable to prices table.");
                 return false;
             }
         }
@@ -130,9 +188,9 @@ class PricesRepository
         // test if table exists, if not then create table
         $result = $this->conn->query("SHOW TABLES LIKE 'REPRICER_SETTINGS';");
         if ($result->rowCount() == 0) {
-            print ("Settings table doesn't exist, building now." . PHP_EOL);
+            $this->logger->info("Settings table doesn't exist, building now.");
             if ($this->buildSettingsTable() == false) {
-                print ("Unable to create REPRICER_SETTINGS table." . PHP_EOL);
+                $this->logger->err ("Unable to create REPRICER_SETTINGS table." );
                 exit();
             }
         }
@@ -167,12 +225,13 @@ class PricesRepository
      */
     public function setMostRecentSelleryDownloadNumber($downloadNumber)
     {
+        $this->logger->debug("Inside " . __METHOD__ );
         $query = "REPLACE INTO REPRICER_SETTINGS (setting_value, setting_name)  
             VALUES (:downloadNumber, 'sellery_download_number');";
         $statement = $this->conn->prepare($query);
         $statement->bindValue(':downloadNumber', $downloadNumber);
         if (!$statement->execute()) {
-            print(implode('\n', $statement->errorInfo()) . PHP_EOL);
+            $this->logger->err(implode('\n', $statement->errorInfo()));
             return false;
         }
         return true;
@@ -186,32 +245,73 @@ class PricesRepository
      ******************************/
     private function buildPricesTable()
     {
-        $createTableQuery = "CREATE TABLE PRICES (
-            record_id integer NOT NULL AUTO_INCREMENT primary key,
-            product_name varchar(255),
-            category_name varchar(255),
-            total_qty integer NOT NULL DEFAULT 0,
-            wishlists integer,
-            buy_price numeric(9,2),
-            sell_price numeric(9,2),
-            product_url varchar(1000),
-            barcode varchar(255),
-            manufacturer_sku varchar(255),
-            asin varchar(25),
-            msrp numeric(9,2),
-            brand varchar(255),
-            weight numeric(8,4),
-            description varchar(4000),
-            max_quantity integer,
-            domestic_only boolean,
-            tax_exempt boolean,
-            date_created datetime DEFAULT CURRENT_TIMESTAMP,
-            last_updated timestamp DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-            unique key (product_name, category_name),
-            unique key amazon_id (asin)
-        );";
+        $createTableQuery = "CREATE TABLE `PRICES` (
+           `record_id` int(11) NOT NULL AUTO_INCREMENT,
+           `product_name` varchar(255) DEFAULT NULL,
+           `category_name` varchar(255) DEFAULT NULL,
+           `total_qty` int(11) NOT NULL DEFAULT '0',
+           `wishlists` int(11) DEFAULT NULL,
+           `buy_price` decimal(9,2) DEFAULT NULL,
+           `sell_price` decimal(9,2) DEFAULT NULL,
+           `product_url` varchar(1000) DEFAULT NULL,
+           `barcode` varchar(255) DEFAULT NULL,
+           `manufacturer_sku` varchar(255) DEFAULT NULL,
+           `asin` varchar(25) DEFAULT NULL,
+           `msrp` decimal(9,2) DEFAULT NULL,
+           `brand` varchar(255) DEFAULT NULL,
+           `weight` decimal(8,4) DEFAULT NULL,
+           `description` varchar(4000) DEFAULT NULL,
+           `max_quantity` int(11) DEFAULT NULL,
+           `domestic_only` tinyint(1) DEFAULT NULL,
+           `tax_exempt` tinyint(1) DEFAULT NULL,
+           `amazon_title` varchar(255) DEFAULT NULL,
+           `amazon_avg_new_price` decimal(9,2) DEFAULT NULL,
+           `amazon_lowest_new_price` decimal(9,2) DEFAULT NULL,
+           `amazon_avg_used_price` decimal(9,2) DEFAULT NULL,
+           `amazon_avg_price` decimal(9,2) DEFAULT NULL,
+           `amazon_buy_box_percentage` decimal(15,8) DEFAULT NULL,
+           `amazon_buy_box_price` decimal(9,2) DEFAULT NULL,
+           `amazon_num_new_offers` int(11) DEFAULT NULL,
+           `amazon_sales_rank` int(11) DEFAULT NULL,
+           `sellery_estimated_profit` decimal(9,2) DEFAULT NULL,
+           `amazon_fees` decimal(9,2) DEFAULT NULL,
+           `amazon_competition_price` decimal(9,2) DEFAULT NULL,
+           `amazon_we_own_buy_box` tinyint(1) DEFAULT NULL,
+           `sellery_last_reprice_date` varchar(255) DEFAULT NULL,
+           `sellery_minimum_price` decimal(9,2) DEFAULT NULL,
+           `sellery_minimum_ship` decimal(9,2) DEFAULT NULL,
+           `sellery_minimum_price_plus_ship` decimal(9,2) DEFAULT NULL,
+           `sellery_pricing_rule` varchar(255) DEFAULT NULL,
+           `sellery_pricing_strategy` varchar(255) DEFAULT NULL,
+           `sellery_shipping_carrier` varchar(255) DEFAULT NULL,
+           `sellery_shipping_credit` decimal(9,2) DEFAULT NULL,
+           `sellery_smartlist_name` varchar(255) DEFAULT NULL,
+           `amazon_sales_per_day` decimal(9,2) DEFAULT NULL,
+           `amazon_sold_in_7` int(11) DEFAULT NULL,
+           `amazon_sold_in_15` int(11) DEFAULT NULL,
+           `amazon_sold_in_30` int(11) DEFAULT NULL,
+           `amazon_sold_in_60` int(11) DEFAULT NULL,
+           `amazon_sold_in_90` int(11) DEFAULT NULL,
+           `amazon_sold_in_120` int(11) DEFAULT NULL,
+           `amazon_sold_in_180` int(11) DEFAULT NULL,
+           `sellery_cost` decimal(9,2) DEFAULT NULL,
+           `sellery_cost_source` varchar(255) DEFAULT NULL,
+           `sellery_days_of_stock` int(11) DEFAULT NULL,
+           `amazon_condition` varchar(100) DEFAULT NULL,
+           `amazon_last_restock_date` datetime DEFAULT '0000-00-00 00:00:00',
+           `amazon_buy_box_seller` varchar(255) DEFAULT NULL,
+           `amazon_num_offers` int(11) DEFAULT NULL,
+           `date_created` datetime DEFAULT CURRENT_TIMESTAMP,
+           `last_updated` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+           PRIMARY KEY (`record_id`),
+           UNIQUE KEY `product_name` (`product_name`,`category_name`),
+           UNIQUE KEY `amazon_id` (`asin`)
+         ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
+        ";
         $result = $this->conn->exec($createTableQuery);
         if ($result === false) {
+            $this->logger->err("PDO::errorInfo():");
+            $this->logger->err(print_r($this->conn->errorInfo(), true) );
             return false;
         }
         return true;
@@ -248,6 +348,8 @@ class PricesRepository
      **************************************/
     public function importPricesFromSellery($pricesArray)
     {
+        $this->logger->debug("Inside " . __METHOD__ );
+        $this->logger->debug(" This mapping with be used :" . print_r($this->selleryMapping, true));
         return $this->importPrices($pricesArray, $this->selleryMapping);
     }
 
@@ -280,7 +382,7 @@ class PricesRepository
     {
         $warning = false;
         if(count($pricesArray) < 1) {
-            print ("Prices array is empty. Unable to import.");
+            $this->logger->info("Prices array is empty. Unable to import.");
             return false;
         }
 
@@ -291,6 +393,8 @@ class PricesRepository
                 $columnArray[$headerName] = $dataMapping[$headerName];
             }
         }
+
+        $typeData = $this->getTypeInformation('PRICES');
 
         try {
             // Build query with :name in place of each variable.
@@ -305,7 +409,7 @@ class PricesRepository
 
             $insertQuery .= " ) ON DUPLICATE KEY UPDATE $duplicateKeyClause ;";
 
-            //print($insertQuery . PHP_EOL);
+            //$this->logger->debug($insertQuery . PHP_EOL);
 
             $stmt = $this->conn->prepare($insertQuery);
 
@@ -314,22 +418,23 @@ class PricesRepository
             foreach ($pricesArray as $priceLine) {
                 foreach ($columnArray as $arrayIndex => $columnName) {
                     if (isset($priceLine[$arrayIndex])) {
-                        $stmt->bindValue(':' . $columnName, $priceLine[$arrayIndex]);
+                        $cleanValue = $this->cleanValue($priceLine[$arrayIndex], $typeData[$columnName]);
+                        $stmt->bindValue(':' . $columnName, $cleanValue);
                     }
                 }
                 if(!$stmt->execute()){
-                    print(implode('\n', $stmt->errorInfo()) . PHP_EOL);
+                    $this->logger->err(implode('\n', $stmt->errorInfo()) );
                     $warning = true;
                 }
                 $debugCounter++;
                 if ($this->debug && $debugCounter > $this->debugImportLimit) {
-                    print ("There have been $debugCounter prices imported. Stopping" . PHP_EOL);
+                    $this->logger->info ("There have been $debugCounter prices imported. Stopping" );
                     break;
                 }
 
             }
         } catch (\PDOException $e) {
-            print "Error!: " . $e->getMessage() . PHP_EOL;
+            $this->logger->err("Error!: " . $e->getMessage());
             return false;
         }
         if ($warning) {
@@ -338,6 +443,80 @@ class PricesRepository
         return true;
     }
 
+    private function cleanValue($value, $mysqlInfoArray)
+    {
+        if ($value === '') {
+            return null;
+        }
+        switch ($mysqlInfoArray['DATA_TYPE']) {
+            case 'tinyint':
+                if ($value) {
+                    return 1;
+                }
+                return 0;
+            case 'decimal':
+                return trim ($value,'$');
+            case 'varchar':
+                if ($mysqlInfoArray['CHARACTER_MAXIMUM_LENGTH'] < strlen($value)) {
+                    return substr($value, $mysqlInfoArray['CHARACTER_MAXIMUM_LENGTH']);
+                }
+                return $value;
+            default:
+                return $value;
+        }
+    }
+
+
+    private function getTypeInformation($tableName)
+    {
+        $returnArray = [];
+
+        $query = "SELECT * FROM information_schema.columns WHERE table_name='$tableName' AND table_schema = '{$this->config['defaultDb']}';";
+        $statement = $this->conn->prepare($query);
+        $statement->execute();
+        $result = $statement->fetchAll(\PDO::FETCH_ASSOC);
+
+        foreach($result as $data) {
+            $returnArray[$data['COLUMN_NAME']] = $data;
+        }
+        return $returnArray;
+
+    }
+
+
+    /*********************************************
+     * Convert an array into a CSV formatted string with it's keys as the
+     * header row of the CSV file.
+     *
+     * @param array $dataArray - associative array
+     *
+     *
+     * @return bool|string false on failure, a string on success
+     **********************************************/
+    public function convertAssociateiveArrayToCsvString($dataArray)
+    {
+        if(empty($dataArray)) {
+            return false;
+        }
+
+        $fp = tmpfile();
+        $firstRow = array_shift($dataArray);
+        array_unshift($dataArray, $firstRow);
+
+        $headers = array_keys($firstRow);
+        fputcsv($fp,$headers);
+        foreach ($dataArray as $row) {
+            fputcsv($fp,$row);
+        }
+        // Reset the pointer and read back the data.
+        fseek($fp,0);
+
+        $dataString = '';
+        while($line = fread($fp,8192)) {
+            $dataString .= $line;
+        }
+        return $dataString;
+    }
 
 
 

@@ -11,11 +11,18 @@
 namespace Application\ApiConnection;
 
 use Application\ApiConnection;
+use Zend\Log\Logger;
 
 class CrystalCommerce extends ApiConnection
 {
     protected $authorizePostVariables;
 
+    /**
+     * @var Logger
+     */
+    protected $logger;
+
+    protected $debug;
 
     /**
      * @var array
@@ -32,12 +39,16 @@ class CrystalCommerce extends ApiConnection
         $this->config = $this->getConfig();
     }
 
-    public function __construct()
+    public function __construct($logger, $debug)
     {
+        $this->logger = $logger;
+        $this->debug = $debug;
+
         $this->setConfig();
         if ($this->setAuthorizeVariables()) {
             $apiResult = $this->authorize();
         }
+
 
     }
 
@@ -49,12 +60,12 @@ class CrystalCommerce extends ApiConnection
         if (strpos($result, 'You are already signed in.') !== false ||
             strpos($result, 'Signed in!') !== false) {
             //already signed in
-            //print "already signed in";
+            $this->logger->debug("already signed in");
             return false;
         }
         if (strpos($result, 'AdminPanel: Dashboard') !== false) {
             //already signed in
-            //print "already on dashboard";
+            $this->logger->debug("already on dashboard");
             return false;
         }
         $splitPage = explode('authenticity_token', $result);
@@ -129,7 +140,7 @@ class CrystalCommerce extends ApiConnection
         $filePath = realpath($filePath);
 
         if (!file_exists($filePath)) {
-            print("File to Upload doesn't exist" . PHP_EOL);
+            $this->logger->err("File to Upload doesn't exist" );
             return false;
         }
 
@@ -140,6 +151,8 @@ class CrystalCommerce extends ApiConnection
 
         $curlFile = curl_file_create($filePath, 'text/csv', basename($filePath));
 
+        //$files = ['import' => $filePath];
+
         $postVariables = [
             'commit'              => 'Mass Import',
             'multiple_categories' => 1,
@@ -147,20 +160,22 @@ class CrystalCommerce extends ApiConnection
             'match_products_by'   =>  'name',
             'mode'                =>  $mode,
             'category_id'         =>  '',
+            'utf8'                => '✓',
         ];
 
         $headers = [
             "accept:text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
             "accept-encoding: deflate, br",
             "accept-language:en-US,en;q=0.9",
-            "content-type: multipart/form-data;",
+            "content-type: multipart/form-data", // boundary=----WebKitFormBoundaryFLfENGUAWvTqvoJ2",
             "origin: https://nearmintgames-admin.crystalcommerce.com",
             "referer: https://nearmintgames-admin.crystalcommerce.com/mass_imports",
             "upgrade-insecure-requests: 1",
             "user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/62.0.3202.75 Safari/537.36",
-            "cookie:__utmt=1; __utma=250373076.1858490364.1508204602.1510534085.1510696137.12; __utmb=250373076.4.10.1510696137; __utmc=250373076; __utmz=250373076.1508785118.3.2.utmcsr=accounts.crystalcommerce.com|utmccn=(referral)|utmcmd=referral|utmcct=/users/sign_in; intercom-session-iq6g9kms=VVcxNzJYMGdic2RhUUoxQWpaaG5rdkNiZDZmbmt1TVF1VldmVXNnMDErcGJicjRmTGVRSzRFbnI3UXNDU0xFcy0tR2EwL3MzeC9GSnJhaXhLR3F5M0JvUT09--f6c264c39ef00f73f9626e9881681f73d05ea2a4; liveagent_oref=https://accounts.crystalcommerce.com/users/sign_in; liveagent_ptid=4f90aec1-ce86-4d23-b382-f24512cd4f87; liveagent_sid=4c4bff96-fe60-4704-a2d9-34a7d7dedf27; liveagent_vc=43; __utmt=1; __utma=250373076.1858490364.1508204602.1510534085.1510696137.12; __utmb=250373076.3.10.1510696137; __utmc=250373076; __utmz=250373076.1508785118.3.2.utmcsr=accounts.crystalcommerce.com|utmccn=(referral)|utmcmd=referral|utmcct=/users/sign_in; intercom-session-iq6g9kms=Z2dWNy83MUgwYnlESy95cFpIQWFPU0gwdHkxaG9WR2JyMXlzRUtzMmwwR1F6WHMybVBtVUUxSVpoT054UnJlTi0tMTk0dUlRd0NpSkNia1R4OUNMcW9Sdz09--1848e1f56ed3539705b2a1d1f212a9eee5792f96; _admin_session=e807bf43756a3b801d009f6d801e6440"
+            //"cookie:__utmt=1; __utma=250373076.1858490364.1508204602.1510534085.1510696137.12; __utmb=250373076.4.10.1510696137; __utmc=250373076; __utmz=250373076.1508785118.3.2.utmcsr=accounts.crystalcommerce.com|utmccn=(referral)|utmcmd=referral|utmcct=/users/sign_in; intercom-session-iq6g9kms=VVcxNzJYMGdic2RhUUoxQWpaaG5rdkNiZDZmbmt1TVF1VldmVXNnMDErcGJicjRmTGVRSzRFbnI3UXNDU0xFcy0tR2EwL3MzeC9GSnJhaXhLR3F5M0JvUT09--f6c264c39ef00f73f9626e9881681f73d05ea2a4; liveagent_oref=https://accounts.crystalcommerce.com/users/sign_in; liveagent_ptid=4f90aec1-ce86-4d23-b382-f24512cd4f87; liveagent_sid=4c4bff96-fe60-4704-a2d9-34a7d7dedf27; liveagent_vc=43; __utmt=1; __utma=250373076.1858490364.1508204602.1510534085.1510696137.12; __utmb=250373076.3.10.1510696137; __utmc=250373076; __utmz=250373076.1508785118.3.2.utmcsr=accounts.crystalcommerce.com|utmccn=(referral)|utmcmd=referral|utmcct=/users/sign_in; intercom-session-iq6g9kms=Z2dWNy83MUgwYnlESy95cFpIQWFPU0gwdHkxaG9WR2JyMXlzRUtzMmwwR1F6WHMybVBtVUUxSVpoT054UnJlTi0tMTk0dUlRd0NpSkNia1R4OUNMcW9Sdz09--1848e1f56ed3539705b2a1d1f212a9eee5792f96; _admin_session=e807bf43756a3b801d009f6d801e6440"
         ];
 
+        //$result = $this->submitFormWithFile($url, $postVariables, $files, $headers);
         $result = $this->transmit($url, $postVariables, $headers, $url);
 
         if ($result) {
@@ -169,7 +184,7 @@ class CrystalCommerce extends ApiConnection
             if(strpos($result,'Your import has been enqueued.') !== false) {
                 return true;
             }
-            print("Something went wrong with the import. Please check " . $this->config['fileUploadOutputLoggingPath'] . " for more information" . PHP_EOL);
+            $this->logger->err("Something went wrong with the import. Please check " . $this->config['fileUploadOutputLoggingPath'] . " for more information" );
         }
 
         return $result;
@@ -180,11 +195,16 @@ class CrystalCommerce extends ApiConnection
      * using the keys as headers.
      *
      * @param array $dataArray array of records, which are arrays with keys that match Crystal Commerce Column Names.
-     */
-    public function createFileForImport($dataArray)
+     * @param string $filePath optional file name to avoid using the default.
+     **********************************/
+    public function createFileForImport($dataArray, $filePath = '')
     {
+        if (empty($filePath)) {
+            $filePath = $this->config['fileToUploadPath'];
+        }
+
         // This string replace handles testing on windows but running on linux
-        $filePath = str_replace(['\\','/'],DIRECTORY_SEPARATOR, $this->config['fileToUploadPath']);
+        $filePath = str_replace(['\\','/'],DIRECTORY_SEPARATOR, $filePath);
         if (file_exists($filePath)) {
             unlink($filePath);
         }
@@ -342,7 +362,7 @@ class CrystalCommerce extends ApiConnection
                 return true;
             }
             $attempts++;
-            print ("File not ready.  Sleeping for {$this->config['sleepBetweenFileReportChecks']} Seconds." . PHP_EOL);
+            $this->logger->err("File not ready.  Sleeping for {$this->config['sleepBetweenFileReportChecks']} Seconds.");
             sleep($this->config['sleepBetweenFileReportChecks']);
         }
         return false;

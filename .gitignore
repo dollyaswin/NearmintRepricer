@@ -5,3 +5,5 @@ data/
 phpunit.xml
 .idea/
 public/.htaccess
+public/myTestApplication.php
+logs/

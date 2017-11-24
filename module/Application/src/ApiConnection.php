@@ -140,4 +140,126 @@ abstract class ApiConnection
         return $output;
     }
 
+
+    /**********************************
+    * Make the Curl, handle setting the post variables, storing the cookies, and checking the curl error object.
+    *
+    * @param string $url
+    * @param bool|array $postVariables optional array
+    * @param bool|array $headers optional array
+    * @param bool|string $refererOverride optional URL of referring page.
+    *
+    * @return bool|string Output from the cURL
+    */
+    protected function submitFormWithFile($url, $postVariables = false, $files = false, $headers = false)
+    {
+        // create curl resource
+        $ch = curl_init();
+
+        curl_setopt_array($ch, [
+                CURLOPT_URL => $url,
+                CURLOPT_FOLLOWLOCATION => true,
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_MAXREDIRS => 10,
+                CURLOPT_TIMEOUT => 30,
+                CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            ]
+        );
+
+        $this->curlCustomPostfields($ch, $postVariables, $files, $headers);
+
+        // cookies!!!
+        curl_setopt($ch, CURLOPT_COOKIESESSION, true );
+        curl_setopt($ch, CURLOPT_COOKIEJAR, $this->config['cookieFile'] );
+        curl_setopt($ch, CURLOPT_COOKIEFILE, $this->config['cookieFile'] );
+        curl_setopt($ch, CURLOPT_REFERER, $url);
+        curl_setopt($ch, CURLOPT_SAFE_UPLOAD, true);
+
+        // $output contains the output string
+        $output = curl_exec($ch);
+        $error = curl_error($ch);
+        if ($error) {
+            $this->mostRecentCurlError = 'Curl error: ' . curl_error($ch);
+            return false;
+        }
+        // close curl resource to free up system resources
+        curl_close($ch);
+        return $output;
+    }
+
+
+    /**
+     * For safe multipart POST request for PHP5.3 ~ PHP 5.4.
+     *
+     * @param resource $ch cURL resource
+     * @param array $assoc "name => value"
+     * @param array $files "name => path"
+     * @param bool|array $headers
+     * @return bool
+     */
+    private function curlCustomPostfields($ch, array $assoc = [], array $files = [], $headers = []) {
+
+        // invalid characters for "name" and "filename"
+        static $disallow = ["\0", "\"", "\r", "\n"];
+
+        // build normal parameters
+        foreach ($assoc as $key => $value) {
+            $key = str_replace($disallow, "_", $key);
+            $body[] = implode("\r\n", [
+                "Content-Disposition: form-data; name=\"{$key}\"",
+                "",
+                $value,
+            ]);
+        }
+
+        // build file parameters
+        foreach ($files as $key => $value) {
+            switch (true) {
+                case false === $value = realpath(filter_var($value)):
+                case !is_file($value):
+                case !is_readable($value):
+                    continue; // or return false, throw new InvalidArgumentException
+            }
+            $data = file_get_contents($value);
+            $value = basename($value);
+            $key = str_replace($disallow, "_", $key);
+            $value = str_replace($disallow, "_", $value);
+            $body[] = implode("\r\n", array(
+                "Content-Disposition: form-data; name=\"{$key}\"; filename=\"{$value}\"",
+                "Content-Type: text/csv",
+                "",
+                $data,
+            ));
+        }
+
+        // generate safe boundary
+        do {
+            //$boundary = "---------------------" . md5(mt_rand() . microtime());
+            $boundary = "--WebKitFormBoundaryFLfENGUAWvTqvoJ2";
+        } while (preg_grep("/{$boundary}/", $body));
+
+        // add boundary for each parameters
+        array_walk($body, function (&$part) use ($boundary) {
+            $part = "--{$boundary}\r\n{$part}";
+        });
+
+        // add final boundary
+        $body[] = "--{$boundary}--";
+        $body[] = "";
+
+
+        $headers[] = "Expect: 100-continue";
+        $headers[] = "Content-Type: multipart/form-data; boundary={$boundary}";
+
+        curl_setopt_array($ch, [
+            CURLOPT_POST       => true,
+            CURLOPT_POSTFIELDS => implode("\r\n", $body),
+            CURLOPT_HTTPHEADER => $headers,
+        ]);
+
+        return true;
+    }
+
+
+
 }
