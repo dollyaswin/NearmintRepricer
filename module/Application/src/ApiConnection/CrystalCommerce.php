@@ -11,11 +11,18 @@
 namespace Application\ApiConnection;
 
 use Application\ApiConnection;
+use Zend\Log\Logger;
 
 class CrystalCommerce extends ApiConnection
 {
     protected $authorizePostVariables;
 
+    /**
+     * @var Logger
+     */
+    protected $logger;
+
+    protected $debug;
 
     /**
      * @var array
@@ -32,12 +39,14 @@ class CrystalCommerce extends ApiConnection
         $this->config = $this->getConfig();
     }
 
-    public function __construct()
+    public function __construct($logger, $debug)
     {
         $this->setConfig();
         if ($this->setAuthorizeVariables()) {
             $apiResult = $this->authorize();
         }
+        $this->logger = $logger;
+        $this->debug = $debug;
 
     }
 
@@ -49,12 +58,12 @@ class CrystalCommerce extends ApiConnection
         if (strpos($result, 'You are already signed in.') !== false ||
             strpos($result, 'Signed in!') !== false) {
             //already signed in
-            //print "already signed in";
+            $this->logger->debug("already signed in");
             return false;
         }
         if (strpos($result, 'AdminPanel: Dashboard') !== false) {
             //already signed in
-            //print "already on dashboard";
+            $this->logger->debug("already on dashboard");
             return false;
         }
         $splitPage = explode('authenticity_token', $result);
@@ -129,7 +138,7 @@ class CrystalCommerce extends ApiConnection
         $filePath = realpath($filePath);
 
         if (!file_exists($filePath)) {
-            print("File to Upload doesn't exist" . PHP_EOL);
+            $this->logger->err("File to Upload doesn't exist" );
             return false;
         }
 
@@ -173,7 +182,7 @@ class CrystalCommerce extends ApiConnection
             if(strpos($result,'Your import has been enqueued.') !== false) {
                 return true;
             }
-            print("Something went wrong with the import. Please check " . $this->config['fileUploadOutputLoggingPath'] . " for more information" . PHP_EOL);
+            $this->logger->err("Something went wrong with the import. Please check " . $this->config['fileUploadOutputLoggingPath'] . " for more information" );
         }
 
         return $result;
@@ -351,7 +360,7 @@ class CrystalCommerce extends ApiConnection
                 return true;
             }
             $attempts++;
-            print ("File not ready.  Sleeping for {$this->config['sleepBetweenFileReportChecks']} Seconds." . PHP_EOL);
+            $this->logger->err("File not ready.  Sleeping for {$this->config['sleepBetweenFileReportChecks']} Seconds.");
             sleep($this->config['sleepBetweenFileReportChecks']);
         }
         return false;

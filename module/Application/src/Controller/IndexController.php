@@ -10,7 +10,7 @@
  * getCrystalCommerceDataAction() and getSelleryPricingAction() in any order
  * and then run updateCrystalCommercePricesAction()
  *
- * */
+ ******************************************/
 
 
 namespace Application\Controller;
@@ -18,12 +18,21 @@ namespace Application\Controller;
 use Application\ApiConnection\CrystalCommerce;
 use Application\ApiConnection\SellerEngine;
 use Application\Databases\PricesRepository;
-use Composer\Downloader\DownloadManager;
+use Application\Factory\LoggerFactory;
 use Zend\Mvc\Controller\AbstractActionController;
 use Zend\View\Model\ViewModel;
 
 class IndexController extends AbstractActionController
 {
+
+    protected $logger;
+    protected $debug;
+
+    public function __construct()
+    {
+        $this->logger = LoggerFactory::createLogger('updateLog.txt', false, $this->debug);
+    }
+
     public function indexAction()
     {
         // This just shows the user the default Zend Skeleton home page if they load http://localhost/
@@ -38,36 +47,35 @@ class IndexController extends AbstractActionController
     public function updateCrystalCommercePricesAction()
     {
         set_time_limit(0);
-        print("<pre>");
 
-        $pricesRepo = new PricesRepository();
+        $this->setLogger('CrystalCommercePricesUpdateLog.txt');
+
+        $pricesRepo = new PricesRepository($this->logger, $this->debug);
         $pricesArray = $pricesRepo->getRecordsWithPriceChanges();
 
         if ($pricesArray) {
-            print "There are " . count($pricesArray) . " prices to be uploaded" . PHP_EOL;
-            $crystal = new CrystalCommerce();
+            $this->logger->info("There are " . count($pricesArray) . " prices to be uploaded");
+            $crystal = new CrystalCommerce($this->logger, $this->debug);
             $crystal->createFileForImport($pricesArray);
 
             if($ouput = $crystal->uploadFileToImportForm()) {
-                print ("Successfully uploaded CSV File." . PHP_EOL);
+                $this->logger->info("Successfully uploaded CSV File.");
             } else {
-                print ("Failed to upload CSV File." . PHP_EOL);
+                $this->logger->info("Failed to upload CSV File.");
             }
         } else {
-            print ("There are no prices which need to be updated" . PHP_EOL);
+            $this->logger->info("There are no prices which need to be updated");
         }
-        print("</pre>");
 
     }
 
     public function getSelleryPricingAction()
     {
-        print("<pre>");
-
         set_time_limit(0);
 
-        $request = $this->getRequest();
-        $skipDownload = $request->getQuery('skipDownload', false);
+        $this->setLogger('SelleryPricesUpdateLog.txt');
+
+        $skipDownload = $this->params()->fromQuery('skipDownload', false);
 
         $sellery = new SellerEngine();
 
@@ -75,18 +83,17 @@ class IndexController extends AbstractActionController
         // while testing, or if you just made a download.
         if (!$skipDownload) {
             $pricesArray = $sellery->downloadReportAndReturnArray();
-            print ("There are " . count($pricesArray) . " prices to be updated" . PHP_EOL);
+            $this->logger->info("There are " . count($pricesArray) . " prices to be updated");
         } else {
             $pricesArray = $sellery->createArrayfromFile();
         }
 
-        $pricesRepo = new PricesRepository();
+        $pricesRepo = new PricesRepository($this->logger, $this->debug);
         if($pricesRepo->importPricesFromSellery($pricesArray)) {
-            print ("Successfully imported CSV File." . PHP_EOL);
+            $this->logger->info("Successfully imported CSV File.");
         } else {
-            print ("Failed to import CSV File." . PHP_EOL);
+            $this->logger->info("Failed to import CSV File.");
         }
-        print("</pre>");
     }
 
     /******************************************
@@ -104,32 +111,37 @@ class IndexController extends AbstractActionController
      ****************************************/
     public function getCrystalCommerceDataAction()
     {
-        print("<pre>");
-
         set_time_limit(0);
 
-        $request = $this->getRequest();
-        $skipDownload = $request->getQuery('skipDownload', false);
-
-        $crystal = new CrystalCommerce();
+        $this->setLogger('CrystalCommercePricesUpdateLog.txt');
+        $skipDownload = $this->params()->fromQuery('skipDownload', false);
+        $crystal = new CrystalCommerce($this->logger, $this->debug);
         if (!$skipDownload) {
             $csvFile = $crystal->downloadCsv();
             if ($csvFile) {
-                print ("Successfully downloaded a CSV File." . PHP_EOL);
+                $this->logger->info("Successfully downloaded a CSV File.");
             }
         }
 
         $pricesArray = $crystal->getMostRecentCsvAsArray();
 
-        print ("There are " . count($pricesArray) . " prices to be updated" . PHP_EOL);
-        $pricesRepo = new PricesRepository();
+        $this->logger->info("There are " . count($pricesArray) . " prices to be updated");
+        $pricesRepo = new PricesRepository($this->logger, $this->debug);
         if($pricesRepo->importPricesFromCC($pricesArray)) {
-            print ("Successfully imported CSV File." . PHP_EOL);
+            $this->logger->info ("Successfully imported CSV File.");
         } else {
-            print ("Failed to import CSV File." . PHP_EOL);
+            $this->logger->info ("Failed to import CSV File.");
         }
 
         print("</pre>");
     }
+
+    private function setLogger($fileName)
+    {
+        $this->debug = $this->params()->fromQuery('debug', false);
+        $inBrowser = $this->params()->fromQuery('inBrowser', false);
+        $this->logger = LoggerFactory::createLogger($fileName, $inBrowser, $this->debug);
+    }
+
 
 }

@@ -11,11 +11,17 @@
 namespace Application\Databases;
 
 
+use Zend\Log\Logger;
+
 class PricesRepository
 {
 
     protected $debug;
     protected $debugImportLimit = 500;
+    /**
+     * @var Logger
+     */
+    protected $logger;
 
     /**
      * @var \PDO
@@ -38,8 +44,10 @@ class PricesRepository
         $this->config = $this->getConfig();
     }
 
-    public function __construct($debug = false)
+    public function __construct(Logger $logger, $debug = false)
     {
+        $this->logger = $logger;
+
         $this->setConfig();
         $this->config['password'] = getenv('MYSQL_PASS');
 
@@ -49,7 +57,7 @@ class PricesRepository
                 $this->config['username'],
                 $this->config['password']);
         } catch (\PDOException $e) {
-            print "Error!: " . $e->getMessage() . PHP_EOL;
+            $this->logger->err("Error!: " . $e->getMessage() );
             exit();
         }
 
@@ -95,7 +103,7 @@ class PricesRepository
         $result = $statement->fetchAll(\PDO::FETCH_ASSOC);
 
         if (count($result) == 0) {
-            print "No prices to update" . PHP_EOL;
+            $this->logger->info("No prices to update" );
             return false;
         }
         return $result;
@@ -121,8 +129,7 @@ class PricesRepository
                 sell_price as 'Sell Price',
                 PR.*                
             FROM PRICES as PR
-            WHERE last_updated > DATE_SUB(now(), interval $hoursFrequency hour)
-            AND sell_price is NOT NULL
+            WHERE sell_price is NOT NULL
             AND product_name is NOT NULL
             ORDER BY last_updated DESC
         ";
@@ -134,7 +141,7 @@ class PricesRepository
         $result = $statement->fetchAll(\PDO::FETCH_ASSOC);
 
         if (count($result) == 0) {
-            print "No prices to update" . PHP_EOL;
+            $this->logger->info("No prices to update");
             return false;
         }
         return $result;
@@ -153,9 +160,9 @@ class PricesRepository
         // test if table exists, if not then create table
         $result = $this->conn->query("SHOW TABLES LIKE 'PRICES';");
         if ($result->rowCount() == 0) {
-            print ("Prices table doesn't exist, building now." . PHP_EOL);
+            $this->logger->info("Prices table doesn't exist, building now.");
             if ($this->buildPricesTable() == false) {
-                print ("Unable to prices table." . PHP_EOL);
+                $this->logger->err("Unable to prices table.");
                 return false;
             }
         }
@@ -171,9 +178,9 @@ class PricesRepository
         // test if table exists, if not then create table
         $result = $this->conn->query("SHOW TABLES LIKE 'REPRICER_SETTINGS';");
         if ($result->rowCount() == 0) {
-            print ("Settings table doesn't exist, building now." . PHP_EOL);
+            $this->logger->info("Settings table doesn't exist, building now.");
             if ($this->buildSettingsTable() == false) {
-                print ("Unable to create REPRICER_SETTINGS table." . PHP_EOL);
+                $this->logger->err ("Unable to create REPRICER_SETTINGS table." );
                 exit();
             }
         }
@@ -213,7 +220,7 @@ class PricesRepository
         $statement = $this->conn->prepare($query);
         $statement->bindValue(':downloadNumber', $downloadNumber);
         if (!$statement->execute()) {
-            print(implode('\n', $statement->errorInfo()) . PHP_EOL);
+            $this->logger->err(implode('\n', $statement->errorInfo()));
             return false;
         }
         return true;
@@ -358,7 +365,7 @@ class PricesRepository
     {
         $warning = false;
         if(count($pricesArray) < 1) {
-            print ("Prices array is empty. Unable to import.");
+            $this->logger->info("Prices array is empty. Unable to import.");
             return false;
         }
 
@@ -383,7 +390,7 @@ class PricesRepository
 
             $insertQuery .= " ) ON DUPLICATE KEY UPDATE $duplicateKeyClause ;";
 
-            //print($insertQuery . PHP_EOL);
+            //$this->logger->debug($insertQuery . PHP_EOL);
 
             $stmt = $this->conn->prepare($insertQuery);
 
@@ -396,18 +403,18 @@ class PricesRepository
                     }
                 }
                 if(!$stmt->execute()){
-                    print(implode('\n', $stmt->errorInfo()) . PHP_EOL);
+                    $this->logger->err(implode('\n', $stmt->errorInfo()) );
                     $warning = true;
                 }
                 $debugCounter++;
                 if ($this->debug && $debugCounter > $this->debugImportLimit) {
-                    print ("There have been $debugCounter prices imported. Stopping" . PHP_EOL);
+                    $this->logger->info ("There have been $debugCounter prices imported. Stopping" );
                     break;
                 }
 
             }
         } catch (\PDOException $e) {
-            print "Error!: " . $e->getMessage() . PHP_EOL;
+            $this->logger->err("Error!: " . $e->getMessage());
             return false;
         }
         if ($warning) {
