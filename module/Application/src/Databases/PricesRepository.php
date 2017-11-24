@@ -234,7 +234,7 @@ class PricesRepository
      ******************************/
     private function buildPricesTable()
     {
-        $createTableQuery = "CREATE TABLE `prices` (
+        $createTableQuery = "CREATE TABLE `PRICES` (
            `record_id` int(11) NOT NULL AUTO_INCREMENT,
            `product_name` varchar(255) DEFAULT NULL,
            `category_name` varchar(255) DEFAULT NULL,

@@ -113,7 +113,8 @@ class IndexController extends AbstractActionController
     {
         set_time_limit(0);
 
-        $this->setLogger('CrystalCommercePricesUpdateLog.txt');
+        $this->setLogger('CrystalCommerceGetPricesLog.txt');
+
         $skipDownload = $this->params()->fromQuery('skipDownload', false);
         $crystal = new CrystalCommerce($this->logger, $this->debug);
         if (!$skipDownload) {

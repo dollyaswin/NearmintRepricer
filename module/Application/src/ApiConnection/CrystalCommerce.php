@@ -41,12 +41,14 @@ class CrystalCommerce extends ApiConnection
 
     public function __construct($logger, $debug)
     {
+        $this->logger = $logger;
+        $this->debug = $debug;
+        
         $this->setConfig();
         if ($this->setAuthorizeVariables()) {
             $apiResult = $this->authorize();
         }
-        $this->logger = $logger;
-        $this->debug = $debug;
+
 
     }
 
