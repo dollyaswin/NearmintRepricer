@@ -406,7 +406,6 @@ class PricesRepository
                 foreach ($columnArray as $arrayIndex => $columnName) {
                     if (isset($priceLine[$arrayIndex])) {
                         $cleanValue = $this->cleanValue($priceLine[$arrayIndex], $typeData[$columnName]);
-
                         $stmt->bindValue(':' . $columnName, $cleanValue);
                     }
                 }
@@ -437,7 +436,7 @@ class PricesRepository
             return null;
         }
         switch ($mysqlInfoArray['DATA_TYPE']) {
-            case 'tinyvint':
+            case 'tinyint':
                 if ($value) {
                     return 1;
                 }
