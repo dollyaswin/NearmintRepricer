@@ -52,9 +52,18 @@ class SellerEngine extends ApiConnection
         ];
     }
 
-    protected function download()
+
+    /***********************************************
+     * Get URL for sellery download, then download to file.  Return file location.
+     *
+     * @param integer|bool $jumpToExportId
+     * @return mixed
+     **********************************************/
+    protected function download($jumpToExportId)
     {
-        $remoteUrl = $this->findNextFile();
+        $this->logger->debug("Inside " . __METHOD__ );
+
+        $remoteUrl = $this->findNextFile($jumpToExportId);
         $this->downloadToFile($remoteUrl, $this->config['localFileLocation']);
         // Todo Need to decide if we should keep historic files or not.
         //$newFileName = dirname($this->config['localFileLocation']) . '/download' . date('Y-m-d.H.i.s') . '.csv';
@@ -62,7 +71,6 @@ class SellerEngine extends ApiConnection
         return($this->config['localFileLocation']);
 
     }
-
 
     /*****************************************************
      * The sellery Repricing engine can be configured to create a new report on a daily schedule.
@@ -72,29 +80,40 @@ class SellerEngine extends ApiConnection
      *
      * @return string
      */
-    private function findNextFile()
+    private function findNextFile($jumpToExportId)
     {
+        $this->logger->debug("Inside " . __METHOD__ );
+
         $repo = new PricesRepository($this->logger, $this->debug);
-        $downloadNumber = $repo->getMostRecentSelleryDownloadNumber();
+        if ($jumpToExportId) {
+            $downloadNumber = $jumpToExportId;
+        } else {
+            $downloadNumber = $repo->getMostRecentSelleryDownloadNumber();
+        }
         if (!$downloadNumber) {
             $downloadNumber = 50;
         }
         // move ahead a few numbers then work backwards
-        $downloadNumber += 10;
+        $downloadNumber += 5;
         $highestDownload = false;
+
+        $maxAttempts = 7;
 
         do {
             $nextFileUrl = 'https://sellery.sellerengine.com/export/getContents?userId=' . $this->config['userIdForExport'] . '&exportId=' . $downloadNumber;
             // Downloads which do not exists yet will return a 500 internal server error,
-            // which causes trasmit to return false.
+            // which causes transmit to return false.
             if ($this->transmit($nextFileUrl)) {
                 $highestDownload = $downloadNumber;
             } else {
                 //keep sellery from noticing we are scraping, and banning us.
-                sleep(5);
+                sleep(2);
+                $this->logger->info("Sleeping. Download Number : $downloadNumber. ");
+                $this->logger->err( $this->mostRecentCurlError);
                 $downloadNumber--;
+                $maxAttempts--;
             }
-        } while (!$highestDownload);
+        } while (!$highestDownload && $maxAttempts > 0);
 
         $repo->setMostRecentSelleryDownloadNumber($highestDownload);
         return $nextFileUrl;
@@ -128,13 +147,14 @@ class SellerEngine extends ApiConnection
     /**************************************************
      * Wrapper function for both downloading the most recent price file
      * and loading it into an array
+     * @param integer|bool $jumpToExportId
      *
      * @return array of arrays with keys of the header row
      ***************************************************/
-    public function downloadReportAndReturnArray()
+    public function downloadReportAndReturnArray($jumpToExportId = false)
     {
         $priceArray = [];
-        $fileName = $this->download();
+        $fileName = $this->download($jumpToExportId);
         $fileAsArray = $this->createArrayfromFile();
         foreach ($fileAsArray as $priceLine) {
             if ($priceLine['Live price on Near Mint Games'] > 0) {

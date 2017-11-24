@@ -95,12 +95,14 @@ class IndexController extends AbstractActionController
 
         $skipDownload = $this->params()->fromQuery('skipDownload', false);
 
+        $jumpToExportId = $this->params()->fromQuery('jumpToExportId', false);
+
         $sellery = new SellerEngine($this->logger, $this->debug);
 
         // The downloader always saves to the same location.  You can skip the download
         // while testing, or if you just made a download.
         if (!$skipDownload) {
-            $pricesArray = $sellery->downloadReportAndReturnArray();
+            $pricesArray = $sellery->downloadReportAndReturnArray($jumpToExportId);
             $this->logger->info("There are " . count($pricesArray) . " prices to be updated");
         } else {
             $pricesArray = $sellery->createArrayfromFile();

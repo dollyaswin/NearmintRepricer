@@ -225,6 +225,7 @@ class PricesRepository
      */
     public function setMostRecentSelleryDownloadNumber($downloadNumber)
     {
+        $this->logger->debug("Inside " . __METHOD__ );
         $query = "REPLACE INTO REPRICER_SETTINGS (setting_value, setting_name)  
             VALUES (:downloadNumber, 'sellery_download_number');";
         $statement = $this->conn->prepare($query);
@@ -347,6 +348,8 @@ class PricesRepository
      **************************************/
     public function importPricesFromSellery($pricesArray)
     {
+        $this->logger->debug("Inside " . __METHOD__ );
+        $this->logger->debug(" This mapping with be used :" . print_r($this->selleryMapping, true));
         return $this->importPrices($pricesArray, $this->selleryMapping);
     }
 
