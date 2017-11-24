@@ -57,7 +57,7 @@ class DownloadController extends AbstractActionController
         $daysLimit = $this->params()->fromQuery('daysLimit', false);
 
         // Get data from mysql
-        $pricesRepo = new PricesRepository($this->debug);
+        $pricesRepo = new PricesRepository($this->logger, $this->debug);
         $pricesArray = $pricesRepo->getRecordsWithPriceChanges($quickUploadOnly, $daysLimit);
 
         $downloadPath = $this->config['tempDownloadName'];
@@ -72,12 +72,15 @@ class DownloadController extends AbstractActionController
             $this->logger->debug( "Prices array exists");
             $crystal = new CrystalCommerce($this->logger, $this->debug);
             $crystal->createFileForImport($pricesArray, $downloadPath);
+            // Read data into string
+            $csvString = file_get_contents($downloadPath);
+            // send data to browser with a filename.
+            $timestamp = date('Y-m-d-His');
+            return $this->returnFileFromString('pricesToUpdate' . $timestamp . '.csv', $csvString);
+        } else {
+            print "There are no prices to be updated. ";
+            return new ViewModel();
         }
-        // Read data into string
-        $csvString = file_get_contents($downloadPath);
-        // send data to browser with a filename.
-        $timestamp = date('Y-m-d-His');
-        return $this->returnFileFromString('pricesToUpdate' . $timestamp . '.csv', $csvString);
     }
 
 

@@ -35,9 +35,27 @@ class IndexController extends AbstractActionController
 
     public function indexAction()
     {
+        $scripts = [
+            'Get Prices From Crystal Commerce' => '/application/get-crystal-commerce-data',
+            'Get Prices From Sellery' => '/application/get-sellery-pricing',
+            'Update Prices From Database to Crystal Commerce' => '/application/get-sellery-pricing',
+        ];
+        $downloads = [
+            'Download Full Price List' => '/download/prices-to-update',
+            'Download Prices Which have Changed List' => '/download/prices-to-update?daysLimit=1',
+            'Download Price List for Quick Upload' => '/download/prices-to-update?quickUploadOnly=true',
+        ];
+
+        $variables = [
+            'scripts' => $scripts,
+            'downloads' => $downloads,
+        ];
         // This just shows the user the default Zend Skeleton home page if they load http://localhost/
-        //return new ViewModel();
+        return new ViewModel($variables);
     }
+
+
+
 
     public function testAction()
     {
