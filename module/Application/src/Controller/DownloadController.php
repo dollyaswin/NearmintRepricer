@@ -53,9 +53,12 @@ class DownloadController extends AbstractActionController
 
     public function pricesToUpdateAction()
     {
+        $quickUploadOnly = $this->params()->fromQuery('quickUploadOnly', false);
+        $daysLimit = $this->params()->fromQuery('daysLimit', false);
+
         // Get data from mysql
         $pricesRepo = new PricesRepository($this->debug);
-        $pricesArray = $pricesRepo->getRecordsWithPriceChanges();
+        $pricesArray = $pricesRepo->getRecordsWithPriceChanges($quickUploadOnly, $daysLimit);
 
         $downloadPath = $this->config['tempDownloadName'];
         $downloadPath = str_replace(['\\','/'],DIRECTORY_SEPARATOR, $downloadPath);
@@ -67,7 +70,7 @@ class DownloadController extends AbstractActionController
 
         if ($pricesArray) {
             $this->logger->debug( "Prices array exists");
-            $crystal = new CrystalCommerce();
+            $crystal = new CrystalCommerce($this->logger, $this->debug);
             $crystal->createFileForImport($pricesArray, $downloadPath);
         }
         // Read data into string

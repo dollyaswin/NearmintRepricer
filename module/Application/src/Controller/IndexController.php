@@ -51,7 +51,7 @@ class IndexController extends AbstractActionController
         $this->setLogger('CrystalCommercePricesUpdateLog.txt');
 
         $pricesRepo = new PricesRepository($this->logger, $this->debug);
-        $pricesArray = $pricesRepo->getRecordsWithPriceChanges();
+        $pricesArray = $pricesRepo->getRecordsWithPriceChanges(true);
 
         if ($pricesArray) {
             $this->logger->info("There are " . count($pricesArray) . " prices to be uploaded");

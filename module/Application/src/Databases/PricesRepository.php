@@ -84,15 +84,25 @@ class PricesRepository
      * @param int $daysFrequency default 1
      * @return array|bool false on failure, an associative array on success
      *********************************************/
-    public function getRecordsWithPriceChanges($daysFrequency = 1)
+    public function getRecordsWithPriceChanges($quickUploadOnly, $daysLimit = false)
     {
-        $query = "SELECT product_name as 'Product Name', 
+        $timeLimitClause = '';
+        if ($daysLimit) {
+            $timeLimitClause = " AND last_updated > DATE_SUB(now(), interval $daysLimit day)";
+        }
+
+        $selectClause = "SELECT * ";
+        if ($quickUploadOnly) {
+            $selectClause = "SELECT product_name as 'Product Name', 
                 category_name as 'Category', 
-                sell_price as 'Sell Price' 
+                sell_price as 'Sell Price' ";
+        }
+
+        $query = "$selectClause
             FROM PRICES
-            WHERE last_updated > DATE_SUB(now(), interval $daysFrequency day)
-            AND sell_price is NOT NULL
+            WHERE sell_price is NOT NULL
             AND product_name is NOT NULL
+            $timeLimitClause
             ORDER BY last_updated DESC
         ";
         if ($this->debug) {
@@ -441,6 +451,11 @@ class PricesRepository
                     return 1;
                 }
                 return 0;
+            case 'varchar':
+                if ($mysqlInfoArray['CHARACTER_MAXIMUM_LENGTH'] < strlen($value)) {
+                    return substr($value, $mysqlInfoArray['CHARACTER_MAXIMUM_LENGTH']);
+                }
+                return $value;
             default:
                 return $value;
         }
