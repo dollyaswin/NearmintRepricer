@@ -97,8 +97,6 @@ class SellerEngine extends ApiConnection
         $downloadNumber += 5;
         $highestDownload = false;
 
-        $maxAttempts = 7;
-
         do {
             $nextFileUrl = 'https://sellery.sellerengine.com/export/getContents?userId=' . $this->config['userIdForExport'] . '&exportId=' . $downloadNumber;
             // Downloads which do not exists yet will return a 500 internal server error,
@@ -107,13 +105,10 @@ class SellerEngine extends ApiConnection
                 $highestDownload = $downloadNumber;
             } else {
                 //keep sellery from noticing we are scraping, and banning us.
-                sleep(2);
-                $this->logger->info("Sleeping. Download Number : $downloadNumber. ");
-                $this->logger->err( $this->mostRecentCurlError);
+                sleep(5);
                 $downloadNumber--;
-                $maxAttempts--;
             }
-        } while (!$highestDownload && $maxAttempts > 0);
+        } while (!$highestDownload && $downloadNumber > 0);
 
         $repo->setMostRecentSelleryDownloadNumber($highestDownload);
         return $nextFileUrl;

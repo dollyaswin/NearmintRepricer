@@ -45,7 +45,6 @@ return [
         'Lowest new price on amazon.com'                               => 'amazon_avg_price',
         'New Buy Box 24h Ownership % on amazon.com'                    => 'amazon_buy_box_percentage',
         'New Buy Box price plus shipping on amazon.com'                => 'amazon_buy_box_price',
-        'Number of new Offers on amazon.com'                           => 'amazon_num_offers',
         'Sales rank on amazon.com'                                     => 'amazon_sales_rank',
         'Estimated profit on Near Mint Games'                          => 'sellery_estimated_profit',
         'Final price commission on Near Mint Games'                    => 'amazon_fees',
