@@ -287,7 +287,7 @@ class PricesRepository
            `sellery_cost_source` varchar(255) DEFAULT NULL,
            `sellery_days_of_stock` int(11) DEFAULT NULL,
            `amazon_condition` varchar(100) DEFAULT NULL,
-           `amazon_last_restock_date` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
+           `amazon_last_restock_date` timestamp DEFAULT NULL,
            `amazon_buy_box_seller` varchar(255) DEFAULT NULL,
            `amazon_num_offers` int(11) DEFAULT NULL,
            `date_created` datetime DEFAULT CURRENT_TIMESTAMP,
