@@ -297,6 +297,8 @@ class PricesRepository
         );";
         $result = $this->conn->exec($createTableQuery);
         if ($result === false) {
+            $this->logger->err("PDO::errorInfo():");
+            $this->logger->err(print_r($this->conn->errorInfo(), true) );
             return false;
         }
         return true;
