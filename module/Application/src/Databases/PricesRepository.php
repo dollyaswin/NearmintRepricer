@@ -14,7 +14,7 @@ namespace Application\Databases;
 class PricesRepository
 {
 
-    protected $debug = true;
+    protected $debug;
     protected $debugImportLimit = 500;
 
     /**
@@ -38,7 +38,7 @@ class PricesRepository
         $this->config = $this->getConfig();
     }
 
-    public function __construct()
+    public function __construct($debug = false)
     {
         $this->setConfig();
         $this->config['password'] = getenv('MYSQL_PASS');
@@ -57,6 +57,7 @@ class PricesRepository
             throw new \Exception("Unable to create prices table.");
         }
         $this->checkSettingsTable();
+        $this->debug = $debug;
 
         $this->crystalCommerceMapping = $this->config['crystalCommerceMapping'];
         $this->selleryMapping = $this->config['selleryMapping'];
@@ -72,16 +73,16 @@ class PricesRepository
      * IF THIS FUNCTION IS USED FOR ANOTHER SERVICE, you must leave the column aliases alone
      * or introduce a mapping for the crystal commerce update.
      *
-     * @param int $hoursFrequency default 2
+     * @param int $daysFrequency default 1
      * @return array|bool false on failure, an associative array on success
      *********************************************/
-    public function getRecordsWithPriceChanges($hoursFrequency = 2)
+    public function getRecordsWithPriceChanges($daysFrequency = 1)
     {
         $query = "SELECT product_name as 'Product Name', 
                 category_name as 'Category', 
                 sell_price as 'Sell Price' 
             FROM PRICES
-            WHERE last_updated > DATE_SUB(now(), interval $hoursFrequency hour)
+            WHERE last_updated > DATE_SUB(now(), interval $daysFrequency day)
             AND sell_price is NOT NULL
             AND product_name is NOT NULL
             ORDER BY last_updated DESC

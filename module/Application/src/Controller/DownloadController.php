@@ -3,6 +3,7 @@ namespace Application\Controller;
 
 use Application\ApiConnection\CrystalCommerce;
 use Application\Databases\PricesRepository;
+use Application\Factory\LoggerFactory;
 use Zend\Mvc\Controller\AbstractActionController;
 use Zend\View\Model\ViewModel;
 
@@ -14,10 +15,34 @@ class DownloadController extends AbstractActionController
 
     protected $config;
 
-    public function getConfig()
+
+    /**
+     * @var \Zend\Log\Logger
+     */
+    protected $logger;
+
+    protected $debug;
+
+
+    private function getConfig()
     {
         return include __DIR__ . '/../../config/download.config.php';
     }
+
+    private function setConfig()
+    {
+        $this->config = $this->getConfig();
+    }
+
+    public function __construct()
+    {
+        $this->debug = $this->params()->fromQuery('debug', false);
+
+        $this->setConfig();
+        $this->logger = LoggerFactory::createLogger('downloadLog.txt', false, $this->debug);
+
+    }
+
 
     public function indexAction()
     {
@@ -29,25 +54,27 @@ class DownloadController extends AbstractActionController
     public function pricesToUpdateAction()
     {
         // Get data from mysql
-
-        $pricesRepo = new PricesRepository();
+        $pricesRepo = new PricesRepository($this->debug);
         $pricesArray = $pricesRepo->getRecordsWithPriceChanges();
 
         $downloadPath = $this->config['tempDownloadName'];
         $downloadPath = str_replace(['\\','/'],DIRECTORY_SEPARATOR, $downloadPath);
+
+        $this->logger->debug("Download Path $downloadPath");
         if (file_exists($downloadPath)) {
             unlink($downloadPath);
         }
 
         if ($pricesArray) {
+            $this->logger->debug( "Prices array exists");
             $crystal = new CrystalCommerce();
             $crystal->createFileForImport($pricesArray, $downloadPath);
         }
         // Read data into string
         $csvString = file_get_contents($downloadPath);
-
         // send data to browser with a filename.
-        return $this->returnFileFromString('pricesToUpdate.csv', $csvString);
+        $timestamp = date('Y-m-d-His');
+        return $this->returnFileFromString('pricesToUpdate' . $timestamp . '.csv', $csvString);
     }
 
 
