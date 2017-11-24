@@ -454,6 +454,8 @@ class PricesRepository
                     return 1;
                 }
                 return 0;
+            case 'decimal':
+                return trim ($value,'$');
             case 'varchar':
                 if ($mysqlInfoArray['CHARACTER_MAXIMUM_LENGTH'] < strlen($value)) {
                     return substr($value, $mysqlInfoArray['CHARACTER_MAXIMUM_LENGTH']);
