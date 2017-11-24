@@ -12,9 +12,12 @@ namespace Application\ApiConnection;
 
 use Application\ApiConnection;
 use Application\Databases\PricesRepository;
+use Zend\Log\Logger;
 
 class SellerEngine extends ApiConnection
 {
+    protected $logger;
+    protected $debug;
 
     public function getConfig()
     {
@@ -26,8 +29,10 @@ class SellerEngine extends ApiConnection
         $this->config = $this->getConfig();
     }
 
-    public function __construct()
+    public function __construct(Logger $logger, $debug = false)
     {
+        $this->logger = $logger;
+        $this->debug = $debug;
         $this->setConfig();
         $this->setAuthorizeVariables();
         $apiResult = $this->authorize();
@@ -69,7 +74,7 @@ class SellerEngine extends ApiConnection
      */
     private function findNextFile()
     {
-        $repo = new PricesRepository();
+        $repo = new PricesRepository($this->logger, $this->debug);
         $downloadNumber = $repo->getMostRecentSelleryDownloadNumber();
         if (!$downloadNumber) {
             $downloadNumber = 50;
