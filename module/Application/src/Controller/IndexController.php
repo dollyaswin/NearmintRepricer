@@ -26,7 +26,7 @@ class IndexController extends AbstractActionController
 {
 
     protected $logger;
-    protected $debug;
+    protected $debug = true;
 
     public function __construct()
     {
@@ -38,12 +38,18 @@ class IndexController extends AbstractActionController
         $scripts = [
             'Get Prices From Crystal Commerce' => '/application/get-crystal-commerce-data',
             'Get Prices From Sellery' => '/application/get-sellery-pricing',
-            'Update Prices From Database to Crystal Commerce' => '/application/get-sellery-pricing',
+            'Update Prices From Database to Crystal Commerce (errors on CC side)' => '/application/update-crystal-commerce-prices',
         ];
+        if (getenv('APPLICATION_ENV') == 'development') {
+            $scripts['Load Crystal Commerce Prices From Local File'] = '/application/get-crystal-commerce-data?skipDownload=true';
+            $scripts['Load Sellery Prices From Local File'] = '/application/get-sellery-pricing?skipDownload=true';
+        }
+
         $downloads = [
             'Download Full Price List' => '/download/prices-to-update',
-            'Download Prices Which have Changed List' => '/download/prices-to-update?daysLimit=1',
-            'Download Price List for Quick Upload' => '/download/prices-to-update?quickUploadOnly=true',
+            'Download Prices All Changed prices in Last day' => '/download/prices-to-update?daysLimit=1',
+            'Download Prices With > 2% and > $0.05 changes' => '/download/prices-to-update?daysLimit=1&changesOnly=true',
+            'Download Price List for Quick Upload' => '/download/prices-to-update?quickUploadOnly=true&changesOnly=true',
         ];
 
         $variables = [

@@ -81,10 +81,13 @@ class PricesRepository
      * IF THIS FUNCTION IS USED FOR ANOTHER SERVICE, you must leave the column aliases alone
      * or introduce a mapping for the crystal commerce update.
      *
-     * @param int $daysFrequency default 1
+     * @param bool $quickUploadOnly
+     * @param bool|int $daysLimit
+     * @param bool $changesOnly - restrict results to only records which need updated.
+     *
      * @return array|bool false on failure, an associative array on success
      *********************************************/
-    public function getRecordsWithPriceChanges($quickUploadOnly, $daysLimit = false)
+    public function getRecordsWithPriceChanges($quickUploadOnly = false, $daysLimit = false, $changesOnly = false)
     {
         $timeLimitClause = '';
         if ($daysLimit) {
@@ -103,8 +106,13 @@ class PricesRepository
             WHERE sell_price is NOT NULL
             AND product_name is NOT NULL
             $timeLimitClause
-            ORDER BY last_updated DESC
         ";
+
+        if ($changesOnly) {
+            $query .= ' AND ABS(cc_sell_price - sell_price) > cc_sell_price*0.02
+                AND ABS(cc_sell_price - sell_price) > 0.05';
+        }
+
         if ($this->debug) {
             $query .= "LIMIT 10";
         }
@@ -129,20 +137,27 @@ class PricesRepository
      * IF THIS FUNCTION IS USED FOR ANOTHER SERVICE, you must leave the column aliases alone
      * or introduce a mapping for the crystal commerce update.
      *
-     * @param int $hoursFrequency default 2
+     * @param bool $restrictFileSize
+     *
      * @return array|bool false on failure, an associative array on success
      *********************************************/
-    public function getAllPriceRecords()
+    public function getAllPriceRecords($restrictFileSize = false)
     {
+
         $query = "SELECT product_name as 'Product Name', 
                 category_name as 'Category', 
                 sell_price as 'Sell Price',
                 PR.*                
             FROM PRICES as PR
             WHERE sell_price is NOT NULL
-            AND product_name is NOT NULL
-            ORDER BY last_updated DESC
+            AND product_name is NOT NULL 
         ";
+
+        if ($restrictFileSize) {
+            $query .= ' AND ABS(cc_sell_price - sell_price) > cc_sell_price*0.02
+                AND ABS(cc_sell_price - sell_price) > 0.05';
+        }
+
         if ($this->debug) {
             $query .= "LIMIT 10";
         }
@@ -298,7 +313,7 @@ class PricesRepository
            `sellery_cost_source` varchar(255) DEFAULT NULL,
            `sellery_days_of_stock` int(11) DEFAULT NULL,
            `amazon_condition` varchar(100) DEFAULT NULL,
-           `amazon_last_restock_date` datetime DEFAULT '0000-00-00 00:00:00',
+           `amazon_last_restock_date` varchar(255) DEFAULT NULL,
            `amazon_buy_box_seller` varchar(255) DEFAULT NULL,
            `amazon_num_offers` int(11) DEFAULT NULL,
            `date_created` datetime DEFAULT CURRENT_TIMESTAMP,

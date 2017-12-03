@@ -21,7 +21,7 @@ return [
         'Total Qty'        => 'total_qty',
         'Wishlists'        => 'wishlists',
         'Buy Price'        => 'buy_price',
-        //'Sell Price'       => 'sell_price',
+        'Sell Price'       => 'cc_sell_price',
         'URL'              => 'product_url',
         'Barcode'          => 'barcode',
         'Manufacturer SKU' => 'manufacturer_sku',

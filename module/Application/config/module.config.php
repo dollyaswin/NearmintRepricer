@@ -36,6 +36,16 @@ return [
                     ],
                 ],
             ],
+            'upload' => [
+                'type'    => Segment::class,
+                'options' => [
+                    'route'    => '/upload[/:action]',
+                    'defaults' => [
+                        'controller'    => Controller\UploadController::class,
+                        'action'        => 'index',
+                    ],
+                ],
+            ],
             'application' => [
                 'type'    => Segment::class,
                 'options' => [
@@ -51,6 +61,7 @@ return [
     'controllers' => [
         'factories' => [
             Controller\IndexController::class => InvokableFactory::class,
+            Controller\UploadController::class => InvokableFactory::class,
             Controller\DownloadController::class => InvokableFactory::class,
         ],
     ],
