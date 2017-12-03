@@ -145,9 +145,9 @@ class CrystalCommerce extends ApiConnection
         }
 
 
-        $url = 'https://' . $this->config['adminDomain'] . '.crystalcommerce.com/mass_imports';
+        //$url = 'https://' . $this->config['adminDomain'] . '.crystalcommerce.com/mass_imports';
 
-        //$url = "localhost:8080/testFile.php";
+        $url = "localhost:8080/upload";
 
         $curlFile = curl_file_create($filePath, 'text/csv', basename($filePath));
 

@@ -55,10 +55,11 @@ class DownloadController extends AbstractActionController
     {
         $quickUploadOnly = $this->params()->fromQuery('quickUploadOnly', false);
         $daysLimit = $this->params()->fromQuery('daysLimit', false);
+        $changesOnly = $this->params()->fromQuery('changesOnly', false);
 
         // Get data from mysql
         $pricesRepo = new PricesRepository($this->logger, $this->debug);
-        $pricesArray = $pricesRepo->getRecordsWithPriceChanges($quickUploadOnly, $daysLimit);
+        $pricesArray = $pricesRepo->getRecordsWithPriceChanges($quickUploadOnly, $daysLimit, $changesOnly);
 
         $downloadPath = $this->config['tempDownloadName'];
         $downloadPath = str_replace(['\\','/'],DIRECTORY_SEPARATOR, $downloadPath);
