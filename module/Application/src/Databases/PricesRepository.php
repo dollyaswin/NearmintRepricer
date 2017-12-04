@@ -89,12 +89,6 @@ class PricesRepository
      *********************************************/
     public function getRecordsWithPriceChanges($quickUploadOnly = false, $daysLimit = false, $changesOnly = false)
     {
-        $timeLimitClause = '';
-        if ($daysLimit) {
-            $daysLimit = intval($daysLimit);  // prevent SQL injection
-            $timeLimitClause = " AND last_updated > DATE_SUB(now(), interval $daysLimit day)";
-        }
-
         $selectClause = "SELECT * ";
         if ($quickUploadOnly) {
             $selectClause = "SELECT product_name as 'Product Name', 
@@ -106,8 +100,13 @@ class PricesRepository
             FROM PRICES
             WHERE sell_price is NOT NULL
             AND product_name is NOT NULL
-            $timeLimitClause
         ";
+
+        if ($daysLimit) {
+            $daysLimit = intval($daysLimit);  // prevent SQL injection
+            $query .= " AND last_updated > DATE_SUB(now(), interval $daysLimit day) ";
+        }
+
 
         if ($changesOnly) {
             $query .= ' AND ABS(cc_sell_price - sell_price) > cc_sell_price*0.02
@@ -115,7 +114,7 @@ class PricesRepository
         }
 
         if ($this->debug) {
-            $query .= "LIMIT 10";
+            $query .= " LIMIT 10 ";
         }
         $statement = $this->conn->prepare($query);
         $statement->execute();
