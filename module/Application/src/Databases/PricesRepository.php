@@ -91,6 +91,7 @@ class PricesRepository
     {
         $timeLimitClause = '';
         if ($daysLimit) {
+            $daysLimit = intval($daysLimit);  // prevent SQL injection
             $timeLimitClause = " AND last_updated > DATE_SUB(now(), interval $daysLimit day)";
         }
 
