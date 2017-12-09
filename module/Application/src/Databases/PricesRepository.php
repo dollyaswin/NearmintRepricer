@@ -98,7 +98,12 @@ class PricesRepository
         if ($quickUploadOnly) {
             $selectClause = "SELECT product_name as 'Product Name', 
                 category_name as 'Category', 
-                sell_price as 'Sell Price' ";
+                COALESCE(
+                format(
+                    COALESCE(amazon_avg_new_price, 0) + COALESCE(amazon_lowest_new_price, 0) + COALESCE(amazon_buy_box_price, 0) / (1 +
+                    CASE WHEN amazon_lowest_new_price IS NOT NULL THEN 1 ELSE 0 END +
+                    CASE WHEN amazon_buy_box_price IS NOT NULL THEN 1 ELSE 0 END ), 2)
+                     , sell_price) as 'Sell Price' ";
         }
 
         $query = "$selectClause
