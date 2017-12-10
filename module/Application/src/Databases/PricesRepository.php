@@ -17,7 +17,7 @@ class PricesRepository
 {
 
     protected $debug;
-    protected $debugImportLimit = 500;
+    protected $debugImportLimit = 100;
     /**
      * @var Logger
      */
@@ -92,13 +92,33 @@ class PricesRepository
         $selectClause = "SELECT * ";
         if ($quickUploadOnly) {
             $selectClause = "SELECT product_name as 'Product Name', 
-                category_name as 'Category', 
-                sell_price as 'Sell Price' ";
+                category_name as 'Category' ";
         }
+
+        /**********************************************************
+         * This is the heart of the repricing calculation. The logic for what price is uploaded to CC
+         * is determined in this clause of the query.  Replace or modify here and update the below comment
+         *
+         * Use the sell_price first if available, this comes from 'Live price on Near Mint Games' from sellery
+         * if it is not available, average the follow three prices together
+         * amazon_avg_new_price, amazon_lowest_new_price, amazon_buy_box_price
+         * In MySQL if one is NULL then the result would be null, COALESCE is used
+         *     But because that could throw off the number of prices that exist, the amount you divide by must be adjusted.
+         *     So normally you would add three values and divide by three. Instead count up how much to divide by.
+         **********************************************************/
+        $selectClause .= ",
+        format(
+            COALESCE(sell_price, 
+                (COALESCE(amazon_avg_new_price, 0) + COALESCE(amazon_lowest_new_price, 0) + COALESCE(amazon_buy_box_price, 0) ) /
+                    (1 + CASE WHEN amazon_lowest_new_price IS NOT NULL THEN 1 ELSE 0 END +
+                    CASE WHEN amazon_buy_box_price IS NOT NULL THEN 1 ELSE 0 END )
+            ), 2
+        )  as 'Sell Price'";
+
 
         $query = "$selectClause
             FROM PRICES
-            WHERE sell_price is NOT NULL
+            WHERE (amazon_avg_new_price IS NOT NULL OR sell_price IS NOT NULL) 
             AND product_name is NOT NULL
         ";
 
@@ -435,6 +455,8 @@ class PricesRepository
                     if (isset($priceLine[$arrayIndex])) {
                         $cleanValue = $this->cleanValue($priceLine[$arrayIndex], $typeData[$columnName]);
                         $stmt->bindValue(':' . $columnName, $cleanValue);
+                    } else {
+                        $stmt->bindValue(':' . $columnName, null);
                     }
                 }
                 if(!$stmt->execute()){

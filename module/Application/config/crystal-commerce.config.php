@@ -12,7 +12,7 @@ return [
     // adminDomain is everything before .crystalcommerce.com on the admin panel URL, instead of www
     'adminDomain' => 'nearmintgames-admin',
     'sleepBetweenFileReportChecks' => 30,
-    'attmptsToGetFileReportBeforeError' => 30,
+    'attmptsToGetFileReportBeforeError' => 100,
     'tempFileName'     => __DIR__ . '/../../../data/mostRecentDownloadCrystalCommerce.csv',
     'fileToUploadPath' => __DIR__ . '/../../../data/fileToUploadToCrystalCommerce.csv',
     'fileUploadOutputLoggingPath' => __DIR__ . '/../../../data/uploadOutput.html',

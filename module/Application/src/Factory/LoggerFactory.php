@@ -31,7 +31,7 @@ class LoggerFactory
         } else {
             $path = __DIR__ . '/../../../../logs/' . $path;
             $path = str_replace(['\\','/'],DIRECTORY_SEPARATOR, $path);
-            $formatter = new Simple($formatString . PHP_EOL);
+            $formatter = new Simple($formatString);
         }
 
         $formatter->setDateTimeFormat('Y-m-d H:i:s');

@@ -30,6 +30,7 @@ class IndexController extends AbstractActionController
 
     public function __construct()
     {
+        ini_set('memory_limit','1024M');
         $this->logger = LoggerFactory::createLogger('updateLog.txt', false, $this->debug);
     }
 
@@ -37,10 +38,13 @@ class IndexController extends AbstractActionController
     {
         $scripts = [
             'Get Prices From Crystal Commerce' => '/application/get-crystal-commerce-data',
+            'Get Prices From Crystal Commerce, Include OOS' => '/application/get-crystal-commerce-data?includeOutOfStock=true',
             'Get Prices From Sellery' => '/application/get-sellery-pricing',
             'Update Prices From Database to Crystal Commerce (errors on CC side)' => '/application/update-crystal-commerce-prices',
         ];
         if (getenv('APPLICATION_ENV') == 'development') {
+            $scripts['Download Crystal Commerce Prices Skip Import'] = '/application/get-crystal-commerce-data?skipImport=true';
+            $scripts['Download Crystal Commerce Prices Skip Import Include OOS'] = '/application/get-crystal-commerce-data?skipImport=true&includeOutOfStock=true';
             $scripts['Load Crystal Commerce Prices From Local File'] = '/application/get-crystal-commerce-data?skipDownload=true';
             $scripts['Load Sellery Prices From Local File'] = '/application/get-sellery-pricing?skipDownload=true';
         }
@@ -142,26 +146,44 @@ class IndexController extends AbstractActionController
         $this->setLogger('CrystalCommerceGetPricesLog.txt');
 
         $skipDownload = $this->params()->fromQuery('skipDownload', false);
+        $includeOutOfStock = $this->params()->fromQuery('includeOutOfStock', false);
+        $skipImport = $this->params()->fromQuery('skipImport', false);
+
+        if ($includeOutOfStock) {
+            $this->logger->info("Downloading All records, including Out of Stock");
+        }
+
         $crystal = new CrystalCommerce($this->logger, $this->debug);
         if (!$skipDownload) {
-            $csvFile = $crystal->downloadCsv();
+            $csvFile = $crystal->downloadCsv($includeOutOfStock);
             if ($csvFile) {
                 $this->logger->info("Successfully downloaded a CSV File.");
+            } else {
+                $this->logger->err("Attempted to download a CSV File and failed.");
+                print("</pre>");
+                return false;
             }
         }
 
         $pricesArray = $crystal->getMostRecentCsvAsArray();
-
         $this->logger->info("There are " . count($pricesArray) . " prices to be updated");
-        $pricesRepo = new PricesRepository($this->logger, $this->debug);
-        if($pricesRepo->importPricesFromCC($pricesArray)) {
-            $this->logger->info ("Successfully imported CSV File.");
+
+        if ($skipImport) {
+            $this->logger->info("Skipping importing the CSV File.");
         } else {
-            $this->logger->info ("Failed to import CSV File.");
+
+            $pricesRepo = new PricesRepository($this->logger, $this->debug);
+            if ($pricesRepo->importPricesFromCC($pricesArray)) {
+                $this->logger->info("Successfully imported CSV File.");
+            } else {
+                $this->logger->info("Failed to import CSV File.");
+            }
         }
 
         print("</pre>");
+        return true;
     }
+
 
     private function setLogger($fileName)
     {
