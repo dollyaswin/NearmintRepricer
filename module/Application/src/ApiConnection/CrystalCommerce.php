@@ -295,20 +295,23 @@ class CrystalCommerce extends ApiConnection
 
         $downloadId = $this->parsePageForLatestDownloadId($pageHtml);
         if (!$downloadId) {
-            throw new \Exception("Something went wrong. There are no new downloads available. $pageHtml ");
+            $this->logger->err("Something went wrong. There are no new downloads available. $pageHtml ");
+            return false;
         }
         sleep(10);
         $isReady = $this->checkForLinkForDownloadId($downloadId);
 
-        $result = false;
         if ($isReady) {
             // Once the link appears it will be in the following format :
             $url = 'https://' . $this->config['adminDomain'] . '.crystalcommerce.com/file_reports/' . $downloadId . '/download';
-            $result = $this->transmit($url);
+            $this->downloadToFile($url, $this->config['tempFileName']);
+            return file_get_contents($this->config['tempFileName']);
+        } else {
+            $this->logger->err("After the maximum amount of wait time there was still no file available.");
+            return false;
         }
 
-        file_put_contents($this->config['tempFileName'],$result);
-        return $result;
+
 
     }
 

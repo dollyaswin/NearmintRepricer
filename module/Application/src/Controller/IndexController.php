@@ -157,6 +157,10 @@ class IndexController extends AbstractActionController
             $csvFile = $crystal->downloadCsv($includeOutOfStock);
             if ($csvFile) {
                 $this->logger->info("Successfully downloaded a CSV File.");
+            } else {
+                $this->logger->err("Attempted to download a CSV File and failed.");
+                print("</pre>");
+                return false;
             }
         }
 
@@ -176,6 +180,7 @@ class IndexController extends AbstractActionController
         }
 
         print("</pre>");
+        return true;
     }
 
 
