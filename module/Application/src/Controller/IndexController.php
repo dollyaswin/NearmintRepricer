@@ -37,13 +37,13 @@ class IndexController extends AbstractActionController
     {
         $scripts = [
             'Get Prices From Crystal Commerce' => '/application/get-crystal-commerce-data',
-            'Get Prices From Crystal Commerce, Include OOS' => '/application/get-crystal-commerce-data?inStockOnly=false',
+            'Get Prices From Crystal Commerce, Include OOS' => '/application/get-crystal-commerce-data?includeOutOfStock=true',
             'Get Prices From Sellery' => '/application/get-sellery-pricing',
             'Update Prices From Database to Crystal Commerce (errors on CC side)' => '/application/update-crystal-commerce-prices',
         ];
         if (getenv('APPLICATION_ENV') == 'development') {
             $scripts['Download Crystal Commerce Prices Skip Import'] = '/application/get-crystal-commerce-data?skipImport=true';
-            $scripts['Download Crystal Commerce Prices Skip Import Include OOS'] = '/application/get-crystal-commerce-data?skipImport=true&inStockOnly=false';
+            $scripts['Download Crystal Commerce Prices Skip Import Include OOS'] = '/application/get-crystal-commerce-data?skipImport=true&includeOutOfStock=true';
             $scripts['Load Crystal Commerce Prices From Local File'] = '/application/get-crystal-commerce-data?skipDownload=true';
             $scripts['Load Sellery Prices From Local File'] = '/application/get-sellery-pricing?skipDownload=true';
         }
@@ -145,11 +145,16 @@ class IndexController extends AbstractActionController
         $this->setLogger('CrystalCommerceGetPricesLog.txt');
 
         $skipDownload = $this->params()->fromQuery('skipDownload', false);
-        $inStockOnly = $this->params()->fromQuery('inStockOnly', true);
+        $includeOutOfStock = $this->params()->fromQuery('includeOutOfStock', false);
         $skipImport = $this->params()->fromQuery('skipImport', false);
+
+        if ($includeOutOfStock) {
+            $this->logger->info("Downloading All records, including Out of Stock");
+        }
+
         $crystal = new CrystalCommerce($this->logger, $this->debug);
         if (!$skipDownload) {
-            $csvFile = $crystal->downloadCsv($inStockOnly);
+            $csvFile = $crystal->downloadCsv($includeOutOfStock);
             if ($csvFile) {
                 $this->logger->info("Successfully downloaded a CSV File.");
             }

@@ -218,7 +218,7 @@ class CrystalCommerce extends ApiConnection
 
 
 
-    public function downloadCsv($inStockOnly = 'true')
+    public function downloadCsv($includeOutOfStock = false)
     {
         //$result = $this->loadTestPage();
 
@@ -255,9 +255,9 @@ class CrystalCommerce extends ApiConnection
             'search[sell_price_gte]' => '',
             'search[sell_price_lte]' => '',
             'search[tags_name_eq]' => '',
-            'search[total_qty_gte]' => '0',
+            'search[total_qty_gte]' => '',
             'search[total_qty_lte]' => '',
-            'search[variants_has_reserved_qty]' => '0',
+            'search[variants_has_reserved_qty]' => '',
             'search[variants_locked_by_reserved_qty]' => '0',
             'search[variants_on_buylist]' => '0',
             'search[variants_opt_qty_gte]' => '',
@@ -270,7 +270,7 @@ class CrystalCommerce extends ApiConnection
             //'utf8' => "✓",   // '&#x2713;'
         ];
 
-        if ($inStockOnly) {
+        if (!$includeOutOfStock) {
             // Search quantity gte = Greater than or Equals, lte = Less than or equals
             $postVariables['search[total_qty_gte]'] = '1';
             $postVariables['search[total_qty_lte]'] = '';
