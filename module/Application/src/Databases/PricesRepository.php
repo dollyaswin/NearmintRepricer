@@ -17,7 +17,7 @@ class PricesRepository
 {
 
     protected $debug;
-    protected $debugImportLimit = 500;
+    protected $debugImportLimit = 100;
     /**
      * @var Logger
      */
@@ -113,12 +113,12 @@ class PricesRepository
          **********************************************************/
         $selectClause .= ",
         format(
-            COALESCE(sell_price,
-                COALESCE(amazon_avg_new_price, 0) + COALESCE(amazon_lowest_new_price, 0) + COALESCE(amazon_buy_box_price, 0) / (1 +
-                            CASE WHEN amazon_lowest_new_price IS NOT NULL THEN 1 ELSE 0 END +
-                            CASE WHEN amazon_buy_box_price IS NOT NULL THEN 1 ELSE 0 END )
-                    ), 2
-                )  as 'Sell Price'";
+            COALESCE(sell_price, 
+                (COALESCE(amazon_avg_new_price, 0) + COALESCE(amazon_lowest_new_price, 0) + COALESCE(amazon_buy_box_price, 0) ) /
+                    (1 + CASE WHEN amazon_lowest_new_price IS NOT NULL THEN 1 ELSE 0 END +
+                    CASE WHEN amazon_buy_box_price IS NOT NULL THEN 1 ELSE 0 END )
+            ), 2
+        )  as 'Sell Price'";
 
 
         $query = "$selectClause

@@ -30,6 +30,7 @@ class IndexController extends AbstractActionController
 
     public function __construct()
     {
+        ini_set('memory_limit','1024M');
         $this->logger = LoggerFactory::createLogger('updateLog.txt', false, $this->debug);
     }
 
