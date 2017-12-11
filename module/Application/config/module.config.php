@@ -46,6 +46,16 @@ return [
                     ],
                 ],
             ],
+            'get-data' => [
+                'type'    => Segment::class,
+                'options' => [
+                    'route'    => '/get-data[/:action]',
+                    'defaults' => [
+                        'controller'    => Controller\GetDataController::class,
+                        'action'        => 'index',
+                    ],
+                ],
+            ],
             'application' => [
                 'type'    => Segment::class,
                 'options' => [
@@ -63,6 +73,7 @@ return [
             Controller\IndexController::class => InvokableFactory::class,
             Controller\UploadController::class => InvokableFactory::class,
             Controller\DownloadController::class => InvokableFactory::class,
+            Controller\GetDataController::class => InvokableFactory::class,
         ],
     ],
     'view_manager' => [
