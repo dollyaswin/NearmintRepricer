@@ -18,6 +18,7 @@ namespace Application\Controller;
 use Application\ApiConnection\CrystalCommerce;
 use Application\ApiConnection\SellerEngine;
 use Application\Databases\PricesRepository;
+use Application\Databases\RunTimeRepository;
 use Application\Factory\LoggerFactory;
 use Zend\Mvc\Controller\AbstractActionController;
 use Zend\View\Model\ViewModel;
@@ -56,10 +57,15 @@ class IndexController extends AbstractActionController
             'Download Price List for Quick Upload' => '/download/prices-to-update?quickUploadOnly=true&changesOnly=true',
         ];
 
+        $scriptRunRepo = new RunTimeRepository($this->logger, $this->debug);
+        $recentRunData = $scriptRunRepo->getRunInformation(10);
+
         $variables = [
             'scripts' => $scripts,
             'downloads' => $downloads,
+            'recentScriptRunData' => $recentRunData,
         ];
+
         // This just shows the user the default Zend Skeleton home page if they load http://localhost/
         return new ViewModel($variables);
     }

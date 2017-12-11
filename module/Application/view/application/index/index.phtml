@@ -11,6 +11,24 @@ function buildLinkString($links)
     return $output;
 }
 
+function buildScriptRunString($recentScriptRunData)
+{
+    $output = '<table border="0" >';
+    foreach ($recentScriptRunData as $run) {
+        $output .= "<tr>";
+        foreach ($run as $label => $value) {
+            if ($label == 'script_error_message') {
+                continue;
+            }
+            $output .= '<td>' . $value . '</td>';
+        }
+        $output .= "</tr>";
+    }
+    $output .= "</table>";
+    return $output;
+}
+
+
 ?>
 
 <div class="jumbotron">
@@ -53,4 +71,7 @@ function buildLinkString($links)
             </div>
         </div>
     </div>
+</div>
+<div class="row">
+    <?= buildScriptRunString($recentScriptRunData) ?>
 </div>
