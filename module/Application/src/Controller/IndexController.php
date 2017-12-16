@@ -48,6 +48,7 @@ class IndexController extends AbstractActionController
             $scripts['Download Crystal Commerce Prices Skip Import Include OOS'] = '/get-data/get-crystal-commerce-data?skipImport=true&includeOutOfStock=true';
             $scripts['Load Crystal Commerce Prices From Local File'] = '/get-data/get-crystal-commerce-data?skipDownload=true';
             $scripts['Load Sellery Prices From Local File'] = '/get-data/get-sellery-pricing?skipDownload=true';
+            $scripts['Test Script'] = 'http://localhost:8080/get-data/test-script';
         }
 
         $downloads = [

@@ -10,7 +10,7 @@ use Zend\Log\Writer\Stream;
 class LoggerFactory
 {
 
-    static protected $formatString = '%timestamp% %priorityName% (%priority%): %message%';
+    static protected $formatString = '%timestamp% %priorityName% : %message%';
 
     public function __invoke($path = '', $inBrowser = true, $debug = true)
     {
@@ -25,7 +25,6 @@ class LoggerFactory
      */
     static public function createLogger($path = '', $inBrowser = true, $debug = true)
     {
-        $formatString = '%timestamp% %priorityName% (%priority%): %message%';
 
         if ($inBrowser) {
             $path = 'php://output';

@@ -40,9 +40,22 @@ class GetDataController extends AbstractActionController
     public function __construct()
     {
         ini_set('memory_limit','1024M');
+        //date_default_timezone_set ('America/Chicago');  //This is set in php.ini now.
         $this->startTime = date('Y-m-d H:i:s');
     }
 
+    // Each public action must instantiate a logger and a temp file name in order to use logScript()
+
+    public function testScriptAction()
+    {
+        $this->setLogger('testScriptLog.txt');
+        $this->tempFileName = __DIR__ . '/../../../../logs/tempTestScriptLog.txt';
+        $this->addTempLogger($this->tempFileName);
+
+        $message = "Successfully ran test Script.";
+        //$this->logger->info($message);
+        $this->logScript('Test Script Update', $message);
+    }
 
     public function getSelleryPricingAction()
     {
@@ -161,7 +174,7 @@ class GetDataController extends AbstractActionController
         $this->logger->info($message);
         $errorLog = substr(file_get_contents($this->tempFileName),0,1400);
         $runTimes->logScriptRun($scriptName, $message, $errorLog, $this->startTime);
-        unlink($this->tempFileName);
+        file_put_contents($this->tempFileName,'');
     }
 
     private function setLogger($fileName)

@@ -13,11 +13,21 @@ function buildLinkString($links)
 
 function buildScriptRunString($recentScriptRunData)
 {
-    $output = '<table border="0" >';
+    $output = '<table border="1" width="100%">';
+    $output .= "<tr>";
+    foreach ($recentScriptRunData[0] as $label => $blank) {
+        if ($label == 'script_error_message' || $label == 'record_id') {
+            continue;
+        }
+        $output .= '<td class="btn-success" >' . $label . '</td>';
+    }
+    $output .= "</tr>";
+
+
     foreach ($recentScriptRunData as $run) {
         $output .= "<tr>";
         foreach ($run as $label => $value) {
-            if ($label == 'script_error_message') {
+            if ($label == 'script_error_message' || $label == 'record_id') {
                 continue;
             }
             $output .= '<td>' . $value . '</td>';
@@ -73,5 +83,18 @@ function buildScriptRunString($recentScriptRunData)
     </div>
 </div>
 <div class="row">
-    <?= buildScriptRunString($recentScriptRunData) ?>
+    <div class="col-md-15">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Recently Run Scripts : </h3>
+            </div>
+            <div class="panel-body">
+                <p>
+                    <?= buildScriptRunString($recentScriptRunData) ?>
+                </p>
+
+                <!--         <p><a class="btn btn-success pull-right" href="http://modules.zendframework.com/" target="_blank">Explore ZF Modules &raquo;</a></p> -->
+            </div>
+        </div>
+    </div>
 </div>
