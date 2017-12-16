@@ -23,85 +23,38 @@ use Application\Factory\LoggerFactory;
 use Zend\Mvc\Controller\AbstractActionController;
 use Zend\View\Model\ViewModel;
 
-class IndexController extends AbstractActionController
+class GetDataController extends AbstractActionController
 {
 
+
+    /**
+     * @var \Zend\Log\Logger
+     */
     protected $logger;
-    protected $debug = true;
+    protected $debug;
+
+    protected $startTime;
+
+    protected $tempFileName;
 
     public function __construct()
     {
         ini_set('memory_limit','1024M');
-        $this->logger = LoggerFactory::createLogger('updateLog.txt', false, $this->debug);
+        //date_default_timezone_set ('America/Chicago');  //This is set in php.ini now.
+        $this->startTime = date('Y-m-d H:i:s');
     }
 
-    public function indexAction()
+    // Each public action must instantiate a logger and a temp file name in order to use logScript()
+
+    public function testScriptAction()
     {
-        $scripts = [
-            'Get Prices From Crystal Commerce' => '/get-data/get-crystal-commerce-data',
-            'Get Prices From Crystal Commerce, Include OOS' => '/get-data/get-crystal-commerce-data?includeOutOfStock=true',
-            'Get Prices From Sellery' => '/get-data/get-sellery-pricing',
-            'Update Prices From Database to Crystal Commerce (errors on CC side)' => '/application/update-crystal-commerce-prices',
-        ];
-        if (getenv('APPLICATION_ENV') == 'development') {
-            $scripts['Download Crystal Commerce Prices Skip Import'] = '/get-data/get-crystal-commerce-data?skipImport=true';
-            $scripts['Download Crystal Commerce Prices Skip Import Include OOS'] = '/get-data/get-crystal-commerce-data?skipImport=true&includeOutOfStock=true';
-            $scripts['Load Crystal Commerce Prices From Local File'] = '/get-data/get-crystal-commerce-data?skipDownload=true';
-            $scripts['Load Sellery Prices From Local File'] = '/get-data/get-sellery-pricing?skipDownload=true';
-            $scripts['Test Script'] = 'http://localhost:8080/get-data/test-script';
-        }
+        $this->setLogger('testScriptLog.txt');
+        $this->tempFileName = __DIR__ . '/../../../../logs/tempTestScriptLog.txt';
+        $this->addTempLogger($this->tempFileName);
 
-        $downloads = [
-            'Download Full Price List' => '/download/prices-to-update',
-            'Download Prices All Changed prices in Last day' => '/download/prices-to-update?daysLimit=1',
-            'Download Prices With > 2% and > $0.05 changes' => '/download/prices-to-update?daysLimit=1&changesOnly=true',
-            'Download Price List for Quick Upload' => '/download/prices-to-update?quickUploadOnly=true&changesOnly=true',
-        ];
-
-        $scriptRunRepo = new RunTimeRepository($this->logger, $this->debug);
-        $recentRunData = $scriptRunRepo->getRunInformation(10);
-
-        $variables = [
-            'scripts' => $scripts,
-            'downloads' => $downloads,
-            'recentScriptRunData' => $recentRunData,
-        ];
-
-        // This just shows the user the default Zend Skeleton home page if they load http://localhost/
-        return new ViewModel($variables);
-    }
-
-
-
-
-    public function testAction()
-    {
-
-    }
-
-    public function updateCrystalCommercePricesAction()
-    {
-        set_time_limit(0);
-
-        $this->setLogger('CrystalCommercePricesUpdateLog.txt');
-
-        $pricesRepo = new PricesRepository($this->logger, $this->debug);
-        $pricesArray = $pricesRepo->getRecordsWithPriceChanges(true);
-
-        if ($pricesArray) {
-            $this->logger->info("There are " . count($pricesArray) . " prices to be uploaded");
-            $crystal = new CrystalCommerce($this->logger, $this->debug);
-            $crystal->createFileForImport($pricesArray);
-
-            if($ouput = $crystal->uploadFileToImportForm()) {
-                $this->logger->info("Successfully uploaded CSV File.");
-            } else {
-                $this->logger->info("Failed to upload CSV File.");
-            }
-        } else {
-            $this->logger->info("There are no prices which need to be updated");
-        }
-
+        $message = "Successfully ran test Script.";
+        //$this->logger->info($message);
+        $this->logScript('Test Script Update', $message);
     }
 
     public function getSelleryPricingAction()
@@ -109,9 +62,10 @@ class IndexController extends AbstractActionController
         set_time_limit(0);
 
         $this->setLogger('SelleryPricesUpdateLog.txt');
+        $this->tempFileName = __DIR__ . '/../../../../logs/tempSelleryLog.txt';
+        $this->addTempLogger($this->tempFileName);
 
         $skipDownload = $this->params()->fromQuery('skipDownload', false);
-
         $jumpToExportId = $this->params()->fromQuery('jumpToExportId', false);
 
         $sellery = new SellerEngine($this->logger, $this->debug);
@@ -126,12 +80,23 @@ class IndexController extends AbstractActionController
         }
 
         $pricesRepo = new PricesRepository($this->logger, $this->debug);
-        if($pricesRepo->importPricesFromSellery($pricesArray)) {
-            $this->logger->info("Successfully imported CSV File.");
+
+        if ($pricesRepo->importPricesFromSellery($pricesArray)) {
+            $message = "Successfully imported CSV File.";
+            $this->logger->info($message);
+            $this->logSelleryScript($message);
         } else {
-            $this->logger->info("Failed to import CSV File.");
+            $message = "Failed to import CSV File.";
+            $this->logger->info($message);
+            $this->logSelleryScript($message);
         }
     }
+
+    protected function logSelleryScript($message)
+    {
+        $this->logScript('Sellery Price Update', $message);
+    }
+
 
     /******************************************
      * Request a new data download from Crystal Commerce
@@ -151,6 +116,8 @@ class IndexController extends AbstractActionController
         set_time_limit(0);
 
         $this->setLogger('CrystalCommerceGetPricesLog.txt');
+        $this->tempFileName = __DIR__ . '/../../../../logs/tempCCLog.txt';
+        $this->addTempLogger($this->tempFileName);
 
         $skipDownload = $this->params()->fromQuery('skipDownload', false);
         $includeOutOfStock = $this->params()->fromQuery('includeOutOfStock', false);
@@ -166,8 +133,9 @@ class IndexController extends AbstractActionController
             if ($csvFile) {
                 $this->logger->info("Successfully downloaded a CSV File.");
             } else {
-                $this->logger->err("Attempted to download a CSV File and failed.");
-                print("</pre>");
+                $message = "Attempted to download a CSV File and failed.";
+                $this->logger->err($message);
+                $this->logCrystalCommerceScript($message);
                 return false;
             }
         }
@@ -181,16 +149,33 @@ class IndexController extends AbstractActionController
 
             $pricesRepo = new PricesRepository($this->logger, $this->debug);
             if ($pricesRepo->importPricesFromCC($pricesArray)) {
-                $this->logger->info("Successfully imported CSV File.");
+                $message = "Successfully imported CSV File.";
+                $this->logger->info($message);
+                $this->logCrystalCommerceScript($message);
             } else {
-                $this->logger->info("Failed to import CSV File.");
+                $message = "Failed to import CSV File.";
+                $this->logger->err($message);
+                $this->logCrystalCommerceScript($message);
             }
         }
-
-        print("</pre>");
         return true;
     }
 
+    protected function logCrystalCommerceScript($message)
+    {
+        $scriptName  = 'Crystal Commerce Price Update';
+        $this->logScript($scriptName, $message);
+    }
+
+
+    protected function logScript($scriptName, $message)
+    {
+        $runTimes = new RunTimeRepository($this->logger, $this->debug);
+        $this->logger->info($message);
+        $errorLog = substr(file_get_contents($this->tempFileName),0,1400);
+        $runTimes->logScriptRun($scriptName, $message, $errorLog, $this->startTime);
+        file_put_contents($this->tempFileName,'');
+    }
 
     private function setLogger($fileName)
     {
@@ -199,5 +184,9 @@ class IndexController extends AbstractActionController
         $this->logger = LoggerFactory::createLogger($fileName, $inBrowser, $this->debug);
     }
 
+    private function addTempLogger($tempFileName)
+    {
+        $this->logger = LoggerFactory::addWriterToLogger($this->logger, $tempFileName);
+    }
 
 }
