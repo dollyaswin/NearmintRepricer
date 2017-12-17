@@ -1,4 +1,4 @@
-# Product Repricer
+# Data Entry and Reprice Program (DERP)
 
 ## Introduction
 

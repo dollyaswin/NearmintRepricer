@@ -1,48 +1,53 @@
 <?php
 
-function buildLinkString($links)
-{
-    $output = '<table border="0" >';
-    foreach ($links as $label => $url) {
-        $output .= '<tr><td><a href="' . $url . '" >' . $label . '</a></td></tr>';
-    }
 
-    $output .= "</table>";
-    return $output;
+// Todo put these two functions used on the index into their own file, and then include_once that file.
+if (!function_exists('buildIndexLinksString')) {
+    function buildIndexLinksString($links)
+    {
+        $output = '<table border="0" >';
+        foreach ($links as $label => $url) {
+            $output .= '<tr><td><a href="' . $url . '" >' . $label . '</a></td></tr>';
+        }
+
+        $output .= "</table>";
+        return $output;
+    }
 }
 
-function buildScriptRunString($recentScriptRunData)
-{
-    $output = '<table border="1" width="100%">';
-    $output .= "<tr>";
-    foreach ($recentScriptRunData[0] as $label => $blank) {
-        if ($label == 'script_error_message' || $label == 'record_id') {
-            continue;
-        }
-        $output .= '<td class="btn-success" >' . $label . '</td>';
-    }
-    $output .= "</tr>";
-
-
-    foreach ($recentScriptRunData as $run) {
+if (!function_exists('buildScriptRunString')) {
+    function buildScriptRunString($recentScriptRunData)
+    {
+        $output = '<table border="1" width="100%">';
         $output .= "<tr>";
-        foreach ($run as $label => $value) {
+        foreach ($recentScriptRunData[0] as $label => $blank) {
             if ($label == 'script_error_message' || $label == 'record_id') {
                 continue;
             }
-            $output .= '<td>' . $value . '</td>';
+            $output .= '<td class="btn-success" >' . $label . '</td>';
         }
         $output .= "</tr>";
-    }
-    $output .= "</table>";
-    return $output;
-}
 
+
+        foreach ($recentScriptRunData as $run) {
+            $output .= "<tr>";
+            foreach ($run as $label => $value) {
+                if ($label == 'script_error_message' || $label == 'record_id') {
+                    continue;
+                }
+                $output .= '<td>' . $value . '</td>';
+            }
+            $output .= "</tr>";
+        }
+        $output .= "</table>";
+        return $output;
+    }
+}
 
 ?>
 
 <div class="jumbotron">
-    <h1>Welcome to the Repricer Project</span></h1>
+    <h1>Welcome to the Data Entry and Reprice Program (DERP)</span></h1>
 
     <p>
         This is a project by Andrew Stokinger written for Near Mint Games, using Zend Framework 3
@@ -60,7 +65,7 @@ function buildScriptRunString($recentScriptRunData)
                 <p>
                     If you need to run the scripts at off times, or because something needs updated, please click the links below.
                     They will take quite a while to run, please don't close your browser.
-                    <?= buildLinkString($scripts) ?>
+                    <?= buildIndexLinksString($scripts) ?>
                 </p>
                 <!--             <p><a class="btn btn-success pull-right" href="http://framework.zend.com/" target="_blank">ZF Development Portal &raquo;</a></p> -->
             </div>
@@ -74,7 +79,7 @@ function buildScriptRunString($recentScriptRunData)
             </div>
             <div class="panel-body">
                 <p>
-                    <?= buildLinkString($downloads) ?>
+                    <?= buildIndexLinksString($downloads) ?>
                 </p>
 
        <!--         <p><a class="btn btn-success pull-right" href="http://modules.zendframework.com/" target="_blank">Explore ZF Modules &raquo;</a></p> -->
