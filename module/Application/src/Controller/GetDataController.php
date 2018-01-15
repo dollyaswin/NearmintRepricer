@@ -17,10 +17,12 @@ namespace Application\Controller;
 
 use Application\ApiConnection\CrystalCommerce;
 use Application\ApiConnection\SellerEngine;
+use Application\ApiConnection\TrollandToad;
 use Application\Databases\CrystalCommerceRepository;
 use Application\Databases\PricesRepository;
 use Application\Databases\RunTimeRepository;
 use Application\Databases\SellerEngineRepository;
+use Application\Databases\TrollAndToadRepository;
 use Application\Factory\LoggerFactory;
 use Zend\Mvc\Controller\AbstractActionController;
 use Zend\View\Model\ViewModel;
@@ -41,6 +43,7 @@ class GetDataController extends AbstractActionController
 
     public function __construct()
     {
+        set_time_limit(0);
         ini_set('memory_limit','1024M');
         //date_default_timezone_set ('America/Chicago');  //This is set in php.ini now.
         $this->startTime = date('Y-m-d H:i:s');
@@ -60,17 +63,53 @@ class GetDataController extends AbstractActionController
         $this->logScript('Test Script Update', $message);
     }
 
+    public function trollBuyPricesAction()
+    {
+        $this->setLogger('TrollBuyPriceUpdateLog.txt');
+        $this->tempFileName = __DIR__ . '/../../../../logs/tempTrollLog.txt';
+        $this->addTempLogger($this->tempFileName);
+
+        $skipDownload = $this->params()->fromQuery('skipDownload', false);
+        $skipImport = $this->params()->fromQuery('skipImport', false);
+
+        $troll = new TrollandToad($this->logger, $this->debug);
+        if (!$skipDownload) {
+            $pricesArray = $troll->getBuyListArray();
+            $this->logger->info("There are " . count($pricesArray) . " prices to be updated");
+        } else {
+            $pricesArray = $troll->createArrayfromFile();
+        }
+
+        if ($skipImport) {
+            $this->logger->info("Skipping importing the CSV File.");
+        } else {
+            $pricesRepo = new TrollAndToadRepository($this->logger, $this->debug);
+
+            if ($pricesRepo->importFromArray($pricesArray)) {
+                $message = "Successfully imported CSV File.";
+                $this->logger->info($message);
+                $this->logSelleryScript($message);
+            } else {
+                $message = "Failed to import CSV File.";
+                $this->logger->info($message);
+                $this->logSelleryScript($message);
+            }
+        }
+
+    }
+
+
     public function getSelleryPricingAction()
     {
-        set_time_limit(0);
 
         $this->setLogger('SelleryPricesUpdateLog.txt');
         $this->tempFileName = __DIR__ . '/../../../../logs/tempSelleryLog.txt';
         $this->addTempLogger($this->tempFileName);
 
         $skipDownload = $this->params()->fromQuery('skipDownload', false);
-        $jumpToExportId = $this->params()->fromQuery('jumpToExportId', false);
         $skipImport = $this->params()->fromQuery('skipImport', false);
+
+        $jumpToExportId = $this->params()->fromQuery('jumpToExportId', false);
 
         $sellery = new SellerEngine($this->logger, $this->debug);
 
