@@ -113,12 +113,19 @@ class DownloadController extends AbstractActionController
         return $outputArray;
     }
 
+    /**
+     *  Process the Form POST action to create a CSV file from the database
+     *  and return that file to the user.
+     *
+     * @return bool|\Zend\Stdlib\ResponseInterface|ViewModel
+     */
     public function pricesToUpdateAction()
     {
-        $quickUploadOnly = $this->params()->fromPost('quickUploadOnly', false);
-        if ($quickUploadOnly == true) {
-            $this->logger->info("Quick Upload set to true");
+        if(!$this->getRequest()->isPost()) {
+            $this->redirect()->toUrl('/download');
         }
+
+        $quickUploadOnly = $this->params()->fromPost('quickUploadOnly', false);
         $daysLimit = $this->params()->fromPost('daysLimit', false);
         $changesOnly = $this->params()->fromPost('changesOnly', false);
 
