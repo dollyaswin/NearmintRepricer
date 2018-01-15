@@ -53,10 +53,10 @@ class IndexController extends AbstractActionController
         }
 
         $downloads = [
-            'Download Full Price List' => '/download/prices-to-update',
-            'Download Prices All Changed prices in Last day' => '/download/prices-to-update?daysLimit=1',
-            'Download Prices With > 2% and > $0.05 changes' => '/download/prices-to-update?daysLimit=1&changesOnly=true',
-            'Download Price List for Quick Upload' => '/download/prices-to-update?quickUploadOnly=true&changesOnly=true',
+            'Spreadsheet Generator' => '/download',
+            //'Download Prices All Changed prices in Last day' => '/download/prices-to-update?daysLimit=1',
+            //'Download Prices With > 2% and > $0.05 changes' => '/download/prices-to-update?daysLimit=1&changesOnly=true',
+            //'Download Price List for Quick Upload' => '/download/prices-to-update?quickUploadOnly=true&changesOnly=true',
         ];
 
         $scriptRunRepo = new RunTimeRepository($this->logger, $this->debug);

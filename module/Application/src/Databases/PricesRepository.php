@@ -63,6 +63,10 @@ class PricesRepository
         $this->debug = $debug;
     }
 
+    protected $tableAliasMapping = [
+        'crystal_commerce' =>  'CC',
+        'sellery' =>  'SE',
+    ];
 
     /*********************************************
      * Get Prices updated in the last # hours
@@ -131,8 +135,10 @@ class PricesRepository
         }
 
         if (!empty($dropDownParameters)) {
-            foreach ($dropDownParameters as $column => $value) {
-                $query .= " AND $column = '$value' ";
+            foreach ($dropDownParameters as $tableAndColumn => $value) {
+                list($table, $column) = explode('^', $tableAndColumn);
+                $tableAlias = $this->tableAliasMapping[$table];
+                $query .= " AND $tableAlias.$column = '$value' ";
             }
         }
 
@@ -142,6 +148,9 @@ class PricesRepository
         $statement = $this->conn->prepare($query);
         $statement->execute();
         $result = $statement->fetchAll(\PDO::FETCH_ASSOC);
+        $this->logger->info("The query : $query");
+
+        $this->logger->info($query);
 
         if (count($result) == 0) {
             $this->logger->info("No prices to update" );
@@ -151,12 +160,12 @@ class PricesRepository
         return $result;
     }
 
-    public function getOptionsForColumn($columnName)
+    public function getOptionsForColumn($tableAndColumn)
     {
-        list($table, $column) = explode('.', $columnName);
-        $query = "SELECT $column as option_name, count(*) as the_count
+        list($table, $columnName) = explode('^', $tableAndColumn);
+        $query = "SELECT $columnName as option_name, count(*) as the_count
             FROM $table 
-            GROUP BY $column
+            GROUP BY $columnName
             ORDER BY the_count DESC;";
         $statement = $this->conn->prepare($query);
         $statement->execute();

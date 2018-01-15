@@ -44,7 +44,7 @@ class DownloadController extends AbstractActionController
     }
 
     protected $dropDowns = [
-        'crystal_commerce.category_name' => 'Category Name',
+        'crystal_commerce^category_name' => 'Category Name',
     ];
 
 
@@ -115,21 +115,26 @@ class DownloadController extends AbstractActionController
 
     public function pricesToUpdateAction()
     {
-        $quickUploadOnly = $this->params()->fromQuery('quickUploadOnly', false);
-        $daysLimit = $this->params()->fromQuery('daysLimit', false);
-        $changesOnly = $this->params()->fromQuery('changesOnly', false);
+        $quickUploadOnly = $this->params()->fromPost('quickUploadOnly', false);
+        if ($quickUploadOnly == true) {
+            $this->logger->info("Quick Upload set to true");
+        }
+        $daysLimit = $this->params()->fromPost('daysLimit', false);
+        $changesOnly = $this->params()->fromPost('changesOnly', false);
 
         $dropDownParameters = [];
         // Filtering here, only drop downs from the list will be processed,
         // no values from the form allowed as column names.
         if (!empty($this->dropDowns)) {
             foreach ($this->dropDowns as $column => $displayName) {
-                $setting = $this->params()->fromQuery($column, '');
+                $setting = $this->params()->fromPost($column, '');
                 if($setting) {
                     $dropDownParameters[$column] = $setting;
                 }
             }
         }
+
+        $this->logger->info(print_r($dropDownParameters));
 
         // Get data from mysql
         $pricesRepo = new PricesRepository($this->logger, $this->debug);
