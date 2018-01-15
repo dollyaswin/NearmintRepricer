@@ -17,8 +17,10 @@ namespace Application\Controller;
 
 use Application\ApiConnection\CrystalCommerce;
 use Application\ApiConnection\SellerEngine;
+use Application\Databases\CrystalCommerceRepository;
 use Application\Databases\PricesRepository;
 use Application\Databases\RunTimeRepository;
+use Application\Databases\SellerEngineRepository;
 use Application\Factory\LoggerFactory;
 use Zend\Mvc\Controller\AbstractActionController;
 use Zend\View\Model\ViewModel;
@@ -79,9 +81,9 @@ class GetDataController extends AbstractActionController
             $pricesArray = $sellery->createArrayfromFile();
         }
 
-        $pricesRepo = new PricesRepository($this->logger, $this->debug);
+        $pricesRepo = new SellerEngineRepository($this->logger, $this->debug);
 
-        if ($pricesRepo->importPricesFromSellery($pricesArray)) {
+        if ($pricesRepo->importFromArray($pricesArray)) {
             $message = "Successfully imported CSV File.";
             $this->logger->info($message);
             $this->logSelleryScript($message);
@@ -147,8 +149,8 @@ class GetDataController extends AbstractActionController
             $this->logger->info("Skipping importing the CSV File.");
         } else {
 
-            $pricesRepo = new PricesRepository($this->logger, $this->debug);
-            if ($pricesRepo->importPricesFromCC($pricesArray)) {
+            $pricesRepo = new CrystalCommerceRepository($this->logger, $this->debug);
+            if ($pricesRepo->importFromArray($pricesArray)) {
                 $message = "Successfully imported CSV File.";
                 $this->logger->info($message);
                 $this->logCrystalCommerceScript($message);

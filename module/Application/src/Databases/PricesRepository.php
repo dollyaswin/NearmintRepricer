@@ -10,7 +10,6 @@
 
 namespace Application\Databases;
 
-
 use Zend\Log\Logger;
 
 class PricesRepository
