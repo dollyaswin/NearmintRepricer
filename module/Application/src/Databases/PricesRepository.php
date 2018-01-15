@@ -142,7 +142,6 @@ class PricesRepository
         $statement = $this->conn->prepare($query);
         $statement->execute();
         $result = $statement->fetchAll(\PDO::FETCH_ASSOC);
-        $this->logger->info("The query : $query");
 
         if (count($result) == 0) {
             $this->logger->info("No prices to update" );
