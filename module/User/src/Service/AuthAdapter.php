@@ -27,7 +27,7 @@ class AuthAdapter implements AdapterInterface
 
     /**
      * Entity manager.
-     * @var Doctrine\ORM\EntityManager
+     * @var \Doctrine\ORM\EntityManager
      */
     private $entityManager;
 

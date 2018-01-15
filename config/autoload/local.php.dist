@@ -11,5 +11,21 @@
  * credentials from accidentally being committed into version control.
  */
 
+<?php
+use Doctrine\DBAL\Driver\PDOMySql\Driver as PDOMySqlDriver;
+
 return [
+    'doctrine' => [
+        'connection' => [
+            'orm_default' => [
+                'driverClass' => PDOMySqlDriver::class,
+                'params' => [
+                    'host'     => 'localhost',
+                    'user'     => 'derp',
+                    'password' => '<password>',
+                    'dbname'   => 'nearmintgames',
+                ]
+            ],
+        ],
+    ],
 ];

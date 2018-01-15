@@ -90,10 +90,10 @@ return [
         ],
         'controllers' => [
             Controller\IndexController::class => [
-                // Allow anyone to visit "index" and "about" actions
-                ['actions' => ['index', 'about'], 'allow' => '*'],
-                // Allow authorized users to visit "settings" action
-                ['actions' => ['settings'], 'allow' => '@']
+                // Allow anyone to visit "home"  action
+                ['actions' => ['home'], 'allow' => '*'],
+                // Allow authorized users to visit this list of action
+                ['actions' => ['application','get-data','upload','download',], 'allow' => '@']
             ],
         ]
     ],
@@ -111,6 +111,20 @@ return [
         ],
         'template_path_stack' => [
             __DIR__ . '/../view',
+        ],
+    ],
+    'service_manager' => [
+        'factories' => [
+            Service\NavManager::class => Service\Factory\NavManagerFactory::class,
+        ],
+    ],
+
+    'view_helpers' => [
+        'factories' => [
+            View\Helper\Menu::class => View\Helper\Factory\MenuFactory::class,
+        ],
+        'aliases' => [
+            'mainMenu' => View\Helper\Menu::class,
         ],
     ],
 ];
