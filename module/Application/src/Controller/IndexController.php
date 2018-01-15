@@ -44,18 +44,19 @@ class IndexController extends AbstractActionController
             'Update Prices From Database to Crystal Commerce (errors on CC side)' => '/application/update-crystal-commerce-prices',
         ];
         if (getenv('APPLICATION_ENV') == 'development') {
-            $scripts['Download Crystal Commerce Prices Skip Import'] = '/get-data/get-crystal-commerce-data?skipImport=true';
-            $scripts['Download Crystal Commerce Prices Skip Import Include OOS'] = '/get-data/get-crystal-commerce-data?skipImport=true&includeOutOfStock=true';
-            $scripts['Load Crystal Commerce Prices From Local File'] = '/get-data/get-crystal-commerce-data?skipDownload=true';
-            $scripts['Load Sellery Prices From Local File'] = '/get-data/get-sellery-pricing?skipDownload=true';
-            $scripts['Test Script'] = 'http://localhost:8080/get-data/test-script';
+            $scripts['Download Crystal Commerce Prices Skip Import'] = '/get-data/get-crystal-commerce-data?skipImport=true&inBrowser=true';
+            $scripts['Download Crystal Commerce Prices Skip Import Include OOS'] = '/get-data/get-crystal-commerce-data?skipImport=true&includeOutOfStock=true&inBrowser=true';
+            $scripts['Load Crystal Commerce Prices From Local File'] = '/get-data/get-crystal-commerce-data?skipDownload=true&inBrowser=true';
+            $scripts['Load Sellery Prices From Local File'] = '/get-data/get-sellery-pricing?skipDownload=true&inBrowser=true';
+            $scripts['Download Sellery Prices Skip Import'] = '/get-data/get-sellery-pricing?skipImport=true&inBrowser=true&debug=true';
+            //$scripts['Test Script'] = 'http://localhost:8080/get-data/test-script';
         }
 
         $downloads = [
-            'Download Full Price List' => '/download/prices-to-update',
-            'Download Prices All Changed prices in Last day' => '/download/prices-to-update?daysLimit=1',
-            'Download Prices With > 2% and > $0.05 changes' => '/download/prices-to-update?daysLimit=1&changesOnly=true',
-            'Download Price List for Quick Upload' => '/download/prices-to-update?quickUploadOnly=true&changesOnly=true',
+            'Spreadsheet Generator' => '/download',
+            //'Download Prices All Changed prices in Last day' => '/download/prices-to-update?daysLimit=1',
+            //'Download Prices With > 2% and > $0.05 changes' => '/download/prices-to-update?daysLimit=1&changesOnly=true',
+            //'Download Price List for Quick Upload' => '/download/prices-to-update?quickUploadOnly=true&changesOnly=true',
         ];
 
         $scriptRunRepo = new RunTimeRepository($this->logger, $this->debug);

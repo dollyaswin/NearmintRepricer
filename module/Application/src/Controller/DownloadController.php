@@ -43,23 +43,109 @@ class DownloadController extends AbstractActionController
 
     }
 
+    protected $dropDowns = [
+        'crystal_commerce^category_name' => 'Category Name',
+    ];
+
 
     public function indexAction()
     {
-        print ("Download Controller Index in use");
+        $checkboxes = [
+            'quickUploadOnly' => 'Create Fields For Upload Only',
+            'changesOnly' => 'Show only prices which are > 2% and > $0.05 different',
+        ];
+
+        $searchBoxes = [
+            'daysLimit' => 'Updated in last Number of Days',
+        ];
+
+        if (!empty($this->dropDowns)) {
+            $dropDowns = $this->buildDropDowns($this->dropDowns);
+        }
+
+        if (!empty($checkboxes)) {
+            $checkboxes = $this->buildCheckBoxes($checkboxes);
+        }
+
+        $variables = [
+            'checkboxes' => $checkboxes,
+            'dropDowns' => $dropDowns,
+            'searchBoxes' => $searchBoxes,
+        ];
+
         // Show list of possible downloads and options. Link to the actions below.
-        return new ViewModel();
+        return new ViewModel($variables);
     }
 
+    protected function buildCheckBoxes($checkboxes)
+    {
+        $outputArray = [];
+        foreach ($checkboxes as $parameterName => $displayName) {
+            $outputArray[]  = "<input type='checkbox' name='$parameterName' value='true'> - $displayName ";
+        }
+        return $outputArray;
+    }
+
+    /****************
+     * Build the HTML needed for form drop down options.
+     *
+     * @param array $dropDowns an array of table_name.column_name keys, and Display Name for values.
+     * @return array of strings which are Html for select boxes
+     */
+    protected function buildDropDowns($dropDowns)
+    {
+        $outputArray = [];
+        $pricesRepo = new PricesRepository($this->logger, $this->debug);
+        foreach ($dropDowns as $columnName => $displayText) {
+            $optionsArray = $pricesRepo->getOptionsForColumn($columnName);
+
+            if ($optionsArray) {
+                $selector = "$displayText : <select name='$columnName'> ";
+                $selector .= "<option value='' selected >Choose A $displayText</option>";
+                foreach($optionsArray as $option) {
+                    $optionName = $option['option_name'];
+                    $selector .= "<option value='$optionName' >$optionName</option>";
+                }
+                $selector .= '</select>';
+                $outputArray[] = $selector;
+            }
+        }
+        return $outputArray;
+    }
+
+    /**
+     *  Process the Form POST action to create a CSV file from the database
+     *  and return that file to the user.
+     *
+     * @return bool|\Zend\Stdlib\ResponseInterface|ViewModel
+     */
     public function pricesToUpdateAction()
     {
-        $quickUploadOnly = $this->params()->fromQuery('quickUploadOnly', false);
-        $daysLimit = $this->params()->fromQuery('daysLimit', false);
-        $changesOnly = $this->params()->fromQuery('changesOnly', false);
+        if(!$this->getRequest()->isPost()) {
+            $this->redirect()->toUrl('/download');
+        }
+
+        $quickUploadOnly = $this->params()->fromPost('quickUploadOnly', false);
+        $daysLimit = $this->params()->fromPost('daysLimit', false);
+        $changesOnly = $this->params()->fromPost('changesOnly', false);
+
+        $dropDownParameters = [];
+        // Filtering here, only drop downs from the list will be processed,
+        // no values from the form allowed as column names.
+        if (!empty($this->dropDowns)) {
+            foreach ($this->dropDowns as $column => $displayName) {
+                $setting = $this->params()->fromPost($column, '');
+                if($setting) {
+                    $dropDownParameters[$column] = $setting;
+                }
+            }
+        }
+
+        $this->logger->info(print_r($dropDownParameters));
 
         // Get data from mysql
         $pricesRepo = new PricesRepository($this->logger, $this->debug);
-        $pricesArray = $pricesRepo->getRecordsWithPriceChanges($quickUploadOnly, $daysLimit, $changesOnly);
+        $pricesArray = $pricesRepo->getRecordsWithPriceChanges($dropDownParameters, $quickUploadOnly, $daysLimit, $changesOnly);
 
         $downloadPath = $this->config['tempDownloadName'];
         $downloadPath = str_replace(['\\','/'],DIRECTORY_SEPARATOR, $downloadPath);
@@ -91,7 +177,7 @@ class DownloadController extends AbstractActionController
      *
      * This is the 'file' action that is invoked when a user wants to download the given file.
      */
-    public function fileAction()
+    private function fileAction()
     {
         // Get the file name from GET variable
         $fileName = $this->params()->fromQuery('name', '');

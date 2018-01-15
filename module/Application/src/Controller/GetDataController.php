@@ -17,8 +17,10 @@ namespace Application\Controller;
 
 use Application\ApiConnection\CrystalCommerce;
 use Application\ApiConnection\SellerEngine;
+use Application\Databases\CrystalCommerceRepository;
 use Application\Databases\PricesRepository;
 use Application\Databases\RunTimeRepository;
+use Application\Databases\SellerEngineRepository;
 use Application\Factory\LoggerFactory;
 use Zend\Mvc\Controller\AbstractActionController;
 use Zend\View\Model\ViewModel;
@@ -42,6 +44,7 @@ class GetDataController extends AbstractActionController
         ini_set('memory_limit','1024M');
         //date_default_timezone_set ('America/Chicago');  //This is set in php.ini now.
         $this->startTime = date('Y-m-d H:i:s');
+        $this->debug = true;
     }
 
     // Each public action must instantiate a logger and a temp file name in order to use logScript()
@@ -67,6 +70,7 @@ class GetDataController extends AbstractActionController
 
         $skipDownload = $this->params()->fromQuery('skipDownload', false);
         $jumpToExportId = $this->params()->fromQuery('jumpToExportId', false);
+        $skipImport = $this->params()->fromQuery('skipImport', false);
 
         $sellery = new SellerEngine($this->logger, $this->debug);
 
@@ -79,16 +83,20 @@ class GetDataController extends AbstractActionController
             $pricesArray = $sellery->createArrayfromFile();
         }
 
-        $pricesRepo = new PricesRepository($this->logger, $this->debug);
-
-        if ($pricesRepo->importPricesFromSellery($pricesArray)) {
-            $message = "Successfully imported CSV File.";
-            $this->logger->info($message);
-            $this->logSelleryScript($message);
+        if ($skipImport) {
+            $this->logger->info("Skipping importing the CSV File.");
         } else {
-            $message = "Failed to import CSV File.";
-            $this->logger->info($message);
-            $this->logSelleryScript($message);
+            $pricesRepo = new SellerEngineRepository($this->logger, $this->debug);
+
+            if ($pricesRepo->importFromArray($pricesArray)) {
+                $message = "Successfully imported CSV File.";
+                $this->logger->info($message);
+                $this->logSelleryScript($message);
+            } else {
+                $message = "Failed to import CSV File.";
+                $this->logger->info($message);
+                $this->logSelleryScript($message);
+            }
         }
     }
 
@@ -146,9 +154,8 @@ class GetDataController extends AbstractActionController
         if ($skipImport) {
             $this->logger->info("Skipping importing the CSV File.");
         } else {
-
-            $pricesRepo = new PricesRepository($this->logger, $this->debug);
-            if ($pricesRepo->importPricesFromCC($pricesArray)) {
+            $pricesRepo = new CrystalCommerceRepository($this->logger, $this->debug);
+            if ($pricesRepo->importFromArray($pricesArray)) {
                 $message = "Successfully imported CSV File.";
                 $this->logger->info($message);
                 $this->logCrystalCommerceScript($message);

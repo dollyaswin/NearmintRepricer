@@ -11,7 +11,7 @@
 namespace Application\ApiConnection;
 
 use Application\ApiConnection;
-use Application\Databases\PricesRepository;
+use Application\Databases\RepricerSettingsRepository;
 use Zend\Log\Logger;
 
 class SellerEngine extends ApiConnection
@@ -84,11 +84,11 @@ class SellerEngine extends ApiConnection
     {
         $this->logger->debug("Inside " . __METHOD__ );
 
-        $repo = new PricesRepository($this->logger, $this->debug);
+        $settingsRepo = new RepricerSettingsRepository($this->logger, $this->debug);
         if ($jumpToExportId) {
             $downloadNumber = $jumpToExportId;
         } else {
-            $downloadNumber = $repo->getMostRecentSelleryDownloadNumber();
+            $downloadNumber = $settingsRepo->getSetting('sellery_download_number');
         }
         if (!$downloadNumber) {
             $downloadNumber = 50;
@@ -110,7 +110,7 @@ class SellerEngine extends ApiConnection
             }
         } while (!$highestDownload && $downloadNumber > 0);
 
-        $repo->setMostRecentSelleryDownloadNumber($highestDownload);
+        $settingsRepo->setSetting('sellery_download_number', $highestDownload);
         return $nextFileUrl;
     }
 

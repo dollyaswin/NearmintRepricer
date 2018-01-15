@@ -7,11 +7,11 @@ use Zend\Log\Logger;
 
 class RunTimeRepository extends Databases
 {
-
-    public function __construct(Logger $logger, bool $debug = false)
+    public function getConfig()
     {
-        parent::__construct($logger, $debug);
-        $this->checkLogTable();
+        $parent = parent::getConfig();
+        $child = include(__DIR__ . '/../../config/run-time-repository.config.php');
+        return array_merge($parent, $child);
     }
 
     public function getLastRunTime($scriptName)
@@ -79,41 +79,5 @@ class RunTimeRepository extends Databases
         }
         return true;
     }
-
-    /**********************************************
-     * Check if the script log table exists in the default database.
-     * If not create it.
-     *********************************************/
-    protected function checkLogTable()
-    {
-        // test if table exists, if not then create table
-        $result = $this->conn->query("SHOW TABLES LIKE 'SCRIPT_RUN_LOG';");
-        if ($result->rowCount() == 0) {
-            $this->logger->info("SCRIPT RUN LOG table doesn't exist, building now.");
-            if ($this->buildLogTable() == false) {
-                $this->logger->err ("Unable to create SCRIPT_RUN_LOG table." );
-                exit();
-            }
-        }
-    }
-
-
-    protected function buildLogTable()
-    {
-        $createTableQuery = "CREATE TABLE SCRIPT_RUN_LOG (
-            record_id integer NOT NULL AUTO_INCREMENT primary key,
-            script_name varchar(255),
-            script_result varchar(255),
-            script_error_message varchar(1600),
-            start_time datetime DEFAULT CURRENT_TIMESTAMP,
-            completion_time timestamp DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-        );";
-        $result = $this->conn->exec($createTableQuery);
-        if ($result === false) {
-            return false;
-        }
-        return true;
-    }
-
 
 }
