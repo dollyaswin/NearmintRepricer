@@ -151,51 +151,6 @@ class PricesRepository
         return $result;
     }
 
-
-    /*********************************************
-     * Get All Records
-     *
-     * The aliases for the columns in this query are very important.  They must match the
-     * expected column names for uploading into Crystal Commerce.
-     *
-     * IF THIS FUNCTION IS USED FOR ANOTHER SERVICE, you must leave the column aliases alone
-     * or introduce a mapping for the crystal commerce update.
-     *
-     * @param bool $restrictFileSize
-     *
-     * @return array|bool false on failure, an associative array on success
-     *********************************************/
-    public function getAllPriceRecords($restrictFileSize = false)
-    {
-
-        $query = "SELECT product_name as 'Product Name', 
-                category_name as 'Category', 
-                sell_price as 'Sell Price',
-                PR.*                
-            FROM PRICES as PR
-            WHERE sell_price is NOT NULL
-            AND product_name is NOT NULL 
-        ";
-
-        if ($restrictFileSize) {
-            $query .= ' AND ABS(cc_sell_price - sell_price) > cc_sell_price*0.02
-                AND ABS(cc_sell_price - sell_price) > 0.05';
-        }
-
-        if ($this->debug) {
-            $query .= "LIMIT 10";
-        }
-        $statement = $this->conn->prepare($query);
-        $statement->execute();
-        $result = $statement->fetchAll(\PDO::FETCH_ASSOC);
-
-        if (count($result) == 0) {
-            $this->logger->info("No prices to update");
-            return false;
-        }
-        return $result;
-    }
-
     public function getOptionsForColumn($columnName)
     {
         list($table, $column) = explode('.', $columnName);

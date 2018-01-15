@@ -49,7 +49,7 @@ class IndexController extends AbstractActionController
             $scripts['Load Crystal Commerce Prices From Local File'] = '/get-data/get-crystal-commerce-data?skipDownload=true&inBrowser=true';
             $scripts['Load Sellery Prices From Local File'] = '/get-data/get-sellery-pricing?skipDownload=true&inBrowser=true';
             $scripts['Download Sellery Prices Skip Import'] = '/get-data/get-sellery-pricing?skipImport=true&inBrowser=true&debug=true';
-            $scripts['Test Script'] = 'http://localhost:8080/get-data/test-script';
+            //$scripts['Test Script'] = 'http://localhost:8080/get-data/test-script';
         }
 
         $downloads = [
