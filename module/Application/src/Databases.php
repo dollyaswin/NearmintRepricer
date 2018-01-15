@@ -71,7 +71,7 @@ abstract class Databases
         if ($result->rowCount() == 0) {
             $this->logger->info("Table '{$this->config['table name']}' doesn't exist, building now.");
             if ($this->rebuildTableFromDefinition() == false) {
-                throw new \Exception("Unable to '{$this->config['table name']}' table.");
+                throw new \Exception("Unable to create '{$this->config['table name']}' table.");
             }
         }
         return true;
@@ -83,6 +83,7 @@ abstract class Databases
 
         $result = $this->conn->exec($createTableQuery);
         if ($result === false) {
+            $this->logger->err("Create table Query : $createTableQuery");
             $this->logger->err("PDO::errorInfo():");
             $this->logger->err(print_r($this->conn->errorInfo(), true) );
             return false;
@@ -92,11 +93,11 @@ abstract class Databases
 
     protected function buildCreateTableQuery()
     {
-        $tableName = "CREATE TABLE '{$this->config['table name']}' (";
+        $tableName = "CREATE TABLE {$this->config['table name']} (";
 
         $columnsSection = '';
         foreach ($this->config['columns'] as $name => $columnData) {
-            $columnsSection .= $name . ' ' . $columnData['']  . ",\n";
+            $columnsSection .= $name . ' ' . $columnData['definition']  . ",\n";
         }
 
         $keys = '';
@@ -183,7 +184,7 @@ abstract class Databases
                     $warning = true;
                 }
                 $debugCounter++;
-                if ($this->debug && $debugCounter > $this->debugImportLimit) {
+                if ($this->debug && $debugCounter >= $this->debugImportLimit) {
                     $this->logger->info ("There have been $debugCounter prices imported. Stopping" );
                     break;
                 }

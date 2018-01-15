@@ -4,7 +4,7 @@ function buildLinkString($links)
 {
     $output = '<table border="0" >';
     foreach ($links as $label => $url) {
-        $output .= '<tr><td><a href="' . $url . '" >' . $label . '</a></td></tr>';
+        $output .= '<tr><td><a href="' . $url . '" target="_blank">' . $label . '</a></td></tr>';
     }
 
     $output .= "</table>";

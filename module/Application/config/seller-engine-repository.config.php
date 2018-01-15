@@ -1,13 +1,5 @@
 <?php
 
-/**************************************
- * This configuration file does a lot of work.  It contains the mappings
- * between third party website's CSV download column names,
- * and the local database column names.
- *
- * This also contains all non password MySQL login information.
- ****************************************/
-
 namespace Application\Databases;
 
 return [

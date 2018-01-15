@@ -7,8 +7,6 @@ use Zend\Log\Logger;
 
 class CrystalCommerceRepository extends Databases
 {
-    protected $tableName = 'crystal_commerce';
-
     public function getConfig()
     {
         $parent = parent::getConfig();
