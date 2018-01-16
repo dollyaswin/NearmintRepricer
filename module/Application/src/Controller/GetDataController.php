@@ -87,15 +87,12 @@ class GetDataController extends AbstractActionController
 
             if ($pricesRepo->importFromArray($pricesArray)) {
                 $message = "Successfully imported CSV File.";
-                $this->logger->info($message);
-                $this->logSelleryScript($message);
             } else {
                 $message = "Failed to import CSV File.";
-                $this->logger->info($message);
-                $this->logSelleryScript($message);
             }
+            $this->logger->info($message);
+            $this->logScript('Troll Buy Price Update',$message);
         }
-
     }
 
 
