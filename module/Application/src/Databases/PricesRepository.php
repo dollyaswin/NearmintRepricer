@@ -85,11 +85,6 @@ class PricesRepository
      *********************************************/
     public function getRecordsWithPriceChanges($dropDownParameters, $quickUploadOnly, $daysLimit, $changesOnly)
     {
-        $timeLimitClause = '';
-        if ($daysLimit) {
-            $timeLimitClause = " AND SE.last_updated > DATE_SUB(now(), interval $daysLimit day)";
-        }
-
         $selectClause = "SELECT * ";
         if ($quickUploadOnly) {
             $selectClause = "SELECT product_name as 'Product Name', 
@@ -122,8 +117,13 @@ class PricesRepository
             INNER JOIN sellery as SE on (SE.asin=CC.asin)
             WHERE (SE.amazon_avg_new_price IS NOT NULL OR SE.sellery_sell_price IS NOT NULL) 
             AND CC.product_name is NOT NULL
-            $timeLimitClause
         ";
+
+        if ($daysLimit) {
+            $daysLimit = intval($daysLimit);  // prevent SQL injection
+            $query .= " AND last_updated > DATE_SUB(now(), interval $daysLimit day) ";
+        }
+
 
         if ($changesOnly) {
             $query .= ' AND (   
@@ -143,7 +143,7 @@ class PricesRepository
         }
 
         if ($this->debug) {
-            $query .= "LIMIT 10";
+            $query .= " LIMIT 10 ";
         }
         $statement = $this->conn->prepare($query);
         $statement->execute();
