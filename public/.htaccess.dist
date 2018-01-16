@@ -16,4 +16,5 @@ RewriteRule ^(.*) - [E=BASE:%1]
 RewriteRule ^(.*)$ %{ENV:BASE}/index.php [L]
 SetEnv SELLER_ENGINE_PASS Password
 SetEnv CRYSTAL_COMMERCE_PASS Password
+SetEnv TROLL_AND_TOAD_PASS Password
 SetEnv MYSQL_PASS Password

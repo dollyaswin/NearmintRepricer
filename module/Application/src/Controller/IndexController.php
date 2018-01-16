@@ -41,6 +41,7 @@ class IndexController extends AbstractActionController
             'Get Prices From Crystal Commerce' => '/get-data/get-crystal-commerce-data',
             'Get Prices From Crystal Commerce, Include OOS' => '/get-data/get-crystal-commerce-data?includeOutOfStock=true',
             'Get Prices From Sellery' => '/get-data/get-sellery-pricing',
+            'Get Buy Prices From Troll and Toad' => '/get-data/troll-buy-prices',
             'Update Prices From Database to Crystal Commerce (errors on CC side)' => '/application/update-crystal-commerce-prices',
         ];
         if (getenv('APPLICATION_ENV') == 'development') {
@@ -87,7 +88,7 @@ class IndexController extends AbstractActionController
         $this->setLogger('CrystalCommercePricesUpdateLog.txt');
 
         $pricesRepo = new PricesRepository($this->logger, $this->debug);
-        $pricesArray = $pricesRepo->getRecordsWithPriceChanges(true);
+        $pricesArray = $pricesRepo->getRecordsWithPriceChanges([],true, false, true);
 
         if ($pricesArray) {
             $this->logger->info("There are " . count($pricesArray) . " prices to be uploaded");
@@ -123,7 +124,7 @@ class IndexController extends AbstractActionController
             $pricesArray = $sellery->downloadReportAndReturnArray($jumpToExportId);
             $this->logger->info("There are " . count($pricesArray) . " prices to be updated");
         } else {
-            $pricesArray = $sellery->createArrayfromFile();
+            $pricesArray = $sellery->createArrayFromFile();
         }
 
         $pricesRepo = new PricesRepository($this->logger, $this->debug);

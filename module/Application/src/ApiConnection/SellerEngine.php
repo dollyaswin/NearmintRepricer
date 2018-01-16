@@ -114,31 +114,6 @@ class SellerEngine extends ApiConnection
         return $nextFileUrl;
     }
 
-    /*********************************
-     * Read the CSV file downloaded from Sellery and turn it into a PHP Array
-     * This is not scalable to over 1 million rows, but works for any normal number of products.
-     *
-     * @param string $fileName
-     * @return array of arrays with keys of the header row
-     ********************************/
-    public function createArrayfromFile()
-    {
-        $fileName = $this->config['localFileLocation'];
-        $headerArray = [];
-        $resultArray = [];
-        $fp = fopen($fileName, 'r');
-        while ($line = fgetcsv($fp)) {
-            if (count($headerArray) == 0) {
-                $headerArray = $line;
-            } else {
-                $resultArray[] = array_combine($headerArray, $line);
-            }
-        }
-        fclose($fp);
-        return $resultArray;
-
-    }
-
     /**************************************************
      * Wrapper function for both downloading the most recent price file
      * and loading it into an array
@@ -150,7 +125,7 @@ class SellerEngine extends ApiConnection
     {
         $priceArray = [];
         $fileName = $this->download($jumpToExportId);
-        $fileAsArray = $this->createArrayfromFile();
+        $fileAsArray = $this->createArrayFromFile();
         foreach ($fileAsArray as $priceLine) {
             if ($priceLine['Live price on Near Mint Games'] > 0) {
                 $priceArray[] = $priceLine;
