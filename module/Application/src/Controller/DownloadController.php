@@ -135,13 +135,11 @@ class DownloadController extends AbstractActionController
         if (!empty($this->dropDowns)) {
             foreach ($this->dropDowns as $column => $displayName) {
                 $setting = $this->params()->fromPost($column, '');
-                if($setting) {
+                if ($setting) {
                     $dropDownParameters[$column] = $setting;
                 }
             }
         }
-
-        $this->logger->info(print_r($dropDownParameters));
 
         // Get data from mysql
         $pricesRepo = new PricesRepository($this->logger, $this->debug);
