@@ -55,6 +55,7 @@ class IndexController extends AbstractActionController
 
         $downloads = [
             'Spreadsheet Generator' => '/download',
+            'Import Troll Product List' => '/get-data/troll-products',
             //'Download Prices All Changed prices in Last day' => '/download/prices-to-update?daysLimit=1',
             //'Download Prices With > 2% and > $0.05 changes' => '/download/prices-to-update?daysLimit=1&changesOnly=true',
             //'Download Price List for Quick Upload' => '/download/prices-to-update?quickUploadOnly=true&changesOnly=true',

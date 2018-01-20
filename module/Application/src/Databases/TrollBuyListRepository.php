@@ -4,13 +4,13 @@ namespace Application\Databases;
 
 use Application\Databases;
 
-class TrollAndToadRepository extends Databases
+class TrollBuyListRepository extends Databases
 {
 
     public function getConfig()
     {
         $parent = parent::getConfig();
-        $child = include(__DIR__ . '/../../config/Databases/troll-and-toad-repository.config.php');
+        $child = include(__DIR__ . '/../../config/Databases/troll-buy-list-repository.config.php');
         return array_merge($parent, $child);
     }
 
@@ -21,7 +21,7 @@ class TrollAndToadRepository extends Databases
      */
     public function wipeOutCurrentBuyQuantity()
     {
-        $query = "Update troll_and_toad SET troll_buy_quantity=0;";
+        $query = "Update troll_buy_list SET troll_buy_quantity=0;";
         $statement = $this->conn->prepare($query);
         $statement->execute();
     }

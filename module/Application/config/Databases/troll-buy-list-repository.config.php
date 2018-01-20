@@ -3,7 +3,7 @@
 namespace Application\Databases;
 
 return [
-    'table name' => 'troll_and_toad',
+    'table name' => 'troll_buy_list',
     'primary key' => 'record_id',
     'unique keys' => [
         'product_detail' => 'product_detail_id'

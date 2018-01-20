@@ -14,7 +14,9 @@ RewriteRule ^.*$ - [L]
 RewriteCond %{REQUEST_URI}::$1 ^(/.+)/(.*)::\2$
 RewriteRule ^(.*) - [E=BASE:%1]
 RewriteRule ^(.*)$ %{ENV:BASE}/index.php [L]
+SetEnv APPLICATION_ENV development|production
 SetEnv SELLER_ENGINE_PASS Password
 SetEnv CRYSTAL_COMMERCE_PASS Password
 SetEnv TROLL_AND_TOAD_PASS Password
 SetEnv MYSQL_PASS Password
+SetEnv IMPORT_KEY Password
