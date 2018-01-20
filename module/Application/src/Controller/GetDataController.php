@@ -63,6 +63,10 @@ class GetDataController extends AbstractActionController
         $this->logScript('Test Script Update', $message);
     }
 
+    /**
+     *  Loads the troll and toad buy list CSV download files into the database
+     *  but only for Troll's categories specified in the config file.
+     */
     public function trollBuyPricesAction()
     {
         $this->setLogger('TrollBuyPriceUpdateLog.txt');
@@ -72,6 +76,7 @@ class GetDataController extends AbstractActionController
         $skipDownload = $this->params()->fromQuery('skipDownload', false);
         $skipImport = $this->params()->fromQuery('skipImport', false);
 
+        // Get API Connection
         $troll = new TrollandToad($this->logger, $this->debug);
         if (!$skipDownload) {
             $pricesArray = $troll->getBuyListArray();
@@ -83,6 +88,7 @@ class GetDataController extends AbstractActionController
         if ($skipImport) {
             $this->logger->info("Skipping importing the CSV File.");
         } else {
+            // Get Database Connection
             $pricesRepo = new TrollAndToadRepository($this->logger, $this->debug);
 
             if ($pricesRepo->importFromArray($pricesArray)) {
@@ -90,7 +96,6 @@ class GetDataController extends AbstractActionController
             } else {
                 $message = "Failed to import CSV File.";
             }
-            $this->logger->info($message);
             $this->logScript('Troll Buy Price Update',$message);
         }
     }
@@ -98,6 +103,7 @@ class GetDataController extends AbstractActionController
 
     public function getSelleryPricingAction()
     {
+        $scriptName = 'Sellery Price Update';
 
         $this->setLogger('SelleryPricesUpdateLog.txt');
         $this->tempFileName = __DIR__ . '/../../../../logs/tempSelleryLog.txt';
@@ -126,19 +132,11 @@ class GetDataController extends AbstractActionController
 
             if ($pricesRepo->importFromArray($pricesArray)) {
                 $message = "Successfully imported CSV File.";
-                $this->logger->info($message);
-                $this->logSelleryScript($message);
             } else {
                 $message = "Failed to import CSV File.";
-                $this->logger->info($message);
-                $this->logSelleryScript($message);
             }
+            $this->logScript($scriptName, $message);
         }
-    }
-
-    protected function logSelleryScript($message)
-    {
-        $this->logScript('Sellery Price Update', $message);
     }
 
 
@@ -157,7 +155,7 @@ class GetDataController extends AbstractActionController
      ****************************************/
     public function getCrystalCommerceDataAction()
     {
-        set_time_limit(0);
+        $scriptName  = 'Crystal Commerce Price Update';
 
         $this->setLogger('CrystalCommerceGetPricesLog.txt');
         $this->tempFileName = __DIR__ . '/../../../../logs/tempCCLog.txt';
@@ -178,8 +176,7 @@ class GetDataController extends AbstractActionController
                 $this->logger->info("Successfully downloaded a CSV File.");
             } else {
                 $message = "Attempted to download a CSV File and failed.";
-                $this->logger->err($message);
-                $this->logCrystalCommerceScript($message);
+                $this->logScript($scriptName, $message);
                 return false;
             }
         }
@@ -193,23 +190,13 @@ class GetDataController extends AbstractActionController
             $pricesRepo = new CrystalCommerceRepository($this->logger, $this->debug);
             if ($pricesRepo->importFromArray($pricesArray)) {
                 $message = "Successfully imported CSV File.";
-                $this->logger->info($message);
-                $this->logCrystalCommerceScript($message);
             } else {
                 $message = "Failed to import CSV File.";
-                $this->logger->err($message);
-                $this->logCrystalCommerceScript($message);
             }
+            $this->logScript($scriptName, $message);
         }
         return true;
     }
-
-    protected function logCrystalCommerceScript($message)
-    {
-        $scriptName  = 'Crystal Commerce Price Update';
-        $this->logScript($scriptName, $message);
-    }
-
 
     protected function logScript($scriptName, $message)
     {
