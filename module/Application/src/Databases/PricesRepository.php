@@ -166,7 +166,7 @@ class PricesRepository
         $query = "SELECT $columnName as option_name, count(*) as the_count
             FROM $table 
             GROUP BY $columnName
-            ORDER BY the_count DESC;";
+            ORDER BY $columnName;";
         $statement = $this->conn->prepare($query);
         $statement->execute();
         $result = $statement->fetchAll(\PDO::FETCH_ASSOC);

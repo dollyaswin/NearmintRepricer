@@ -91,6 +91,9 @@ class GetDataController extends AbstractActionController
             // Get Database Connection
             $pricesRepo = new TrollAndToadRepository($this->logger, $this->debug);
 
+            // This is important, because not every product will be listed on the buy list at all times.
+            $pricesRepo->wipeOutCurrentBuyQuantity();
+
             if ($pricesRepo->importFromArray($pricesArray)) {
                 $message = "Successfully imported CSV File.";
             } else {
