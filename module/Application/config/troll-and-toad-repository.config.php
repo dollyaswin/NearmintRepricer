@@ -40,7 +40,7 @@ return [
         ],
         'troll_category' => [
             'definition' => 'varchar(255) DEFAULT NULL',
-            'mapping' => '',
+            'mapping' => 'Category',
         ],
         'date_created' => [
             'definition' => 'datetime DEFAULT CURRENT_TIMESTAMP',
