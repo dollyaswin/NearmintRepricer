@@ -229,10 +229,11 @@ abstract class Databases
                 }
                 return 0;
             case 'decimal':
-                return trim ($value,'$');
+                $charsToStrip = [ ',', '$'];
+                return str_replace($charsToStrip,'',$value);
             case 'varchar':
-                if ($mysqlInfoArray['CHARACTER_MAXIMUM_LENGTH'] < strlen($value)) {
-                    return substr($value, $mysqlInfoArray['CHARACTER_MAXIMUM_LENGTH']);
+                if ($mysqlInfoArray['CHARACTER_MAXIMUM_LENGTH'] <= strlen($value)) {
+                    return substr($value,0, $mysqlInfoArray['CHARACTER_MAXIMUM_LENGTH']-1);
                 }
                 return $value;
             default:
