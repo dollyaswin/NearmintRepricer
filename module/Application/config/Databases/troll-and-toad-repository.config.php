@@ -31,7 +31,7 @@ return [
             'mapping' => 'Condition',
         ],
         'troll_buy_price' => [
-            'definition' => 'decimal(9,8) DEFAULT NULL',
+            'definition' => 'decimal(11,4) DEFAULT NULL',
             'mapping' => 'Buy Price',
         ],
         'troll_buy_quantity' => [

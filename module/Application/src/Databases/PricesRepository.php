@@ -35,7 +35,7 @@ class PricesRepository
 
     public function getConfig()
     {
-        return include(__DIR__ . '/../../config/prices-repository.config.php');
+        return include(__DIR__ . '/../../config/Databases/prices-repository.config.php');
     }
 
     public function setConfig()

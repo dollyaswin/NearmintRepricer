@@ -79,5 +79,10 @@ class TrollandToad extends ApiConnection
          return $buyListsArray;
      }
 
+     public function getProductImportArray()
+     {
+         
+     }
+
 
 }

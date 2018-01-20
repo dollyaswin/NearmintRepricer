@@ -23,6 +23,7 @@ use Application\Databases\PricesRepository;
 use Application\Databases\RunTimeRepository;
 use Application\Databases\SellerEngineRepository;
 use Application\Databases\TrollAndToadRepository;
+use Application\Databases\TrollProductRepository;
 use Application\Factory\LoggerFactory;
 use Zend\Mvc\Controller\AbstractActionController;
 use Zend\View\Model\ViewModel;
@@ -93,6 +94,43 @@ class GetDataController extends AbstractActionController
 
             // This is important, because not every product will be listed on the buy list at all times.
             $pricesRepo->wipeOutCurrentBuyQuantity();
+
+            if ($pricesRepo->importFromArray($pricesArray)) {
+                $message = "Successfully imported CSV File.";
+            } else {
+                $message = "Failed to import CSV File.";
+            }
+            $this->logScript('Troll Buy Price Update',$message);
+        }
+    }
+
+    /**
+     *  Loads the troll and toad buy list CSV download files into the database
+     *  but only for Troll's categories specified in the config file.
+     */
+    public function trollProductsAction()
+    {
+        $this->setLogger('TrollProductsUpdateLog.txt');
+        $this->tempFileName = __DIR__ . '/../../../../logs/tempTrollProductLog.txt';
+        $this->addTempLogger($this->tempFileName);
+
+        $skipDownload = $this->params()->fromQuery('skipDownload', false);
+        $skipImport = $this->params()->fromQuery('skipImport', false);
+
+        // Get API Connection
+        $troll = new TrollandToad($this->logger, $this->debug);
+        if (!$skipDownload) {
+            $pricesArray = $troll->getBuyListArray();
+            $this->logger->info("There are " . count($pricesArray) . " prices to be updated");
+        } else {
+            $pricesArray = $troll->createArrayfromFile();
+        }
+
+        if ($skipImport) {
+            $this->logger->info("Skipping importing the CSV File.");
+        } else {
+            // Get Database Connection
+            $pricesRepo = new TrollProductRepository($this->logger, $this->debug);
 
             if ($pricesRepo->importFromArray($pricesArray)) {
                 $message = "Successfully imported CSV File.";
