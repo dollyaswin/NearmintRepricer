@@ -22,7 +22,8 @@ use Application\Databases\CrystalCommerceRepository;
 use Application\Databases\PricesRepository;
 use Application\Databases\RunTimeRepository;
 use Application\Databases\SellerEngineRepository;
-use Application\Databases\TrollAndToadRepository;
+use Application\Databases\TrollBuyListRepository;
+use Application\Databases\TrollProductRepository;
 use Application\Factory\LoggerFactory;
 use Zend\Mvc\Controller\AbstractActionController;
 use Zend\View\Model\ViewModel;
@@ -89,7 +90,7 @@ class GetDataController extends AbstractActionController
             $this->logger->info("Skipping importing the CSV File.");
         } else {
             // Get Database Connection
-            $pricesRepo = new TrollAndToadRepository($this->logger, $this->debug);
+            $pricesRepo = new TrollBuyListRepository($this->logger, $this->debug);
 
             // This is important, because not every product will be listed on the buy list at all times.
             $pricesRepo->wipeOutCurrentBuyQuantity();
@@ -100,6 +101,54 @@ class GetDataController extends AbstractActionController
                 $message = "Failed to import CSV File.";
             }
             $this->logScript('Troll Buy Price Update',$message);
+        }
+    }
+
+    /**
+     *  Loads the troll and toad buy list CSV download files into the database
+     *  but only for Troll's categories specified in the config file.
+     */
+    public function trollProductsAction()
+    {
+        $scriptName = 'Troll Product Import';
+
+        if (!$this->getRequest()->isPost()) {
+            return new ViewModel();
+        } else {
+
+            $this->setLogger('TrollProductsUpdateLog.txt');
+            $this->tempFileName = __DIR__ . '/../../../../logs/tempTrollProductLog.txt';
+            $this->addTempLogger($this->tempFileName);
+
+            $key = $this->params()->fromPost('key', false);
+            if ($key != getenv('IMPORT_KEY')) {
+                $message = "Bad Key. Import not Accepted. $key ";
+                $this->logScript($scriptName, $message);
+                return new ViewModel(['message' => $message]);
+            }
+
+            $destPath = __DIR__ . '/../../../../data/mostRecentUploadTrollProducts.csv';
+            $result = move_uploaded_file($_FILES['myfile']['tmp_name'], $destPath);
+            if(!$result) {
+                $message = 'Uploaded file would not save to disk';
+                $this->logScript($scriptName, $message);
+                return new ViewModel(['message' => $message]);
+            }
+
+            // Get API Connection just to parse the file.
+            $troll = new TrollandToad($this->logger, $this->debug);
+            $pricesArray = $troll->createArrayfromFile($destPath);
+
+            // Get Database Connection
+            $pricesRepo = new TrollProductRepository($this->logger, $this->debug);
+
+            if ($pricesRepo->importFromArray($pricesArray)) {
+                $message = "Successfully imported CSV File.";
+            } else {
+                $message = "Failed to import CSV File.";
+            }
+            $this->logScript($scriptName, $message);
+            return new ViewModel(['message' => $message]);
         }
     }
 

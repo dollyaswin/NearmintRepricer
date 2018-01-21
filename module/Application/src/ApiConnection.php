@@ -266,9 +266,11 @@ abstract class ApiConnection
      *
      * @return array of arrays with keys of the header row
      ********************************/
-    public function createArrayFromFile()
+    public function createArrayFromFile($fileName = '')
     {
-        $fileName = $this->config['localFileLocation'];
+        if (empty($fileName)) {
+            $fileName = $this->config['localFileLocation'];
+        }
         $headerArray = [];
         $resultArray = [];
         $fp = fopen($fileName, 'r');

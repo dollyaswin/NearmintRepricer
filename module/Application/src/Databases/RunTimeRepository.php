@@ -10,7 +10,7 @@ class RunTimeRepository extends Databases
     public function getConfig()
     {
         $parent = parent::getConfig();
-        $child = include(__DIR__ . '/../../config/run-time-repository.config.php');
+        $child = include(__DIR__ . '/../../config/Databases/run-time-repository.config.php');
         return array_merge($parent, $child);
     }
 

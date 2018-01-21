@@ -9,7 +9,7 @@ class RepricerSettingsRepository extends Databases
     public function getConfig()
     {
         $parent = parent::getConfig();
-        $child = include(__DIR__ . '/../../config/repricer-settings-repository.config.php');
+        $child = include(__DIR__ . '/../../config/Databases/repricer-settings-repository.config.php');
         return array_merge($parent, $child);
     }
 

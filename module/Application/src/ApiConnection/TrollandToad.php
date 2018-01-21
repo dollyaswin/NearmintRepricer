@@ -79,5 +79,4 @@ class TrollandToad extends ApiConnection
          return $buyListsArray;
      }
 
-
 }

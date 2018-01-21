@@ -1,0 +1,15 @@
+<div>
+    <?php
+    if (isset($message)) {
+        print $message;
+    }
+    ?>
+</div>
+<br>
+<br>
+<form method="POST"  enctype="multipart/form-data" action="">
+
+    Pick a File : <input type="file" name="myfile"> <br>
+    Key : <input type="password" name="key"> <br>
+    <input type="submit" name="Submit">
+</form>
