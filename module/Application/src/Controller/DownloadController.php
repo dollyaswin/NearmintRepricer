@@ -36,8 +36,8 @@ class DownloadController extends AbstractActionController
 
     public function __construct()
     {
+        set_time_limit(0);
         $this->debug = $this->params()->fromQuery('debug', false);
-
         $this->setConfig();
         $this->logger = LoggerFactory::createLogger('downloadLog.txt', false, $this->debug);
 
@@ -47,13 +47,15 @@ class DownloadController extends AbstractActionController
         'crystal_commerce^category_name' => 'Category Name',
     ];
 
+    protected $checkBoxes = [
+        'quickUploadOnly' => 'Create Fields For Upload Only',
+        'changesOnly' => 'Show only prices which are > 2% and > $0.05 different',
+        'trollBuyInfo' => 'Show Troll and Toad Buy Price Info if available',
+        'trollBuyRestrict' => 'Require Troll and Toad Buy Price Info',
+    ];
 
     public function indexAction()
     {
-        $checkboxes = [
-            'quickUploadOnly' => 'Create Fields For Upload Only',
-            'changesOnly' => 'Show only prices which are > 2% and > $0.05 different',
-        ];
 
         $searchBoxes = [
             'daysLimit' => 'Updated in last Number of Days',
@@ -63,8 +65,10 @@ class DownloadController extends AbstractActionController
             $dropDowns = $this->buildDropDowns($this->dropDowns);
         }
 
-        if (!empty($checkboxes)) {
-            $checkboxes = $this->buildCheckBoxes($checkboxes);
+        if (!empty($this->checkBoxes)) {
+            $checkboxes = $this->buildCheckBoxes($this->checkBoxes);
+        } else {
+            $checkboxes =[];
         }
 
         $variables = [
@@ -125,9 +129,17 @@ class DownloadController extends AbstractActionController
             $this->redirect()->toUrl('/download');
         }
 
-        $quickUploadOnly = $this->params()->fromPost('quickUploadOnly', false);
         $daysLimit = $this->params()->fromPost('daysLimit', false);
-        $changesOnly = $this->params()->fromPost('changesOnly', false);
+
+        $checkBoxParameters = [];
+        if (!empty($this->checkBoxes)) {
+            foreach ($this->checkBoxes as $column => $displayName) {
+                $setting = $this->params()->fromPost($column, '');
+                if ($setting) {
+                    $checkBoxParameters[$column] = $setting;
+                }
+            }
+        }
 
         $dropDownParameters = [];
         // Filtering here, only drop downs from the list will be processed,
@@ -143,7 +155,7 @@ class DownloadController extends AbstractActionController
 
         // Get data from mysql
         $pricesRepo = new PricesRepository($this->logger, $this->debug);
-        $pricesArray = $pricesRepo->getRecordsWithPriceChanges($dropDownParameters, $quickUploadOnly, $daysLimit, $changesOnly);
+        $pricesArray = $pricesRepo->getRecords($dropDownParameters, $checkBoxParameters, $daysLimit);
 
         $downloadPath = $this->config['tempDownloadName'];
         $downloadPath = str_replace(['\\','/'],DIRECTORY_SEPARATOR, $downloadPath);

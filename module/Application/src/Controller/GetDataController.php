@@ -130,7 +130,7 @@ class GetDataController extends AbstractActionController
             $destPath = __DIR__ . '/../../../../data/mostRecentUploadTrollProducts.csv';
             $result = move_uploaded_file($_FILES['myfile']['tmp_name'], $destPath);
             if(!$result) {
-                $message = 'Uploaded file would not save to disk' . print_r($_FILES, true);
+                $message = 'Uploaded file would not save to disk';
                 $this->logScript($scriptName, $message);
                 return new ViewModel(['message' => $message]);
             }

@@ -83,10 +83,10 @@ class PricesRepository
      *
      * @return array|bool false on failure, an associative array on success
      *********************************************/
-    public function getRecordsWithPriceChanges($dropDownParameters, $quickUploadOnly, $daysLimit, $changesOnly)
+    public function getRecords($dropDownParameters, $checkBoxParameters, $daysLimit)
     {
         $selectClause = "SELECT * ";
-        if ($quickUploadOnly) {
+        if (!empty($checkBoxParameters['quickUploadOnly'])) {
             $selectClause = "SELECT product_name as 'Product Name', 
                 category_name as 'Category' ";
         }
@@ -112,9 +112,22 @@ class PricesRepository
         )  as 'Sell Price'";
 
 
+        // Currently these two are in order, so the second will overwrite the first.  If the extra joins section
+        // becomes more complicated, you need to ensure buyPrice restrict overrides Buy Info
+        $extraJoins = '';
+        if (!empty($checkBoxParameters['trollBuyInfo'] )) {
+            $extraJoins = "LEFT JOIN troll_products as TP on (CC.asin=TP.asin)
+                            LEFT JOIN troll_buy_list as BL ON (TP.product_detail_id=BL.product_detail_id) ";
+        }
+        if (!empty($checkBoxParameters['trollBuyRestrict'] )) {
+            $extraJoins = "INNER JOIN troll_products as TP on (CC.asin=TP.asin)
+                            INNER JOIN troll_buy_list as BL ON (TP.product_detail_id=BL.product_detail_id) ";
+        }
+
         $query = "$selectClause
             FROM crystal_commerce as CC 
             INNER JOIN sellery as SE on (SE.asin=CC.asin)
+            $extraJoins
             WHERE (SE.amazon_avg_new_price IS NOT NULL OR SE.sellery_sell_price IS NOT NULL) 
             AND CC.product_name is NOT NULL
         ";
@@ -125,7 +138,7 @@ class PricesRepository
         }
 
 
-        if ($changesOnly) {
+        if (!empty($checkBoxParameters['changesOnly'])) {
             $query .= ' AND (   
                 (ABS(CC.cc_sell_price - SE.sellery_sell_price) > CC.cc_sell_price*0.02
                 AND ABS(CC.cc_sell_price - SE.sellery_sell_price) > 0.05)
@@ -138,19 +151,26 @@ class PricesRepository
             foreach ($dropDownParameters as $tableAndColumn => $value) {
                 list($table, $column) = explode('^', $tableAndColumn);
                 $tableAlias = $this->tableAliasMapping[$table];
-                $query .= " AND $tableAlias.$column = '$value' ";
+                $query .= " AND $tableAlias.$column = :{$table}_{$column} ";
             }
         }
 
         if ($this->debug) {
             $query .= " LIMIT 10 ";
         }
+
         $statement = $this->conn->prepare($query);
+
+        if (!empty($dropDownParameters)) {
+            foreach ($dropDownParameters as $tableAndColumn => $value) {
+                list($table, $column) = explode('^', $tableAndColumn);
+                $statement->bindValue(":{$table}_{$column}", $value);
+            }
+        }
+
         $statement->execute();
         $result = $statement->fetchAll(\PDO::FETCH_ASSOC);
         $this->logger->info("The query : $query");
-
-        $this->logger->info($query);
 
         if (count($result) == 0) {
             $this->logger->info("No prices to update" );
