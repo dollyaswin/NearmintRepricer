@@ -48,6 +48,10 @@ class DownloadController extends AbstractActionController
     ];
 
     protected $checkBoxes = [
+        'selleryData' => [
+            'label' => 'Require Sellery Data',
+            'checked' => true,
+        ],
         'quickUploadOnly' => 'Create Fields For Upload Only',
         'changesOnly' => 'Show only prices which are > 2% and > $0.05 different',
         'trollBuyInfo' => 'Show Troll and Toad Buy Price Info if available',
@@ -85,7 +89,12 @@ class DownloadController extends AbstractActionController
     {
         $outputArray = [];
         foreach ($checkboxes as $parameterName => $displayName) {
-            $outputArray[]  = "<input type='checkbox' name='$parameterName' value='true'> - $displayName ";
+            $checked = '';
+            if (is_array($displayName)) {
+                $checked = $displayName['checked'] ? 'checked' : '';
+                $displayName = $displayName['label'];
+            }
+            $outputArray[]  = "<input type='checkbox' name='$parameterName' value='true' $checked> - $displayName ";
         }
         return $outputArray;
     }
