@@ -87,65 +87,78 @@ class PricesRepository
     {
         $selectClause = "SELECT * ";
         if (!empty($checkBoxParameters['quickUploadOnly'])) {
-            $selectClause = "SELECT product_name as 'Product Name', 
-                category_name as 'Category' ";
+            $selectClause = "SELECT CC.product_name as 'Product Name', 
+                CC.category_name as 'Category' ";
         }
 
-        /**********************************************************
-         * This is the heart of the repricing calculation. The logic for what price is uploaded to CC
-         * is determined in this clause of the query.  Replace or modify here and update the below comment
-         *
-         * Use the sell_price first if available, this comes from 'Live price on Near Mint Games' from sellery
-         * if it is not available, average the follow three prices together
-         * amazon_avg_new_price, amazon_lowest_new_price, amazon_buy_box_price
-         * In MySQL if one is NULL then the result would be null, COALESCE is used
-         *     But because that could throw off the number of prices that exist, the amount you divide by must be adjusted.
-         *     So normally you would add three values and divide by three. Instead count up how much to divide by.
-         **********************************************************/
-        $selectClause .= ",
-        format(
-            COALESCE(SE.sellery_sell_price, 
-                (COALESCE(SE.amazon_avg_new_price, 0) + COALESCE(SE.amazon_lowest_new_price, 0) + COALESCE(SE.amazon_buy_box_price, 0) ) /
-                    (1 + CASE WHEN SE.amazon_lowest_new_price IS NOT NULL THEN 1 ELSE 0 END +
-                    CASE WHEN SE.amazon_buy_box_price IS NOT NULL THEN 1 ELSE 0 END )
-            ), 2
-        )  as 'Sell Price'";
+
 
 
         // Currently these two are in order, so the second will overwrite the first.  If the extra joins section
         // becomes more complicated, you need to ensure buyPrice restrict overrides Buy Info
-        $extraJoins = '';
+        $trollBuyPriceWhere = '';
         if (!empty($checkBoxParameters['trollBuyInfo'] )) {
-            $extraJoins = "LEFT JOIN troll_products as TP on (CC.asin=TP.asin)
-                            LEFT JOIN troll_buy_list as BL ON (TP.product_detail_id=BL.product_detail_id) ";
+            $trollBuyPriceJoin = "LEFT JOIN troll_products as TP on (CC.asin=TP.asin)
+                                LEFT JOIN troll_buy_list as BL ON (TP.product_detail_id=BL.product_detail_id) ";
+            if (!empty($checkBoxParameters['trollBuyRestrict'] )) {
+                $trollBuyPriceWhere = "AND BL.product_detail_id IS NOT NULL";
+            }
+        } else {
+            $trollBuyPriceJoin = '';
         }
-        if (!empty($checkBoxParameters['trollBuyRestrict'] )) {
-            $extraJoins = "INNER JOIN troll_products as TP on (CC.asin=TP.asin)
-                            INNER JOIN troll_buy_list as BL ON (TP.product_detail_id=BL.product_detail_id) ";
+
+
+        if (!empty($checkBoxParameters['selleryData'] )) {
+            $selleryJoin = 'INNER JOIN sellery as SE on (SE.asin=CC.asin)';
+            $selleryWhere = 'AND (SE.amazon_avg_new_price IS NOT NULL OR SE.sellery_sell_price IS NOT NULL)';
+
+            if (!empty($checkBoxParameters['changesOnly'])) {
+                $selleryWhere .= ' AND (   
+                    (ABS(CC.cc_sell_price - SE.sellery_sell_price) > CC.cc_sell_price*0.02
+                    AND ABS(CC.cc_sell_price - SE.sellery_sell_price) > 0.05)
+                 OR 
+                     SE.sellery_sell_price IS NULL    
+                     ) ';
+            }
+            if ($daysLimit) {
+                $daysLimit = intval($daysLimit);  // prevent SQL injection
+                $selleryWhere .= " AND SE.last_updated > DATE_SUB(now(), interval $daysLimit day) ";
+            }
+
+            /**********************************************************
+             * This is the heart of the repricing calculation. The logic for what price is uploaded to CC
+             * is determined in this clause of the query.  Replace or modify here and update the below comment
+             *
+             * Use the sell_price first if available, this comes from 'Live price on Near Mint Games' from sellery
+             * if it is not available, average the follow three prices together
+             * amazon_avg_new_price, amazon_lowest_new_price, amazon_buy_box_price
+             * In MySQL if one is NULL then the result would be null, COALESCE is used
+             *     But because that could throw off the number of prices that exist, the amount you divide by must be adjusted.
+             *     So normally you would add three values and divide by three. Instead count up how much to divide by.
+             **********************************************************/
+            $selectClause .= ",
+                format(
+                    COALESCE(SE.sellery_sell_price, 
+                        (COALESCE(SE.amazon_avg_new_price, 0) + COALESCE(SE.amazon_lowest_new_price, 0) + COALESCE(SE.amazon_buy_box_price, 0) ) /
+                            (1 + CASE WHEN SE.amazon_lowest_new_price IS NOT NULL THEN 1 ELSE 0 END +
+                            CASE WHEN SE.amazon_buy_box_price IS NOT NULL THEN 1 ELSE 0 END )
+                    ), 2
+                )  as 'Sell Price'";
+
+        } else {
+            $selleryWhere = '';
+            $selleryJoin = '';
         }
+
 
         $query = "$selectClause
             FROM crystal_commerce as CC 
-            INNER JOIN sellery as SE on (SE.asin=CC.asin)
-            $extraJoins
-            WHERE (SE.amazon_avg_new_price IS NOT NULL OR SE.sellery_sell_price IS NOT NULL) 
-            AND CC.product_name is NOT NULL
+            $selleryJoin
+            $trollBuyPriceJoin
+            WHERE CC.product_name is NOT NULL 
+            $selleryWhere
+            $trollBuyPriceWhere
         ";
-
-        if ($daysLimit) {
-            $daysLimit = intval($daysLimit);  // prevent SQL injection
-            $query .= " AND last_updated > DATE_SUB(now(), interval $daysLimit day) ";
-        }
-
-
-        if (!empty($checkBoxParameters['changesOnly'])) {
-            $query .= ' AND (   
-                (ABS(CC.cc_sell_price - SE.sellery_sell_price) > CC.cc_sell_price*0.02
-                AND ABS(CC.cc_sell_price - SE.sellery_sell_price) > 0.05)
-             OR 
-                 SE.sellery_sell_price IS NULL    
-                 ) ';
-        }
 
         if (!empty($dropDownParameters)) {
             foreach ($dropDownParameters as $tableAndColumn => $value) {
