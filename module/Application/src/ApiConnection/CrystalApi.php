@@ -28,32 +28,70 @@ class CrystalApi extends ApiConnection
     public function setConfig()
     {
         $this->config = $this->getConfig();
+        $this->config['uid'] = getenv('CRYSTAL_COMMERCE_UID');
     }
 
-    public function __construct($logger, $debug)
+    public function __construct(Logger $logger, $debug)
     {
         $this->logger = $logger;
         $this->debug = $debug;
 
         $this->setConfig();
-        if ($this->setAuthorizeVariables()) {
-            $apiResult = $this->authorize();
-            $result = json_decode($apiResult,true);
-            if (isset($result['token']['token'])) {
-                $this->token = $result['token']['token'];
-            } else {
-                throw new \Exception("Unable to connect to Crystal API. Token not set in response." . $apiResult);
-            }
+
+        $this->authorizePostVariables = [ 'uid' => $this->config['uid'] ];
+
+        $this->logger->info(print_r($this->authorizePostVariables, true));
+        $this->logger->info($this->config['authorizeUrl']);
+
+        $body = $this->authorize();
+        $this->logger->info($body . " Header : " . $this->headers);
+        exit();
+
+    }
+/*
+    protected function authorize()
+    {
+        $data["uid"] = $this->config['uid'];
+        $apiResult = $this->crystalTransmit($this->config['authorizeUrl'], $data, 'POST');
+        $result = json_decode($apiResult,true);
+        if (isset($result['token']['token'])) {
+            $this->token = $result['token']['token'];
+            return true;
         }
+        $this->logger->err($apiResult);
+        exit();
+        return false;
+    }
+*/
+
+    protected function crystalTransmit($url, $data = [], $method = 'PUT')
+    {
+        if ($this->token) {
+            $data["access_token"] = $this->token;
+        }
+        $options = [
+            'http' => [
+                'header'  => [
+                    'Referer: http://localhost:4200',
+                    'User-Agent: php script'
+                ],
+                'method'  => $method,
+                'content' => http_build_query($data),
+            ]
+        ];
+        $context  = stream_context_create($options);
+        $result = file_get_contents($url, false, $context);
+        return $result;
     }
 
-    protected function setAuthorizeVariables()
+    public function getManagedInventories()
     {
-        $this->authorizePostVariables = [
-            'uid' => $this->config['uid'],
-        ];
-        return true;
+        $url = 'https://crystal-api.crystalcommerce.com/api/managed_inventories';
+        $result = $this->transmit($url, [], 'GET');
+        return $result;
     }
+
+
 
 
 }

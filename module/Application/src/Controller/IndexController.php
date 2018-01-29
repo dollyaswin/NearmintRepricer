@@ -45,6 +45,7 @@ class IndexController extends AbstractActionController
             'Update Prices From Database to Crystal Commerce (errors on CC side)' => '/application/update-crystal-commerce-prices',
         ];
         if (getenv('APPLICATION_ENV') == 'development') {
+            $scripts['Crystal Commerce Data'] = '/get-data/get-crystal-ids?inBrowser=true&debug=true';
             $scripts['Download Crystal Commerce Prices Skip Import'] = '/get-data/get-crystal-commerce-data?skipImport=true&inBrowser=true&debug=true';
             $scripts['Download Crystal Commerce Prices Skip Import Include OOS'] = '/get-data/get-crystal-commerce-data?skipImport=true&includeOutOfStock=true&inBrowser=true&debug=true';
             $scripts['Load Crystal Commerce Prices From Local File'] = '/get-data/get-crystal-commerce-data?skipDownload=true&inBrowser=true&debug=true';

@@ -15,6 +15,7 @@
 
 namespace Application\Controller;
 
+use Application\ApiConnection\CrystalApi;
 use Application\ApiConnection\CrystalCommerce;
 use Application\ApiConnection\SellerEngine;
 use Application\ApiConnection\TrollandToad;
@@ -249,6 +250,16 @@ class GetDataController extends AbstractActionController
         }
         return true;
     }
+
+    public function getCrystalIdsAction(){
+        $this->setLogger('CrystalCommerceGetDataLog.txt');
+        $crystalApi = new CrystalApi($this->logger,$this->debug);
+        $result = $crystalApi->getManagedInventories();
+        $this->logger->info($result);
+        return true;
+    }
+
+
 
     protected function logScript($scriptName, $message)
     {
