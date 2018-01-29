@@ -37,6 +37,7 @@ class DownloadController extends AbstractActionController
     public function __construct()
     {
         set_time_limit(0);
+        ini_set('memory_limit','2048M');
         $this->debug = $this->params()->fromQuery('debug', false);
         $this->setConfig();
         $this->logger = LoggerFactory::createLogger('downloadLog.txt', false, $this->debug);
@@ -189,6 +190,59 @@ class DownloadController extends AbstractActionController
         }
     }
 
+
+    public function unmatchedTrollProductsAction()
+    {
+         // Get data from mysql
+        $pricesRepo = new PricesRepository($this->logger, $this->debug);
+        $records = $pricesRepo->getUnmatchedTrollPrices();
+
+        $downloadPath = $this->config['tempDownloadName'];
+        $downloadPath = str_replace(['\\','/'],DIRECTORY_SEPARATOR, $downloadPath);
+
+        $this->logger->debug("Download Path $downloadPath");
+        if (file_exists($downloadPath)) {
+            unlink($downloadPath);
+        }
+
+        if ($records) {
+            $this->logger->debug( "Prices array exists");
+            $this->createFileForImport($records, $downloadPath);
+            // Read data into string
+            $csvString = file_get_contents($downloadPath);
+            // send data to browser with a filename.
+            $timestamp = date('Y-m-d-His');
+            return $this->returnFileFromString('unmatchedTrollProducts' . $timestamp . '.csv', $csvString);
+        } else {
+            print "There are no records with bad ASINs.";
+            return new ViewModel();
+        }
+
+
+    }
+
+
+    /**********************
+     * Creates a CSV file from an array
+     * using the keys as headers.
+     *
+     * @param array $dataArray array of records, which are arrays with keys that match Crystal Commerce Column Names.
+     * @param string $filePath optional file name to avoid using the default.
+     **********************************/
+    public function createFileForImport($dataArray, $filePath)
+    {
+        // This string replace handles testing on windows but running on linux
+        $filePath = str_replace(['\\','/'],DIRECTORY_SEPARATOR, $filePath);
+        if (file_exists($filePath)) {
+            unlink($filePath);
+        }
+        $fp = fopen($filePath, 'w');
+        fputcsv($fp, array_keys(array_values($dataArray)[0])); // write headers
+        foreach ($dataArray as $record) {
+            fputcsv($fp, $record);
+        }
+        fclose($fp);
+    }
 
 
     /**

@@ -31,7 +31,7 @@ class IndexController extends AbstractActionController
 
     public function __construct()
     {
-        ini_set('memory_limit','1024M');
+        ini_set('memory_limit','2048M');
         $this->logger = LoggerFactory::createLogger('updateLog.txt', false, $this->debug);
     }
 
@@ -56,7 +56,7 @@ class IndexController extends AbstractActionController
         $downloads = [
             'Spreadsheet Generator' => '/download',
             'Import Troll Product List' => '/get-data/troll-products',
-            //'Download Prices All Changed prices in Last day' => '/download/prices-to-update?daysLimit=1',
+            'Download Unmatched Troll Products' => '/download/unmatched-troll-products',
             //'Download Prices With > 2% and > $0.05 changes' => '/download/prices-to-update?daysLimit=1&changesOnly=true',
             //'Download Price List for Quick Upload' => '/download/prices-to-update?quickUploadOnly=true&changesOnly=true',
         ];
