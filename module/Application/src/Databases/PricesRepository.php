@@ -244,6 +244,26 @@ class PricesRepository
         return $dataString;
     }
 
+    public function getUnmatchedTrollPrices()
+    {
+        $query = "SELECT TP.product_detail_id, TP.troll_set, TP.troll_product_name, TP.asin, BL.troll_category, BL.troll_buy_price
+            FROM troll_products as TP
+            LEFT JOIN troll_buy_list as BL on (BL.product_detail_id=TP.product_detail_id)
+            LEFT JOIN crystal_commerce as CC  on (CC.asin=TP.asin)
+            WHERE CC.asin IS NULL
+            AND (TP.asin != 'FAILED' OR TP.asin IS NULL);";
+        $statement = $this->conn->prepare($query);
+        $statement->execute();
+        $result = $statement->fetchAll(\PDO::FETCH_ASSOC);
+        if (count($result) == 0) {
+            $this->logger->info("No records to display" );
+            return false;
+        }
+        return $result;
+
+    }
+
+
 
 
 }
