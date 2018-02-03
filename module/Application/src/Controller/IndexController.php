@@ -15,6 +15,7 @@
 
 namespace Application\Controller;
 
+use Application\ApiConnection\CrystalApi;
 use Application\ApiConnection\CrystalCommerce;
 use Application\ApiConnection\SellerEngine;
 use Application\Databases\PricesRepository;
@@ -80,7 +81,7 @@ class IndexController extends AbstractActionController
 
     public function testAction()
     {
-
+        $crystalApi = new CrystalApi($this->logger, $this->debug);
     }
 
 
@@ -109,93 +110,6 @@ class IndexController extends AbstractActionController
             $this->logger->info("There are no prices which need to be updated");
         }
 
-    }
-
-    public function getSelleryPricingAction()
-    {
-        set_time_limit(0);
-
-        $this->setLogger('SelleryPricesUpdateLog.txt');
-
-        $skipDownload = $this->params()->fromQuery('skipDownload', false);
-
-        $jumpToExportId = $this->params()->fromQuery('jumpToExportId', false);
-
-        $sellery = new SellerEngine($this->logger, $this->debug);
-
-        // The downloader always saves to the same location.  You can skip the download
-        // while testing, or if you just made a download.
-        if (!$skipDownload) {
-            $pricesArray = $sellery->downloadReportAndReturnArray($jumpToExportId);
-            $this->logger->info("There are " . count($pricesArray) . " prices to be updated");
-        } else {
-            $pricesArray = $sellery->createArrayFromFile();
-        }
-
-        $pricesRepo = new PricesRepository($this->logger, $this->debug);
-        if($pricesRepo->importPricesFromSellery($pricesArray)) {
-            $this->logger->info("Successfully imported CSV File.");
-        } else {
-            $this->logger->info("Failed to import CSV File.");
-        }
-    }
-
-    /******************************************
-     * Request a new data download from Crystal Commerce
-     * Wait for the download to be ready.
-     * Download it into a temporary file.
-     *
-     * Load that temporary file into an array.
-     * Load that array into the database using the mapping in the config file.
-     * Currently that means everything but sale price (which comes from Sellery
-     *
-     * Note: This method uses a LOT of RAM as the file gets bigger
-     * However, if you try to use mysql command LOAD DATA INFILE to import directly
-     * you are open to errors from the product descriptions.
-     ****************************************/
-    public function getCrystalCommerceDataAction()
-    {
-        set_time_limit(0);
-
-        $this->setLogger('CrystalCommerceGetPricesLog.txt');
-
-        $skipDownload = $this->params()->fromQuery('skipDownload', false);
-        $includeOutOfStock = $this->params()->fromQuery('includeOutOfStock', false);
-        $skipImport = $this->params()->fromQuery('skipImport', false);
-
-        if ($includeOutOfStock) {
-            $this->logger->info("Downloading All records, including Out of Stock");
-        }
-
-        $crystal = new CrystalCommerce($this->logger, $this->debug);
-        if (!$skipDownload) {
-            $csvFile = $crystal->downloadCsv($includeOutOfStock);
-            if ($csvFile) {
-                $this->logger->info("Successfully downloaded a CSV File.");
-            } else {
-                $this->logger->err("Attempted to download a CSV File and failed.");
-                print("</pre>");
-                return false;
-            }
-        }
-
-        $pricesArray = $crystal->getMostRecentCsvAsArray();
-        $this->logger->info("There are " . count($pricesArray) . " prices to be updated");
-
-        if ($skipImport) {
-            $this->logger->info("Skipping importing the CSV File.");
-        } else {
-
-            $pricesRepo = new PricesRepository($this->logger, $this->debug);
-            if ($pricesRepo->importPricesFromCC($pricesArray)) {
-                $this->logger->info("Successfully imported CSV File.");
-            } else {
-                $this->logger->info("Failed to import CSV File.");
-            }
-        }
-
-        print("</pre>");
-        return true;
     }
 
 
