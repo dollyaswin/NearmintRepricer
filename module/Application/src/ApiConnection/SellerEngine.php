@@ -90,7 +90,7 @@ class SellerEngine extends ApiConnection
             $downloadNumber = 50;
         }
         // move ahead a few numbers then work backwards
-        $downloadNumber += 50;
+        $downloadNumber += 5;
         $highestDownload = false;
 
         do {
