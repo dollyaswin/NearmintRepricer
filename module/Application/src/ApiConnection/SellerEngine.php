@@ -65,11 +65,7 @@ class SellerEngine extends ApiConnection
 
         $remoteUrl = $this->findNextFile($jumpToExportId);
         $this->downloadToFile($remoteUrl, $this->config['localFileLocation']);
-        // Todo Need to decide if we should keep historic files or not.
-        //$newFileName = dirname($this->config['localFileLocation']) . '/download' . date('Y-m-d.H.i.s') . '.csv';
-        //copy ($this->config['localFileLocation'],  $newFileName);
         return($this->config['localFileLocation']);
-
     }
 
     /*****************************************************
@@ -127,9 +123,7 @@ class SellerEngine extends ApiConnection
         $fileName = $this->download($jumpToExportId);
         $fileAsArray = $this->createArrayFromFile();
         foreach ($fileAsArray as $priceLine) {
-            if ($priceLine['Live price on Near Mint Games'] > 0) {
-                $priceArray[] = $priceLine;
-            }
+            $priceArray[] = $priceLine;
         }
         return $priceArray;
     }
