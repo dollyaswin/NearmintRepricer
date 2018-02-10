@@ -33,7 +33,7 @@ class IndexController extends AbstractActionController
     public function __construct()
     {
         ini_set('memory_limit','2048M');
-        $this->logger = LoggerFactory::createLogger('updateLog.txt', false, $this->debug);
+        $this->logger = LoggerFactory::createLogger('updateLog.txt', true, $this->debug);
     }
 
     public function indexAction()
@@ -82,6 +82,10 @@ class IndexController extends AbstractActionController
     public function testAction()
     {
         $crystalApi = new CrystalApi($this->logger, $this->debug);
+        $inventory = $crystalApi->getMyManagedInventoryId();
+        $inventoryArray = json_decode($inventory);
+        $this->logger->info(print_r($inventoryArray, true));
+
     }
 
 

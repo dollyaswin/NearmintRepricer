@@ -43,12 +43,14 @@ class CrystalApi extends ApiConnection
         $this->logger->info(print_r($this->authorizePostVariables, true));
         $this->logger->info($this->config['authorizeUrl']);
 
-        $body = $this->authorize();
-        $this->logger->info($body . " Header : " . $this->headers);
-        exit();
+        if($this->authorize()){
+            $this->logger->debug("Authorized CC API and got a token : " . $this->token);
+        } else {
+            throw new \Exception("Unable to authorize CC API");
+        }
 
     }
-/*
+
     protected function authorize()
     {
         $data["uid"] = $this->config['uid'];
@@ -59,38 +61,59 @@ class CrystalApi extends ApiConnection
             return true;
         }
         $this->logger->err($apiResult);
-        exit();
         return false;
     }
-*/
+
 
     protected function crystalTransmit($url, $data = [], $method = 'PUT')
     {
         if ($this->token) {
             $data["access_token"] = $this->token;
         }
+
         $options = [
             'http' => [
-                'header'  => [
-                    'Referer: http://localhost:4200',
-                    'User-Agent: php script'
-                ],
+                'header'  => "Content-Type: application/x-www-form-urlencoded\r\n".
+                             "Referer: nearmintgames.com\r\nUser-Agent: php script",
                 'method'  => $method,
-                'content' => http_build_query($data),
-            ]
+            ],
         ];
+
+        if (!empty($data)) {
+            $options['http']['content'] = http_build_query($data);
+        }
+
         $context  = stream_context_create($options);
-        $result = file_get_contents($url, false, $context);
-        return $result;
+        return file_get_contents($url, false, $context);
     }
 
-    public function getManagedInventories()
+    public function getInventories()
     {
-        $url = 'https://crystal-api.crystalcommerce.com/api/managed_inventories';
-        $result = $this->transmit($url, [], 'GET');
+        $postVariables = [
+            "in_stock_only" => "true",
+            "name" => "Black Vise",
+            "page" => "1",
+            "per_page" => "25",
+            "sort_by" => "lowest_to_highest_price",
+        ];
+
+        $url = 'https://crystal-api.crystalcommerce.com/api/inventories';
+        $result = $this->crystalTransmit($url, $postVariables, 'GET');
+
         return $result;
     }
 
+    public function getMyManagedInventoryId()
+    {
+        $postVariables = [
+            'price_min' => 2000,
+        ];
+
+        $url = 'https://crystal-api.crystalcommerce.com/api/managed_inventories/managed_products';
+        $result = $this->crystalTransmit($url, $postVariables, 'GET');
+
+        return $result;
+    }
 
 
 

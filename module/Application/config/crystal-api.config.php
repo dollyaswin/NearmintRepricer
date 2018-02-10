@@ -8,7 +8,7 @@ return [
     'uid' => getenv('CRYSTAL_COMMERCE_UID'),
 
     'cookieFile' => __DIR__ . '/../../../data/cookiefile',
-    'referer' => 'https://nearmintgames-admin.crystalcommerce.com',
+    'referer' => 'nearmintgames.com',
 
     'tempFileName'     => __DIR__ . '/../../../data/mostRecentDownloadCrystalCommerce.csv',
     'fileToUploadPath' => __DIR__ . '/../../../data/fileToUploadToCrystalCommerce.csv',
