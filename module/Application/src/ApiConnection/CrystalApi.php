@@ -39,12 +39,8 @@ class CrystalApi extends ApiConnection
         $this->setConfig();
 
         $this->authorizePostVariables = [ 'uid' => $this->config['uid'] ];
-
-        $this->logger->info(print_r($this->authorizePostVariables, true));
-        $this->logger->info($this->config['authorizeUrl']);
-
         if($this->authorize()){
-            $this->logger->debug("Authorized CC API and got a token : " . $this->token);
+            $this->logger->debug("Authorized CC API with token : " . $this->token);
         } else {
             throw new \Exception("Unable to authorize CC API");
         }
@@ -76,12 +72,9 @@ class CrystalApi extends ApiConnection
                 'header'  => "Content-Type: application/x-www-form-urlencoded\r\n".
                              "Referer: nearmintgames.com\r\nUser-Agent: php script",
                 'method'  => $method,
+                'content' => http_build_query($data),
             ],
         ];
-
-        if (!empty($data)) {
-            $options['http']['content'] = http_build_query($data);
-        }
 
         $context  = stream_context_create($options);
         return file_get_contents($url, false, $context);
@@ -91,26 +84,30 @@ class CrystalApi extends ApiConnection
     {
         $postVariables = [
             "in_stock_only" => "true",
-            "name" => "Black Vise",
+            "name" => "CT13-EN003",
             "page" => "1",
-            "per_page" => "25",
-            "sort_by" => "lowest_to_highest_price",
+            "collection_name" => "nearmintgames",
         ];
 
-        $url = 'https://crystal-api.crystalcommerce.com/api/inventories';
+        $url = $this->config['baseUrl'] . '/inventories';
         $result = $this->crystalTransmit($url, $postVariables, 'GET');
 
         return $result;
     }
 
+    public function getProductById($productId)
+    {
+        $url = $this->config['baseUrl'] . '/products/' . $productId . '.json';
+        $result = $this->crystalTransmit($url, [], 'GET');
+
+        return $result;
+    }
+
+
     public function getMyManagedInventoryId()
     {
-        $postVariables = [
-            'price_min' => 2000,
-        ];
-
-        $url = 'https://crystal-api.crystalcommerce.com/api/managed_inventories/managed_products';
-        $result = $this->crystalTransmit($url, $postVariables, 'GET');
+        $url = $this->config['baseUrl'] . '/managed_inventories';
+        $result = $this->crystalTransmit($url, null, 'GET');
 
         return $result;
     }

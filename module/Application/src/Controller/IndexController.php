@@ -82,7 +82,7 @@ class IndexController extends AbstractActionController
     public function testAction()
     {
         $crystalApi = new CrystalApi($this->logger, $this->debug);
-        $inventory = $crystalApi->getMyManagedInventoryId();
+        $inventory = $crystalApi->getProductById('584aa68904c5560ffe1011d2');
         $inventoryArray = json_decode($inventory);
         $this->logger->info(print_r($inventoryArray, true));
 
