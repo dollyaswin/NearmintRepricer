@@ -17,7 +17,7 @@ namespace Application\Controller;
 
 use Application\ApiConnection\CrystalApi;
 use Application\ApiConnection\CrystalCommerce;
-use Application\ApiConnection\SellerEngine;
+use Application\ApiConnection\CrystalApi\ProductModel;
 use Application\Databases\PricesRepository;
 use Application\Databases\RunTimeRepository;
 use Application\Factory\LoggerFactory;
@@ -81,8 +81,8 @@ class IndexController extends AbstractActionController
 
     public function testAction()
     {
-        $crystalApi = new CrystalApi($this->logger, $this->debug);
-        $inventory = $crystalApi->getProductById('584aa68904c5560ffe1011d2');
+        $crystalApi = new ProductModel($this->logger, $this->debug);
+        $inventory = $crystalApi->getInventories();
         $inventoryArray = json_decode($inventory);
         $this->logger->info(print_r($inventoryArray, true));
 

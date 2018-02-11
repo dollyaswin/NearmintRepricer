@@ -11,14 +11,13 @@
 namespace Application\ApiConnection;
 
 use Application\ApiConnection;
+use Application\ApiConnection\CrystalApi\TokenHolder;
 use Zend\Log\Logger;
 
-class CrystalApi extends ApiConnection
+abstract class CrystalApi extends ApiConnection
 {
     protected $logger;
     protected $debug;
-
-    protected $token;
 
     public function getConfig()
     {
@@ -31,6 +30,12 @@ class CrystalApi extends ApiConnection
         $this->config['uid'] = getenv('CRYSTAL_COMMERCE_UID');
     }
 
+    /**
+     * CrystalApi constructor.
+     * @param Logger $logger
+     * @param $debug
+     * @throws \Exception
+     */
     public function __construct(Logger $logger, $debug)
     {
         $this->logger = $logger;
@@ -40,7 +45,7 @@ class CrystalApi extends ApiConnection
 
         $this->authorizePostVariables = [ 'uid' => $this->config['uid'] ];
         if($this->authorize()){
-            $this->logger->debug("Authorized CC API with token : " . $this->token);
+            $this->logger->debug("Authorized CC API with token : " . TokenHolder::getToken());
         } else {
             throw new \Exception("Unable to authorize CC API");
         }
@@ -49,11 +54,15 @@ class CrystalApi extends ApiConnection
 
     protected function authorize()
     {
+        if (TokenHolder::getToken()) {
+            return true;
+        }
+
         $data["uid"] = $this->config['uid'];
         $apiResult = $this->crystalTransmit($this->config['authorizeUrl'], $data, 'POST');
         $result = json_decode($apiResult,true);
         if (isset($result['token']['token'])) {
-            $this->token = $result['token']['token'];
+            TokenHolder::setToken($result['token']['token']);
             return true;
         }
         $this->logger->err($apiResult);
@@ -63,8 +72,8 @@ class CrystalApi extends ApiConnection
 
     protected function crystalTransmit($url, $data = [], $method = 'PUT')
     {
-        if ($this->token) {
-            $data["access_token"] = $this->token;
+        if (TokenHolder::getToken()) {
+            $data["access_token"] = TokenHolder::getToken();
         }
 
         $options = [
@@ -79,39 +88,6 @@ class CrystalApi extends ApiConnection
         $context  = stream_context_create($options);
         return file_get_contents($url, false, $context);
     }
-
-    public function getInventories()
-    {
-        $postVariables = [
-            "in_stock_only" => "true",
-            "name" => "CT13-EN003",
-            "page" => "1",
-            "collection_name" => "nearmintgames",
-        ];
-
-        $url = $this->config['baseUrl'] . '/inventories';
-        $result = $this->crystalTransmit($url, $postVariables, 'GET');
-
-        return $result;
-    }
-
-    public function getProductById($productId)
-    {
-        $url = $this->config['baseUrl'] . '/products/' . $productId . '.json';
-        $result = $this->crystalTransmit($url, [], 'GET');
-
-        return $result;
-    }
-
-
-    public function getMyManagedInventoryId()
-    {
-        $url = $this->config['baseUrl'] . '/managed_inventories';
-        $result = $this->crystalTransmit($url, null, 'GET');
-
-        return $result;
-    }
-
 
 
 }
