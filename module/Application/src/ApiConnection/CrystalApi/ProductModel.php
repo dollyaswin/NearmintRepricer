@@ -22,8 +22,13 @@ class ProductModel extends CrystalApi
     private $currentQuantity; // maintained in this object in order to self regulate inventory above 0
 
 
-
-    public function loadProduct($managedInventoryId)
+    /**
+     *  Use the Crystal API to get the information about this product this store
+     *
+     * @param string $managedInventoryId - The id for the product which is specific to this store.
+     * @return bool success or failure to load inventory Id
+     */
+    public function loadProductByInventoryId($managedInventoryId)
     {
         $url = $this->config['baseUrl'] . '/managed_inventories/' . $managedInventoryId  . '.json';
         $data = [];
@@ -32,21 +37,46 @@ class ProductModel extends CrystalApi
             return false;
         }
         $resultArray = json_decode($result, true);
-        $product = $resultArray['product'] ?? false;
-        if (empty($product['id'])) {
+
+        if (isset($resultArray['inventory'])) {
+            return $this->loadThisObjectFromArray($resultArray['inventory']);
+        }
+        return false;
+    }
+
+
+    public function loadProductByProductId($productId)
+    {
+        $url = $this->config['baseUrl'] . '/products/' . $productId  . '.json';
+        $data = [
+            'self_collection_only' => true,
+            'id'                   => $productId,
+        ];
+        $result = $this->crystalTransmit($url, $data,'GET');
+        if (empty($result)) {
             return false;
         }
-        $this->managedInventoryId = $managedInventoryId;
-        $this->productId = $product['id'];
-        $this->quantityAdjustment = 0;
-        $this->currentQuantity =  $product['inventories'][0]['quantity'] ?? 0;
-        // Prices must be converted from cents to dollars
-        $this->buyPrice        = ($product['inventories'][0]['pricing']['buy_price_cents'] ?? 0 ) / 100;
-        $this->sellPrice       = ($product['inventories'][0]['pricing']['sell_price_cents'] ?? 9999999) / 100;
-        $this->sellPriceWas    = ($product['inventories'][0]['pricing']['sell_price_cents_was'] ?? 999999) / 100;
+        $resultArray = json_decode($result, true);
+        if (isset($resultArray['product']['inventories'][0])) {
+            return $this->loadThisObjectFromArray($resultArray['product']['inventories'][0]);
+        }
+        return false;
+    }
 
+    private function loadThisObjectFromArray($productArray)
+    {
+        $this->managedInventoryId = $productArray['id'];
+        $this->productId = $productArray['product_id'];
+        $this->quantityAdjustment = 0;
+
+        $this->currentQuantity =  $productArray['quantity'] ?? 0;
+        $this->buyPrice        = $productArray['buy_price'] ?? 0;
+        $this->sellPrice       = $productArray['sell_price'] ?? 0;
+        $this->sellPriceWas    = $this->sellPrice;
         return true;
     }
+
+
 
     public function setSellPrice($price)
     {
@@ -104,45 +134,5 @@ class ProductModel extends CrystalApi
         }
         return false;
     }
-
-    private function loadManagedInventoryId()
-    {
-        $url = $this->config['baseUrl'] . '/managed_inventories';
-        $result = $this->crystalTransmit($url, null, 'GET');
-    }
-
-
-
-    //==================================================================
-
-
-    public function getInventories()
-    {
-        $postVariables = [
-            "in_stock_only" => "true",
-            "name" => "CT13-EN003",
-            "collection_name" => "nearmintgames",
-        ];
-
-        $url = $this->config['baseUrl'] . '/inventories';
-        $result = $this->crystalTransmit($url, $postVariables, 'GET');
-
-        return $result;
-    }
-
-    public function getProductById($productId)
-    {
-        $url = $this->config['baseUrl'] . '/products/' . $productId . '.json';
-        $result = $this->crystalTransmit($url, [], 'GET');
-
-        return $result;
-    }
-
-
-    public function getMyManagedInventoryId()
-    {
-
-
-        return $result;
-    }
+    
 }
