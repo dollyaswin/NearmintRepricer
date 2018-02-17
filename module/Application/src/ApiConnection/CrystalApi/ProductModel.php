@@ -23,10 +23,11 @@ class ProductModel extends CrystalApi
 
 
     /**
-     *  Use the Crystal API to get the information about this product this store
+     *  Use the Crystal API to get the information about this product for this store
+     *  and load it into this object
      *
      * @param string $managedInventoryId - The id for the product which is specific to this store.
-     * @return bool success or failure to load inventory Id
+     * @return bool success or failure to load this inventory id
      */
     public function loadProductByInventoryId($managedInventoryId)
     {
@@ -45,6 +46,13 @@ class ProductModel extends CrystalApi
     }
 
 
+    /**
+     * Use the Crystal API to get the information about this product for this store
+     *  and load it into this object
+     *
+     * @param string $productId - The product's Id, not specific to this store
+     * @return bool success or failure to load this product Id
+     */
     public function loadProductByProductId($productId)
     {
         $url = $this->config['baseUrl'] . '/products/' . $productId  . '.json';
@@ -134,5 +142,5 @@ class ProductModel extends CrystalApi
         }
         return false;
     }
-    
+
 }

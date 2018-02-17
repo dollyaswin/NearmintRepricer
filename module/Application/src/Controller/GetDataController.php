@@ -253,8 +253,8 @@ class GetDataController extends AbstractActionController
 
     public function getCrystalIdsAction(){
         $this->setLogger('CrystalCommerceGetDataLog.txt');
-        $crystalApi = new CrystalApi($this->logger,$this->debug);
-        $result = $crystalApi->getManagedInventories();
+        $crystalApi = new CrystalApi\ProductDownload($this->logger,$this->debug);
+        $result = $crystalApi->downloadProducts();
         $this->logger->info($result);
         return true;
     }
