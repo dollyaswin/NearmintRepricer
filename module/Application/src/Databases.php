@@ -35,6 +35,14 @@ abstract class Databases
         $this->config = $this->getConfig();
     }
 
+    /***********************************************
+     * Create the repository object, make a connection to the database, and confirm the table is built correctly.
+     * exit if the table is not built correctly.
+     *
+     * Databases constructor.
+     * @param Logger $logger
+     * @param bool $debug
+     */
     public function __construct(Logger $logger, $debug = false)
     {
         $this->debug = $debug;
@@ -50,29 +58,79 @@ abstract class Databases
             $this->checkTable();
         } catch (\PDOException $e) {
             $this->logger->err("Error!: " . $e->getMessage() );
-            exit();
+            exit(2);
         } catch (\Exception $e) {
             $this->logger->err("Error!: " . $e->getMessage() );
-            exit();
+            exit(2);
         }
     }
 
     /**********************************
-     *  Check if the prices table exists in the default database
-     *  if not create it.
+     *  Check if the prices table exists in the default database,
+     * if it doesn't exists, create it.
+     * if it does exist, check the columns to see if any were added,
+     * if so create the new columns.
+     * Do not check for columns removed from the mapping.
      *
-     *  Ensures that after this function is run, there is a prices table.
+     *  Ensures that after this function is run, there is a table which has all the mappings from the config file.
      * @throws \Exception when unable to build table
      */
     protected function checkTable()
     {
-        // test if table exists, if not then create table
-        $result = $this->conn->query("SHOW TABLES LIKE '{$this->config['table name']}';");
-        if ($result->rowCount() == 0) {
+        $columnMappings = array_keys($this->config['columns']);
+
+        $query = "SELECT column_name from information_schema.COLUMNS 
+          WHERE table_schema = '{$this->config['defaultDb']}'
+          AND table_name = '{$this->config['table name']}'
+          ORDER BY column_name;";
+        $statement = $this->conn->prepare($query);
+        $statement->execute();
+
+        $result = $statement->fetchAll(\PDO::FETCH_ASSOC);
+        if (count($result) == 0) {
             $this->logger->info("Table '{$this->config['table name']}' doesn't exist, building now.");
             if ($this->rebuildTableFromDefinition() == false) {
                 throw new \Exception("Unable to create '{$this->config['table name']}' table.");
             }
+            return true;
+        }
+        foreach($result as $value) {
+            $columnsInDatabase[] = $value['column_name'];
+        }
+        $newColumns = array_diff($columnMappings, $columnsInDatabase);
+        if (count($newColumns) > 0) {
+            $this->logger->info("There are new mappings to be added to Table '{$this->config['table name']}'.");
+            if ($this->addNewColumns($newColumns) == false) {
+                throw new \Exception("Unable to create '{$this->config['table name']}' table.");
+            }
+        }
+        return true;
+    }
+
+    /***********************************
+     * Creates and runs a query which add the new columns to the current table.
+     * This uses the config file to get the column definitions.
+     *
+     * @param array $newColumns - column names as values
+     * @return bool success or failure
+     ***********************************/
+    private function addNewColumns($newColumns)
+    {
+        $tableName = "ALTER TABLE {$this->config['table name']} ";
+        $columnsSection = '';
+        foreach ($newColumns as $columnName) {
+            $columnsSection .= 'ADD COLUMN ' . $columnName . ' ' . $this->config['columns'][$columnName]['definition']  . ",\n";
+        }
+        $columnsSection = trim ($columnsSection, ",\n");
+
+        $alterTableQuery = $tableName . $columnsSection . ';';
+
+        $result = $this->conn->exec($alterTableQuery);
+        if ($result === false) {
+            $this->logger->err("Alter table Query : $alterTableQuery");
+            $this->logger->err("PDO::errorInfo():");
+            $this->logger->err(print_r($this->conn->errorInfo(), true) );
+            return false;
         }
         return true;
     }

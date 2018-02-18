@@ -30,30 +30,40 @@ class ProductDownload extends CrystalApi
         return false;
     }
 
-    private function flattenProductArray($productArray)
+    protected $mapping = [
+        'Product Id' => 'product_id',
+        'Inventory Id' => 'id',
+        'Product Name' => 'product_name',
+        'Total Qty' => 'quantity',
+        'Buy Price' => 'buy_price',
+        'Sell Price' => 'sell_price',
+        'condition' => 'condition',
+        'language' =>  'language',
+    ];
+
+
+    private function flattenProductArray($products)
     {
         $flatArray = [];
 
-        $desiredParameters = [
-            'quantity',
-            'product_id',
-            'id',   // managed product Id
-            'sell_price',
-            'buy_price',
-            'condition',
-            'language',
-            'product_name',
-            'product_details' => [
-                'product_type',
-                'default_weight',
-                'category',
-                'category_id' => [
-                    '$oid',   // This is the category ID that is needed
-                ],
-            ],
-        ];
+        foreach ($products as $product) {
+            $currentProduct = [];
+            foreach ($this->mapping as $databaseKey => $apiKey ) {
+                $currentProduct[$databaseKey] = $product[$apiKey] ?? '';
+            }
+            $currentProduct['product_type'] = $product['product_details']['product_type'];
+            $currentProduct['Category Id'] = $product['product_details']['category_id']['$oid'];
+            $currentProduct['Category'] = $product['product_details']['category'];
+
+            $flatArray[] = $currentProduct;
+        }
 
         return $flatArray;
     }
+
+
+
+
+
 
 }
