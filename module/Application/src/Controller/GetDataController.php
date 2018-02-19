@@ -251,11 +251,31 @@ class GetDataController extends AbstractActionController
         return true;
     }
 
-    public function getCrystalIdsAction(){
+    public function getCrystalProductsUsingApiAction()
+    {
+        $scriptName  = 'Crystal Commerce API Price Update';
+
         $this->setLogger('CrystalCommerceGetDataLog.txt');
+        $this->tempFileName = __DIR__ . '/../../../../logs/tempCCLog.txt';
+        $this->addTempLogger($this->tempFileName);
+
+        $skipImport = $this->params()->fromQuery('skipImport', false);
+
         $crystalApi = new CrystalApi\ProductDownload($this->logger,$this->debug);
-        $result = $crystalApi->downloadProducts();
-        $this->logger->info($result);
+        $pricesArray = $crystalApi->downloadProducts();
+
+        if ($skipImport) {
+            $this->logger->info("Skipping importing the CSV File.");
+        } else {
+            $pricesRepo = new CrystalCommerceRepository($this->logger, $this->debug);
+            if ($pricesRepo->importFromArray($pricesArray)) {
+                $message = "Successfully imported CSV File.";
+            } else {
+                $message = "Failed to import CSV File.";
+            }
+            $this->logScript($scriptName, $message);
+        }
+
         return true;
     }
 

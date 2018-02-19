@@ -26,7 +26,7 @@ return [
             'definition' => 'varchar(100) DEFAULT NULL',
             'mapping' => 'Category Id',
         ],
-        'condition' => [
+        'condition_text' => [
             'definition' => 'varchar(100) DEFAULT NULL',
             'mapping' => 'condition',
         ],
@@ -48,7 +48,7 @@ return [
         ],
         'total_qty' => [
             'definition' => "int(11) NOT NULL DEFAULT '0'",
-        'mapping' =>'Total Qty',
+            'mapping' =>'Total Qty',
          ],
         'wishlists' => [
             'definition' => 'int(11) DEFAULT NULL',
