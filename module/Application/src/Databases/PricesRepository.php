@@ -91,9 +91,6 @@ class PricesRepository
                 CC.category_name as 'Category' ";
         }
 
-
-
-
         // Currently these two are in order, so the second will overwrite the first.  If the extra joins section
         // becomes more complicated, you need to ensure buyPrice restrict overrides Buy Info
         $trollBuyPriceWhere = '';
@@ -125,25 +122,9 @@ class PricesRepository
                 $selleryWhere .= " AND SE.last_updated > DATE_SUB(now(), interval $daysLimit day) ";
             }
 
-            /**********************************************************
-             * This is the heart of the repricing calculation. The logic for what price is uploaded to CC
-             * is determined in this clause of the query.  Replace or modify here and update the below comment
-             *
-             * Use the sell_price first if available, this comes from 'Live price on Near Mint Games' from sellery
-             * if it is not available, average the follow three prices together
-             * amazon_avg_new_price, amazon_lowest_new_price, amazon_buy_box_price
-             * In MySQL if one is NULL then the result would be null, COALESCE is used
-             *     But because that could throw off the number of prices that exist, the amount you divide by must be adjusted.
-             *     So normally you would add three values and divide by three. Instead count up how much to divide by.
-             **********************************************************/
-            $selectClause .= ",
-                format(
-                    COALESCE(SE.sellery_sell_price, 
-                        (COALESCE(SE.amazon_avg_new_price, 0) + COALESCE(SE.amazon_lowest_new_price, 0) + COALESCE(SE.amazon_buy_box_price, 0) ) /
-                            (1 + CASE WHEN SE.amazon_lowest_new_price IS NOT NULL THEN 1 ELSE 0 END +
-                            CASE WHEN SE.amazon_buy_box_price IS NOT NULL THEN 1 ELSE 0 END )
-                    ), 2
-                )  as 'Sell Price'";
+            $selectClause .= ", " . $this->getSellPriceString() . " as 'Sell Price'";
+
+
 
         } else {
             $selleryWhere = '';
@@ -209,6 +190,68 @@ class PricesRepository
         }
         return $result;
     }
+
+    public function getPricesToUpdate($limit = 20){
+
+        $query = "SELECT 
+            CC.asin, 
+            CC.product_name,
+            RIGHT(CC.product_url, (POSITION('/' IN REVERSE(CC.product_url)) - 1)) as 'productId',
+            " . $this->getSellPriceString() . "  as 'sellPrice',
+            CC.buy_price as 'buyPrice'
+            FROM crystal_commerce as CC 
+            INNER JOIN sellery as SE on (SE.asin=CC.asin)
+            WHERE CC.product_name is NOT NULL
+            AND SE.sellery_sell_price < 2  
+            AND (SE.amazon_avg_new_price IS NOT NULL OR SE.sellery_sell_price IS NOT NULL)
+            AND ((ABS(CC.cc_sell_price - SE.sellery_sell_price) > CC.cc_sell_price*0.02 AND ABS(CC.cc_sell_price - SE.sellery_sell_price) > 0.05) 
+                OR SE.sellery_sell_price IS NULL) 
+            ORDER BY SE.last_updated IS NULL, DATE(CC.last_updated), CC.cc_sell_price DESC
+            LIMIT $limit;  ";
+        $statement = $this->conn->prepare($query);
+        $statement->execute();
+        $result = $statement->fetchAll(\PDO::FETCH_ASSOC);
+        //$this->logger->debug("The query : $query");
+
+        if (count($result) == 0) {
+            $this->logger->info("No prices to update" );
+
+            return false;
+        }
+        return $result;
+    }
+
+    /**********************************************************
+     * This is the heart of the repricing calculation. The logic for what price is uploaded to CC
+     * is determined in this clause of the query.  Replace or modify here and update the below comment
+     *
+     * Use the sell_price first if available, this comes from 'Live price on Near Mint Games' from sellery
+     * if it is not available, average the follow three prices together
+     * amazon_avg_new_price, amazon_lowest_new_price, amazon_buy_box_price
+     * In MySQL if one is NULL then the result would be null, COALESCE is used
+     *     But because that could throw off the number of prices that exist, the amount you divide by must be adjusted.
+     *     So normally you would add three values and divide by three. Instead count up how much to divide by.
+     *
+     * Assumes that Sellery table is aliased SE, and Crstal Commerce is Aliased CC and the two are joined.
+     *
+     **********************************************************/
+    private function getSellPriceString()
+    {
+        // return the sellery calculated sell price, or the average of up to three price datapoints returned by sellery
+        $string  = "format( 
+                        COALESCE(
+                            SE.sellery_sell_price, 
+                            (   COALESCE(SE.amazon_avg_new_price, 0) 
+                                + COALESCE(SE.amazon_lowest_new_price, 0) 
+                                + COALESCE(SE.amazon_buy_box_price, 0) ) 
+                                / (1 + CASE WHEN SE.amazon_lowest_new_price IS NOT NULL THEN 1 ELSE 0 END 
+                                    + CASE WHEN SE.amazon_buy_box_price IS NOT NULL THEN 1 ELSE 0 END ))
+                    , 2 )";
+        return $string;
+    }
+
+
+
 
     /*********************************************
      * Convert an array into a CSV formatted string with it's keys as the

@@ -216,6 +216,45 @@ class CrystalCommerce extends ApiConnection
         fclose($fp);
     }
 
+    public function updateProductPrices($productArray)
+    {
+        $url = 'https://' . $this->config['adminDomain'] . '.crystalcommerce.com/inventory/update_multiple';
+
+        $postVariables =[];
+
+        foreach ($productArray as $product) {
+            $postVariables["products[{$product['productId']}][buy_price]"] = $product['buyPrice'];
+            $postVariables["products[{$product['productId']}][sell_price]"] = $product['sellPrice'];
+        }
+
+        $postVariables['save_products'] = 'Save';
+
+        $headers = [
+            "accept: text/javascript, text/html, application/xml, text/xml, */*",
+            "accept-encoding: deflate, br",
+            "accept-language: en-US,en;q=0.9",
+            "content-type: application/x-www-form-urlencoded; charset=UTF-8",
+            "origin: https://nearmintgames-admin.crystalcommerce.com",
+            "referer: https://nearmintgames-admin.crystalcommerce.com/inventory/update",
+            "user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/62.0.3202.75 Safari/537.36",
+            "X-Prototype-Version:1.7_rc2",
+            "X-Requested-With:XMLHttpRequest",
+            //"Cookie:_admin_session=22caa50a5cbd54d289105b4f91375ec4; __utmc=250373076; __utmz=250373076.1525016996.1.1.utmcsr=accounts.crystalcommerce.com|utmccn=(referral)|utmcmd=referral|utmcct=/users/sign_in; intercom-lou-iq6g9kms=1; _ga=GA1.2.1920311669.1525016996; _gid=GA1.2.942434860.1525024139; __hstc=186938743.88a6e087063cb2e458502932a0d72420.1525024144613.1525024144613.1525024144613.1; __hssrc=1; hubspotutk=88a6e087063cb2e458502932a0d72420; __utma=250373076.1920311669.1525016996.1525016996.1525025646.2; __utmt=1; __utmb=250373076.15.10.1525025646; intercom-session-iq6g9kms=d1I3RWFnVzJkRkxBaXk5MHBqWnJhMGs0OStaQ0dPd1U5bTE4N2p6THhlaEtUc0sralRiUU1sb0R5VW1uM1NVaS0teTVKQ25yUnRUaWhORlJ6Umdydmhvdz09--42ffee2dc5cfec2e5a84fbb4daebb1a78208a9e6",
+        ];
+
+        $result = $this->transmit($url, $postVariables, $headers);
+
+        //Result should contain "Changes to 1 product have been made successfully." in a successful update.
+        if(strpos($result, 'have been made successfully') !== false) {
+            // success
+            return true;
+        }
+        $this->logger->warn("The update was not successful " . $result);
+        //failure
+        return false;
+
+    }
+
 
 
     public function downloadCsv($includeOutOfStock = false)

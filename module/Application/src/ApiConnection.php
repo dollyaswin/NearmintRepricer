@@ -107,8 +107,9 @@ abstract class ApiConnection
         );
 
         if ($postVariables) {
+            $postString = http_build_query($postVariables);
             curl_setopt($ch, CURLOPT_POST, true);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, $postVariables);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $postString);
         }
 
         // cookies!!!
@@ -135,6 +136,7 @@ abstract class ApiConnection
             $this->mostRecentCurlError = 'Curl error: ' . curl_error($ch);
             return false;
         }
+
         // close curl resource to free up system resources
         curl_close($ch);
         return $output;

@@ -3,23 +3,32 @@
 namespace Application\Controller;
 
 
+use Application\ApiConnection\CrystalCommerce;
+use Application\Databases\PricesRepository;
+use Application\Factory\LoggerFactory;
 use Zend\Mvc\Controller\AbstractActionController;
 use Zend\View\Model\ViewModel;
 
 class UploadController extends AbstractActionController
 {
-
+    private $debug;
 
     public function indexAction()
     {
-        print ("Upload Controller Index in use <pre>");
+        $this->debug = $this->params()->fromQuery('debug', false);
+        $logger = LoggerFactory::createLogger('uploadLog.txt', true, true);
+        $prices = new PricesRepository($logger);
+        $productsToUpdate = $prices->getPricesToUpdate(1);
+        $logger->info(print_r($productsToUpdate, true));
 
-        print ("Files : ". print_r($_FILES, true));
 
-        print ("POST : "  . print_r($_POST, true));
+        $crystal = new CrystalCommerce($logger, $this->debug);
+        $result = $crystal->updateProductPrices($productsToUpdate);
 
-        print ("</pre>");
-        // Show list of possible downloads and options. Link to the actions below.
+        if ($result) {
+            $logger->info("Upload Successful");
+        }
+
         return new ViewModel();
     }
 

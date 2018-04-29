@@ -43,9 +43,11 @@ class IndexController extends AbstractActionController
             'Get Prices From Crystal Commerce, Include OOS' => '/get-data/get-crystal-commerce-data?includeOutOfStock=true',
             'Get Prices From Sellery' => '/get-data/get-sellery-pricing',
             'Get Buy Prices From Troll and Toad' => '/get-data/troll-buy-prices',
-            'Update Prices From Database to Crystal Commerce (errors on CC side)' => '/application/update-crystal-commerce-prices',
+
         ];
         if (getenv('APPLICATION_ENV') == 'development') {
+            $scripts['Upload Test'] = '/upload?inBrowser=true&debug=true';
+
             $scripts['Crystal Commerce Data'] = '/get-data/get-crystal-products-using-api?inBrowser=true&debug=true';
             $scripts['Download Crystal Commerce Prices Skip Import'] = '/get-data/get-crystal-commerce-data?skipImport=true&inBrowser=true&debug=true';
             $scripts['Download Crystal Commerce Prices Skip Import Include OOS'] = '/get-data/get-crystal-commerce-data?skipImport=true&includeOutOfStock=true&inBrowser=true&debug=true';
@@ -81,9 +83,11 @@ class IndexController extends AbstractActionController
 
     public function testAction()
     {
+        /*
         $crystalApi = new CrystalApi\ProductDownload($this->logger, $this->debug);
         $inventory = $crystalApi->downloadProducts();
         $this->logger->info(print_r($inventory, true));
+        */
 
     }
 
