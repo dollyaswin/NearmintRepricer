@@ -167,12 +167,12 @@ abstract class Databases
                 foreach ($this->config['unique keys'] as $name => $value) {
                     $keys .= "UNIQUE KEY $name ( $value),";
                 }
-                $keys = trim ($keys, ',');
             }
+            $keys = trim ($keys, ",\n");
         } else {
             $columnsSection = trim($columnsSection, ",\n");
         }
-        $engine = ') ENGINE=InnoDB DEFAULT CHARSET=latin1;';
+        $engine = ') ENGINE=InnoDB ;';
 
         return $tableName . $columnsSection . $keys . $engine;
     }
