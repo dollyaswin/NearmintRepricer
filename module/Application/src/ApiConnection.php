@@ -107,8 +107,9 @@ abstract class ApiConnection
         );
 
         if ($postVariables) {
+            $postString = http_build_query($postVariables);
             curl_setopt($ch, CURLOPT_POST, true);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, $postVariables);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $postString);
         }
 
         // cookies!!!
@@ -126,7 +127,7 @@ abstract class ApiConnection
             curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
         }
         // This would add the header to the returned page
-        //curl_setopt($ch, CURLOPT_HEADER, true);
+        curl_setopt($ch, CURLOPT_HEADER, true);
 
         // $output contains the output string
         $output = curl_exec($ch);
@@ -135,6 +136,7 @@ abstract class ApiConnection
             $this->mostRecentCurlError = 'Curl error: ' . curl_error($ch);
             return false;
         }
+
         // close curl resource to free up system resources
         curl_close($ch);
         return $output;

@@ -159,7 +159,7 @@ return [
             'mapping' => 'Condition',
         ],
         'amazon_last_restock_date' => [
-            'definition' => "timestamp NOT NULL DEFAULT '0000-00-00 00:00:00'",
+            'definition' => "varchar(100) DEFAULT NULL",
             'mapping' => 'Last restock date',
         ],
         'amazon_buy_box_seller' => [

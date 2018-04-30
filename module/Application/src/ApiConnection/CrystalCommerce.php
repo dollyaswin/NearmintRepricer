@@ -151,7 +151,6 @@ class CrystalCommerce extends ApiConnection
 
         $curlFile = curl_file_create($filePath, 'text/csv', basename($filePath));
 
-        //$files = ['import' => $filePath];
 
         $postVariables = [
             'commit'              => 'Mass Import',
@@ -167,15 +166,13 @@ class CrystalCommerce extends ApiConnection
             "accept:text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
             "accept-encoding: deflate, br",
             "accept-language:en-US,en;q=0.9",
-            "content-type: multipart/form-data", // boundary=----WebKitFormBoundaryFLfENGUAWvTqvoJ2",
+            "content-type: multipart/form-data",
             "origin: https://nearmintgames-admin.crystalcommerce.com",
             "referer: https://nearmintgames-admin.crystalcommerce.com/mass_imports",
             "upgrade-insecure-requests: 1",
             "user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/62.0.3202.75 Safari/537.36",
-            //"cookie:__utmt=1; __utma=250373076.1858490364.1508204602.1510534085.1510696137.12; __utmb=250373076.4.10.1510696137; __utmc=250373076; __utmz=250373076.1508785118.3.2.utmcsr=accounts.crystalcommerce.com|utmccn=(referral)|utmcmd=referral|utmcct=/users/sign_in; intercom-session-iq6g9kms=VVcxNzJYMGdic2RhUUoxQWpaaG5rdkNiZDZmbmt1TVF1VldmVXNnMDErcGJicjRmTGVRSzRFbnI3UXNDU0xFcy0tR2EwL3MzeC9GSnJhaXhLR3F5M0JvUT09--f6c264c39ef00f73f9626e9881681f73d05ea2a4; liveagent_oref=https://accounts.crystalcommerce.com/users/sign_in; liveagent_ptid=4f90aec1-ce86-4d23-b382-f24512cd4f87; liveagent_sid=4c4bff96-fe60-4704-a2d9-34a7d7dedf27; liveagent_vc=43; __utmt=1; __utma=250373076.1858490364.1508204602.1510534085.1510696137.12; __utmb=250373076.3.10.1510696137; __utmc=250373076; __utmz=250373076.1508785118.3.2.utmcsr=accounts.crystalcommerce.com|utmccn=(referral)|utmcmd=referral|utmcct=/users/sign_in; intercom-session-iq6g9kms=Z2dWNy83MUgwYnlESy95cFpIQWFPU0gwdHkxaG9WR2JyMXlzRUtzMmwwR1F6WHMybVBtVUUxSVpoT054UnJlTi0tMTk0dUlRd0NpSkNia1R4OUNMcW9Sdz09--1848e1f56ed3539705b2a1d1f212a9eee5792f96; _admin_session=e807bf43756a3b801d009f6d801e6440"
         ];
 
-        //$result = $this->submitFormWithFile($url, $postVariables, $files, $headers);
         $result = $this->transmit($url, $postVariables, $headers, $url);
 
         if ($result) {
@@ -216,13 +213,48 @@ class CrystalCommerce extends ApiConnection
         fclose($fp);
     }
 
+    public function updateProductPrices($productArray)
+    {
+        $url = 'https://' . $this->config['adminDomain'] . '.crystalcommerce.com/inventory/update_multiple';
+
+        $postVariables =[];
+
+        foreach ($productArray as $product) {
+            $postVariables["products[{$product['productId']}][buy_price]"] = $product['buy_price'];
+            $postVariables["products[{$product['productId']}][sell_price]"] = $product['cc_sell_price'];
+        }
+
+        $postVariables['save_products'] = 'Save';
+
+        $headers = [
+            "accept: text/javascript, text/html, application/xml, text/xml, */*",
+            "accept-encoding: deflate, br",
+            "accept-language: en-US,en;q=0.9",
+            "content-type: application/x-www-form-urlencoded; charset=UTF-8",
+            "origin: https://nearmintgames-admin.crystalcommerce.com",
+            "referer: https://nearmintgames-admin.crystalcommerce.com/inventory/update",
+            "user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/62.0.3202.75 Safari/537.36",
+            "X-Prototype-Version:1.7_rc2",
+            "X-Requested-With:XMLHttpRequest",
+        ];
+
+        $result = $this->transmit($url, $postVariables, $headers);
+
+        //Result should contain "Changes to 1 product have been made successfully." in a successful update.
+        if(strpos($result, 'have been made successfully') !== false) {
+            // success
+            return true;
+        }
+        $this->logger->warn("The update was not successful " . $result);
+        //failure
+        return false;
+
+    }
+
 
 
     public function downloadCsv($includeOutOfStock = false)
     {
-        //$result = $this->loadTestPage();
-
-        //print $result;
 
         $url = 'https://' . $this->config['adminDomain'] . '.crystalcommerce.com/inventory/update';
 

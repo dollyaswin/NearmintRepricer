@@ -14,6 +14,30 @@ return [
             'definition' => 'int(11) NOT NULL AUTO_INCREMENT',
             'mapping' =>'',
         ],
+        'product_id' => [
+            'definition' => 'varchar(100) DEFAULT NULL',
+            'mapping' => 'Product Id',
+        ],
+        'inventory_id' => [
+            'definition' => 'varchar(100) DEFAULT NULL',
+            'mapping' => 'Inventory Id',
+        ],
+        'category_id' => [
+            'definition' => 'varchar(100) DEFAULT NULL',
+            'mapping' => 'Category Id',
+        ],
+        'condition_text' => [
+            'definition' => 'varchar(100) DEFAULT NULL',
+            'mapping' => 'condition',
+        ],
+        'language' => [
+            'definition' => 'varchar(100) DEFAULT NULL',
+            'mapping' => 'language',
+        ],
+        'product_type' => [
+            'definition' => 'varchar(100) DEFAULT NULL',
+            'mapping' => 'product_type',
+        ],
         'product_name' => [
             'definition' => 'varchar(255) DEFAULT NULL',
             'mapping' =>'Product Name',
@@ -24,7 +48,7 @@ return [
         ],
         'total_qty' => [
             'definition' => "int(11) NOT NULL DEFAULT '0'",
-        'mapping' =>'Total Qty',
+            'mapping' =>'Total Qty',
          ],
         'wishlists' => [
             'definition' => 'int(11) DEFAULT NULL',
