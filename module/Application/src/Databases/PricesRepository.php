@@ -197,10 +197,12 @@ class PricesRepository
             CC.asin, 
             CC.product_name,
             RIGHT(CC.product_url, (POSITION('/' IN REVERSE(CC.product_url)) - 1)) as 'productId',
-            " . $this->getSellPriceString() . "  as 'sellPrice',
-            CC.buy_price as 'buyPrice'
+            " . $this->getSellPriceString() . "  as 'cc_sell_price',
+            COALESCE(BL.troll_buy_price, CC.buy_price) as buy_price
             FROM crystal_commerce as CC 
             INNER JOIN sellery as SE on (SE.asin=CC.asin)
+            LEFT JOIN troll_products as TP on (CC.asin=TP.asin)
+            LEFT JOIN troll_buy_list as BL ON (TP.product_detail_id=BL.product_detail_id AND BL.troll_buy_quantity > 0)
             WHERE CC.product_name is NOT NULL
             AND SE.sellery_sell_price < 2  
             AND (SE.amazon_avg_new_price IS NOT NULL OR SE.sellery_sell_price IS NOT NULL)

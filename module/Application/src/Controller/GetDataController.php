@@ -250,7 +250,7 @@ class GetDataController extends AbstractActionController
         }
         return true;
     }
-
+/*
     public function getCrystalProductsUsingApiAction()
     {
         $scriptName  = 'Crystal Commerce API Price Update';
@@ -278,7 +278,7 @@ class GetDataController extends AbstractActionController
 
         return true;
     }
-
+*/
 
 
     protected function logScript($scriptName, $message)

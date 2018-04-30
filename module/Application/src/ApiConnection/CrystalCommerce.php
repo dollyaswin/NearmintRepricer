@@ -223,8 +223,8 @@ class CrystalCommerce extends ApiConnection
         $postVariables =[];
 
         foreach ($productArray as $product) {
-            $postVariables["products[{$product['productId']}][buy_price]"] = $product['buyPrice'];
-            $postVariables["products[{$product['productId']}][sell_price]"] = $product['sellPrice'];
+            $postVariables["products[{$product['productId']}][buy_price]"] = $product['buy_price'];
+            $postVariables["products[{$product['productId']}][sell_price]"] = $product['cc_sell_price'];
         }
 
         $postVariables['save_products'] = 'Save';
@@ -259,9 +259,6 @@ class CrystalCommerce extends ApiConnection
 
     public function downloadCsv($includeOutOfStock = false)
     {
-        //$result = $this->loadTestPage();
-
-        //print $result;
 
         $url = 'https://' . $this->config['adminDomain'] . '.crystalcommerce.com/inventory/update';
 

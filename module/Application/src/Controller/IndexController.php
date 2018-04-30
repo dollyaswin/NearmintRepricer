@@ -43,11 +43,10 @@ class IndexController extends AbstractActionController
             'Get Prices From Crystal Commerce, Include OOS' => '/get-data/get-crystal-commerce-data?includeOutOfStock=true',
             'Get Prices From Sellery' => '/get-data/get-sellery-pricing',
             'Get Buy Prices From Troll and Toad' => '/get-data/troll-buy-prices',
-
+            'Upload Prices to Crystal Commerce' => '/upload?inBrowser=true&updateLimit=20',
         ];
-        if (getenv('APPLICATION_ENV') == 'development') {
-            $scripts['Upload Test'] = '/upload?inBrowser=true&debug=true';
 
+        if (getenv('APPLICATION_ENV') == 'development') {
             $scripts['Crystal Commerce Data'] = '/get-data/get-crystal-products-using-api?inBrowser=true&debug=true';
             $scripts['Download Crystal Commerce Prices Skip Import'] = '/get-data/get-crystal-commerce-data?skipImport=true&inBrowser=true&debug=true';
             $scripts['Download Crystal Commerce Prices Skip Import Include OOS'] = '/get-data/get-crystal-commerce-data?skipImport=true&includeOutOfStock=true&inBrowser=true&debug=true';
