@@ -204,7 +204,6 @@ class PricesRepository
             LEFT JOIN troll_products as TP on (CC.asin=TP.asin)
             LEFT JOIN troll_buy_list as BL ON (TP.product_detail_id=BL.product_detail_id AND BL.troll_buy_quantity > 0)
             WHERE CC.product_name is NOT NULL
-            AND SE.sellery_sell_price < 2  
             AND (SE.amazon_avg_new_price IS NOT NULL OR SE.sellery_sell_price IS NOT NULL)
             AND ((ABS(CC.cc_sell_price - SE.sellery_sell_price) > CC.cc_sell_price*0.02 AND ABS(CC.cc_sell_price - SE.sellery_sell_price) > 0.05) 
                 OR SE.sellery_sell_price IS NULL) 
