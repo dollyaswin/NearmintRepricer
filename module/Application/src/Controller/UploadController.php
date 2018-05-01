@@ -63,7 +63,7 @@ class UploadController extends AbstractActionController
         $updatedProductsCC = [];
         $updatedProductsSE = [];
         foreach ($productsToUpdate as $key => $product) {
-            $this->logger->info(" {$product['product_name']} : has been updated to : " .
+            $this->logger->info("{$product['asin']} : {$product['product_name']} : has been updated to : " .
                 "sell : {$product['cc_sell_price']} : buy : {$product['buy_price']}");
             $updatedProductsCC[$key]['Sell Price'] = $product['cc_sell_price'];
             $updatedProductsCC[$key]['ASIN'] = $product['asin'];
