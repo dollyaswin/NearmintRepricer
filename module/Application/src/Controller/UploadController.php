@@ -6,6 +6,7 @@ namespace Application\Controller;
 use Application\ApiConnection\CrystalCommerce;
 use Application\Databases\CrystalCommerceRepository;
 use Application\Databases\PricesRepository;
+use Application\Databases\SellerEngineRepository;
 use Application\Factory\LoggerFactory;
 use Zend\Mvc\Controller\AbstractActionController;
 use Zend\View\Model\ViewModel;
@@ -38,8 +39,11 @@ class UploadController extends AbstractActionController
             $result = $crystal->updateProductPrices($productsToUpdate);
 
             if ($result) {
-                $this->logAndMarkProductsUpdated($productsToUpdate);
-                $this->logger->info("Upload Successful");
+                if($this->logAndMarkProductsUpdated($productsToUpdate)) {
+                    $this->logger->info("Upload Successful");
+                } else {
+                    $this->logger->warn("Upload Successful, but database update failed.");
+                }
             }
 
         }
@@ -52,22 +56,31 @@ class UploadController extends AbstractActionController
      * Update the database with  the buy price and sell price which were just sent to Crystal Commerce
      *
      * @param array $productsToUpdate numerically indexed array of products from Database
+     * @return bool success or failure
      */
     private function logAndMarkProductsUpdated($productsToUpdate)
     {
-        $updatedProducts = [];
+        $updatedProductsCC = [];
+        $updatedProductsSE = [];
         foreach ($productsToUpdate as $key => $product) {
             $this->logger->info(" {$product['product_name']} : has been updated to : " .
                 "sell : {$product['cc_sell_price']} : buy : {$product['buy_price']}");
-            $updatedProducts[$key]['Sell Price'] = $product['cc_sell_price'];
-            $updatedProducts[$key]['ASIN'] = $product['asin'];
-            $updatedProducts[$key]['Buy Price'] = $product['buy_price'];
+            $updatedProductsCC[$key]['Sell Price'] = $product['cc_sell_price'];
+            $updatedProductsCC[$key]['ASIN'] = $product['asin'];
+            $updatedProductsCC[$key]['Buy Price'] = $product['buy_price'];
+
+            $updatedProductsSE[$key]['Live price on Near Mint Games'] = $product['cc_sell_price'];
+            $updatedProductsSE[$key]['ASIN on amazon.com'] = $product['asin'];
+
         }
 
-        $repository = new CrystalCommerceRepository($this->logger, $this->debug);
-        $repository->importFromArray($updatedProducts);
-    }
+        $repositoryCC = new CrystalCommerceRepository($this->logger, $this->debug);
 
+        $repositorySE = new SellerEngineRepository($this->logger, $this->debug);
+        $result = $repositorySE->importFromArray($updatedProductsSE);
+
+        return $repositoryCC->importFromArray($updatedProductsCC) && $result;
+    }
 
     /**
      *  Update and return the array of products with modified by prices.
