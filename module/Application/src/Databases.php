@@ -218,11 +218,11 @@ abstract class Databases
                 $duplicateKeyClause .= "\n $columnName=VALUES($columnName),";
             }
             $insertQuery = trim($insertQuery,','); // trim off last comma
-            $duplicateKeyClause = trim($duplicateKeyClause,','); // trim off last comma
+            $duplicateKeyClause .= " last_updated=CURRENT_TIMESTAMP "; // There is a trailing comma, this will use it.
 
-            $insertQuery .= " ) ON DUPLICATE KEY UPDATE $duplicateKeyClause ;";
+            $insertQuery .= " ) ON DUPLICATE KEY UPDATE $duplicateKeyClause;";
 
-            //$this->logger->debug($insertQuery . PHP_EOL);
+            $this->logger->debug($insertQuery . PHP_EOL);
 
             $stmt = $this->conn->prepare($insertQuery);
 
