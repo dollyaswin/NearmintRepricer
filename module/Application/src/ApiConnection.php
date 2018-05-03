@@ -127,7 +127,8 @@ abstract class ApiConnection
             curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
         }
         // This would add the header to the returned page
-        curl_setopt($ch, CURLOPT_HEADER, true);
+        // Only use for testing, this will cause sellery download to fail.
+        //curl_setopt($ch, CURLOPT_HEADER, true);
 
         // $output contains the output string
         $output = curl_exec($ch);

@@ -75,7 +75,7 @@ return [
             'mapping' => 'I have the new Buy Box on Near Mint Games',
         ],
         'sellery_last_reprice_date' => [
-            'definition' => 'timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP',
+            'definition' => 'varchar(255) DEFAULT NULL',
             'mapping' => 'Last repriced on Near Mint Games',
         ],
         'sellery_minimum_price' => [
