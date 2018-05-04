@@ -77,9 +77,9 @@ class PricesRepository
      * IF THIS FUNCTION IS USED FOR ANOTHER SERVICE, you must leave the column aliases alone
      * or introduce a mapping for the crystal commerce update.
      *
-     * @param bool $quickUploadOnly
-     * @param bool|int $daysLimit
-     * @param bool $changesOnly - restrict results to only records which need updated.
+     * @param array $dropDownParameters
+     * @param array $checkBoxParameters
+     * @param integer $daysLimit
      *
      * @return array|bool false on failure, an associative array on success
      *********************************************/
@@ -192,11 +192,17 @@ class PricesRepository
 
     public function getPricesToUpdate($mode = 'instock', $limit = 20)
     {
+        $limit = intval($limit);
+        $extraSort = "";
+        $whereClause = "";
         if ($mode == 'instock') {
-            $whereClause = " WHERE CC.total_qty > 0 ";
+            $whereClause = " WHERE CC.total_qty > 0 
+                AND (ABS(CC.cc_sell_price - SE.sellery_sell_price) > CC.cc_sell_price*0.02
+                AND ABS(CC.cc_sell_price - SE.sellery_sell_price) > 0.05)";
         }
         if ($mode == 'onBuyList') {
             $whereClause = " WHERE CC.product_name IS NOT NULL AND BL.troll_buy_price > 0  ";
+            $extraSort = " , BL.troll_buy_price DESC ";
         }
 
         $query = "SELECT 
@@ -214,7 +220,7 @@ class PricesRepository
             LEFT JOIN troll_buy_list as BL ON (TP.product_detail_id=BL.product_detail_id AND BL.troll_buy_quantity > 0)
             LEFT JOIN last_price_update as LU ON (LU.asin=CC.asin)
             $whereClause
-            ORDER BY LU.asin IS NULL, LU.last_updated
+            ORDER BY LU.asin IS NOT NULL, LU.last_updated $extraSort
             LIMIT $limit;  ";
         $statement = $this->conn->prepare($query);
         $statement->execute();

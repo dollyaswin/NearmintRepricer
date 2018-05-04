@@ -8,6 +8,7 @@ use Application\Databases\CrystalCommerceRepository;
 use Application\Databases\LastPriceUpdatedRepository;
 use Application\Databases\PricesRepository;
 use Application\Databases\PriceUpdatesRepository;
+use Application\Databases\RunTimeRepository;
 use Application\Databases\SellerEngineRepository;
 use Application\Factory\LoggerFactory;
 use Zend\Mvc\Controller\AbstractActionController;
@@ -16,17 +17,28 @@ use Zend\View\Model\ViewModel;
 class UploadController extends AbstractActionController
 {
     private $debug;
-    private $inBrowser;
     private $updateLimit;
     private $logger;
 
+    protected $startTime;
+    protected $tempFileName;
+
+    public function __construct()
+    {
+        set_time_limit(0);
+        ini_set('memory_limit','1024M');
+        //date_default_timezone_set ('America/Chicago');  //This is set in php.ini now.
+        $this->startTime = date('Y-m-d H:i:s');
+        $this->debug = true;
+    }
+
     public function indexAction()
     {
-        $this->debug = $this->params()->fromQuery('debug', false);
-        $this->inBrowser = $this->params()->fromQuery('inBrowser', false);
-        $this->logger = LoggerFactory::createLogger('uploadLog.txt', $this->inBrowser, $this->debug);
+        $this->setLogger('uploadLog.txt');
+        $this->tempFileName = __DIR__ . '/../../../../logs/tempCCPriceUpdateLog.txt';
+        $this->addTempLogger($this->tempFileName);
 
-        $this->updateLimit = $this->params()->fromQuery('updateLimit', 15);
+        $this->updateLimit = intval($this->params()->fromQuery('updateLimit', 15));
         $this->mode = $this->params()->fromQuery('mode', 'instock');
 
         $prices = new PricesRepository($this->logger);
@@ -35,22 +47,26 @@ class UploadController extends AbstractActionController
 
 
         if (count($productsToUpdate) > 0 ) {
-            $productsToUpdate = $this->setBuyPrices($productsToUpdate);
-            $this->logger->debug(print_r($productsToUpdate, true));
+            $productsToUpdate = $this->calculatePrices($productsToUpdate);
+            //$this->logger->debug(print_r($productsToUpdate, true));
 
             $crystal = new CrystalCommerce($this->logger, $this->debug);
             $result = $crystal->updateProductPrices($productsToUpdate);
 
             if ($result) {
                 if($this->logAndMarkProductsUpdated($productsToUpdate)) {
-                    $this->logger->info("Upload Successful");
+                    $message = "Upload Successful in " . $this->mode . " mode";
                 } else {
-                    $this->logger->warn("Upload Successful, but database update failed.");
+                    $message = "Upload Successful in " . $this->mode . " mode, but database update failed.";
                 }
+            } else {
+                $message = "Failed to Upload prices to CC";
             }
 
+        } else {
+            $message = "No Prices to update";
         }
-
+        $this->logScript('Prices to CC Update',$message);
         return new ViewModel();
     }
 
@@ -70,20 +86,14 @@ class UploadController extends AbstractActionController
         foreach ($productsToUpdate as $key => $product) {
             $this->logger->info("{$product['asin']} : {$product['product_name']} : has been updated to : " .
                 "sell : {$product['sell_price_new']} : buy : {$product['buy_price_new']}");
-
-            $updatedProducts[$key]['sell_price_old'] = $product['cc_sell_price'];
-            $updatedProducts[$key]['sell_price_new'] = $product['cc_sell_price'];
-            $updatedProducts[$key]['asin'] = $product['asin'];
-            $updatedProducts[$key]['buy_price_old'] = $product['buy_price'];
-            $updatedProducts[$key]['buy_price_new'] = $product['buy_price'];
         }
 
         $repositoryPU = new PriceUpdatesRepository($this->logger, $this->debug);
         $repositoryLU = new LastPriceUpdatedRepository($this->logger, $this->debug);
 
-        $result = $repositoryLU->importFromArray($updatedProducts);
+        $result = $repositoryLU->importFromArray($productsToUpdate);
 
-        return $repositoryPU->importFromArray($updatedProducts) && $result;
+        return $repositoryPU->importFromArray($productsToUpdate) && $result;
     }
 
     private function calculatePrices($productsToUpdate)
@@ -107,13 +117,11 @@ class UploadController extends AbstractActionController
             $priceUpdates[$key]['sell_price_old'] = $product['cc_sell_price'];
             $priceUpdates[$key]['sell_price_new'] = $sellPrice;
             $priceUpdates[$key]['asin'] = $product['asin'];
+            $priceUpdates[$key]['productId'] = $product['productId'];
             $priceUpdates[$key]['buy_price_old'] = $product['cc_buy_price'];
             $priceUpdates[$key]['buy_price_new'] = $buyPrice;
 
         }
-
-
-
         return $priceUpdates;
     }
 
@@ -205,5 +213,27 @@ class UploadController extends AbstractActionController
         $30.00 - $59.99 - 60% of retail price
         $60.00 + 65% of retail price
     */
+
+    protected function logScript($scriptName, $message)
+    {
+        $runTimes = new RunTimeRepository($this->logger, $this->debug);
+        $this->logger->info($message);
+        $errorLog = substr(file_get_contents($this->tempFileName),0,1400);
+        $runTimes->logScriptRun($scriptName, $message, $errorLog, $this->startTime);
+        file_put_contents($this->tempFileName,'');
+    }
+
+    private function setLogger($fileName)
+    {
+        $this->debug = $this->params()->fromQuery('debug', false);
+        $inBrowser = $this->params()->fromQuery('inBrowser', false);
+        $this->logger = LoggerFactory::createLogger($fileName, $inBrowser, $this->debug);
+    }
+
+    private function addTempLogger($tempFileName)
+    {
+        $this->logger = LoggerFactory::addWriterToLogger($this->logger, $tempFileName);
+    }
+
 
 }
