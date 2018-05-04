@@ -9,6 +9,9 @@ return [
         'amazon_id' => 'asin',
         'product_name' => '`product_name`,`category_name`',
     ],
+    'indexes' => [
+        'toqtdx' => 'total_qty',
+    ],
     'columns' => [
         'record_id' => [
             'definition' => 'int(11) NOT NULL AUTO_INCREMENT',

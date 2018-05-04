@@ -8,6 +8,9 @@ return [
     'unique keys' => [
         'product_detail' => 'product_detail_id'
     ],
+    'indexes' => [
+        'asdx' => 'asin',
+    ],
     // In order to add columns to the table and the mapping, just update them here.
     'columns' => [
         'record_id' => [

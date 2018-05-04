@@ -220,8 +220,8 @@ class CrystalCommerce extends ApiConnection
         $postVariables =[];
 
         foreach ($productArray as $product) {
-            $postVariables["products[{$product['productId']}][buy_price]"] = $product['buy_price'];
-            $postVariables["products[{$product['productId']}][sell_price]"] = $product['cc_sell_price'];
+            $postVariables["products[{$product['productId']}][buy_price]"] = $product['buy_price_new'];
+            $postVariables["products[{$product['productId']}][sell_price]"] = $product['sell_price_new'];
         }
 
         $postVariables['save_products'] = 'Save';

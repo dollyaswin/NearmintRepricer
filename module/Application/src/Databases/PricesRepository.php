@@ -77,9 +77,9 @@ class PricesRepository
      * IF THIS FUNCTION IS USED FOR ANOTHER SERVICE, you must leave the column aliases alone
      * or introduce a mapping for the crystal commerce update.
      *
-     * @param bool $quickUploadOnly
-     * @param bool|int $daysLimit
-     * @param bool $changesOnly - restrict results to only records which need updated.
+     * @param array $dropDownParameters
+     * @param array $checkBoxParameters
+     * @param integer $daysLimit
      *
      * @return array|bool false on failure, an associative array on success
      *********************************************/
@@ -103,7 +103,6 @@ class PricesRepository
         } else {
             $trollBuyPriceJoin = '';
         }
-
 
         if (!empty($checkBoxParameters['selleryData'] )) {
             $selleryJoin = 'INNER JOIN sellery as SE on (SE.asin=CC.asin)';
@@ -191,23 +190,37 @@ class PricesRepository
         return $result;
     }
 
-    public function getPricesToUpdate($limit = 20){
+    public function getPricesToUpdate($mode = 'instock', $limit = 20)
+    {
+        $limit = intval($limit);
+        $extraSort = "";
+        $whereClause = "";
+        if ($mode == 'instock') {
+            $whereClause = " WHERE CC.total_qty > 0 
+                AND (ABS(CC.cc_sell_price - SE.sellery_sell_price) > CC.cc_sell_price*0.02
+                AND ABS(CC.cc_sell_price - SE.sellery_sell_price) > 0.05)";
+        }
+        if ($mode == 'onBuyList') {
+            $whereClause = " WHERE CC.product_name IS NOT NULL AND BL.troll_buy_price > 0  ";
+            $extraSort = " , BL.troll_buy_price DESC ";
+        }
 
         $query = "SELECT 
             CC.asin, 
             CC.product_name,
+            CC.total_qty,
+            SE.sellery_sell_price,
             RIGHT(CC.product_url, (POSITION('/' IN REVERSE(CC.product_url)) - 1)) as 'productId',
-            " . $this->getSellPriceString() . "  as 'cc_sell_price',
-            COALESCE(BL.troll_buy_price, CC.buy_price) as buy_price
+            CC.cc_sell_price,
+            BL.troll_buy_price,
+            CC.buy_price as cc_buy_price
             FROM crystal_commerce as CC 
-            INNER JOIN sellery as SE on (SE.asin=CC.asin)
+            LEFT JOIN sellery as SE on (SE.asin=CC.asin)
             LEFT JOIN troll_products as TP on (CC.asin=TP.asin)
             LEFT JOIN troll_buy_list as BL ON (TP.product_detail_id=BL.product_detail_id AND BL.troll_buy_quantity > 0)
-            WHERE CC.product_name is NOT NULL
-            AND (SE.amazon_avg_new_price IS NOT NULL OR SE.sellery_sell_price IS NOT NULL)
-            AND ((ABS(CC.cc_sell_price - SE.sellery_sell_price) > CC.cc_sell_price*0.02 AND ABS(CC.cc_sell_price - SE.sellery_sell_price) > 0.05) 
-                OR SE.sellery_sell_price IS NULL) 
-            ORDER BY SE.last_updated IS NULL, DATE(CC.last_updated), CC.cc_sell_price DESC
+            LEFT JOIN last_price_update as LU ON (LU.asin=CC.asin)
+            $whereClause
+            ORDER BY LU.asin IS NOT NULL, LU.last_updated $extraSort
             LIMIT $limit;  ";
         $statement = $this->conn->prepare($query);
         $statement->execute();
@@ -250,9 +263,6 @@ class PricesRepository
                     , 2 )";
         return $string;
     }
-
-
-
 
     /*********************************************
      * Convert an array into a CSV formatted string with it's keys as the

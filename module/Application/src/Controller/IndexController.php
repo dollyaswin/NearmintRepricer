@@ -18,7 +18,9 @@ namespace Application\Controller;
 use Application\ApiConnection\CrystalApi;
 use Application\ApiConnection\CrystalCommerce;
 use Application\ApiConnection\CrystalApi\ProductModel;
+use Application\Databases\LastPriceUpdatedRepository;
 use Application\Databases\PricesRepository;
+use Application\Databases\PriceUpdatesRepository;
 use Application\Databases\RunTimeRepository;
 use Application\Factory\LoggerFactory;
 use Zend\Mvc\Controller\AbstractActionController;
@@ -43,7 +45,8 @@ class IndexController extends AbstractActionController
             'Get Prices From Crystal Commerce, Include OOS' => '/get-data/get-crystal-commerce-data?includeOutOfStock=true',
             'Get Prices From Sellery' => '/get-data/get-sellery-pricing',
             'Get Buy Prices From Troll and Toad' => '/get-data/troll-buy-prices',
-            'Upload Prices to Crystal Commerce' => '/upload?inBrowser=true&updateLimit=20',
+            'Upload In Stock Prices to Crystal Commerce' => '/upload?inBrowser=true&updateLimit=20&mode=instock',
+            'Upload On Buy List Prices to Crystal Commerce' => '/upload?inBrowser=true&updateLimit=20&mode=onBuyList',
         ];
 
         if (getenv('APPLICATION_ENV') == 'development') {
@@ -77,17 +80,22 @@ class IndexController extends AbstractActionController
         return new ViewModel($variables);
     }
 
-
-
-
     public function testAction()
     {
         /*
-        $crystalApi = new CrystalApi\ProductDownload($this->logger, $this->debug);
-        $inventory = $crystalApi->downloadProducts();
-        $this->logger->info(print_r($inventory, true));
+        $arrayUpdate = [
+            [
+                'product_name' => 'Test',
+                'sell_price_old' => 1.20,
+                'sell_price_new' => 1.25,
+                'asin' => 'RANDOMLETTERS',
+                'buy_price_old' => 0.50,
+                'buy_price_new' => 0.75,
+            ]
+        ];
+        $repo = new LastPriceUpdatedRepository($this->logger, $this->debug);
+        $repo->importFromArray($arrayUpdate);
         */
-
     }
 
 
