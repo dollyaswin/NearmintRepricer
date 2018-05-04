@@ -4,12 +4,10 @@ namespace Application\Controller;
 
 
 use Application\ApiConnection\CrystalCommerce;
-use Application\Databases\CrystalCommerceRepository;
 use Application\Databases\LastPriceUpdatedRepository;
 use Application\Databases\PricesRepository;
 use Application\Databases\PriceUpdatesRepository;
 use Application\Databases\RunTimeRepository;
-use Application\Databases\SellerEngineRepository;
 use Application\Factory\LoggerFactory;
 use Zend\Mvc\Controller\AbstractActionController;
 use Zend\View\Model\ViewModel;
@@ -27,7 +25,6 @@ class UploadController extends AbstractActionController
     {
         set_time_limit(0);
         ini_set('memory_limit','1024M');
-        //date_default_timezone_set ('America/Chicago');  //This is set in php.ini now.
         $this->startTime = date('Y-m-d H:i:s');
         $this->debug = true;
     }
@@ -48,7 +45,6 @@ class UploadController extends AbstractActionController
 
         if (count($productsToUpdate) > 0 ) {
             $productsToUpdate = $this->calculatePrices($productsToUpdate);
-            //$this->logger->debug(print_r($productsToUpdate, true));
 
             $crystal = new CrystalCommerce($this->logger, $this->debug);
             $result = $crystal->updateProductPrices($productsToUpdate);

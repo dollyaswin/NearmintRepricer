@@ -82,7 +82,7 @@ class IndexController extends AbstractActionController
 
     public function testAction()
     {
-
+        /*
         $arrayUpdate = [
             [
                 'product_name' => 'Test',
@@ -95,6 +95,7 @@ class IndexController extends AbstractActionController
         ];
         $repo = new LastPriceUpdatedRepository($this->logger, $this->debug);
         $repo->importFromArray($arrayUpdate);
+        */
     }
 
 
