@@ -18,7 +18,9 @@ namespace Application\Controller;
 use Application\ApiConnection\CrystalApi;
 use Application\ApiConnection\CrystalCommerce;
 use Application\ApiConnection\CrystalApi\ProductModel;
+use Application\Databases\LastPriceUpdatedRepository;
 use Application\Databases\PricesRepository;
+use Application\Databases\PriceUpdatesRepository;
 use Application\Databases\RunTimeRepository;
 use Application\Factory\LoggerFactory;
 use Zend\Mvc\Controller\AbstractActionController;
@@ -77,17 +79,21 @@ class IndexController extends AbstractActionController
         return new ViewModel($variables);
     }
 
-
-
-
     public function testAction()
     {
-        /*
-        $crystalApi = new CrystalApi\ProductDownload($this->logger, $this->debug);
-        $inventory = $crystalApi->downloadProducts();
-        $this->logger->info(print_r($inventory, true));
-        */
 
+        $arrayUpdate = [
+            [
+                'product_name' => 'Test',
+                'sell_price_old' => 1.20,
+                'sell_price_new' => 1.25,
+                'asin' => 'RANDOMLETTERS',
+                'buy_price_old' => 0.50,
+                'buy_price_new' => 0.75,
+            ]
+        ];
+        $repo = new LastPriceUpdatedRepository($this->logger, $this->debug);
+        $repo->importFromArray($arrayUpdate);
     }
 
 

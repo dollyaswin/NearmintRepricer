@@ -5,7 +5,9 @@ namespace Application\Controller;
 
 use Application\ApiConnection\CrystalCommerce;
 use Application\Databases\CrystalCommerceRepository;
+use Application\Databases\LastPriceUpdatedRepository;
 use Application\Databases\PricesRepository;
+use Application\Databases\PriceUpdatesRepository;
 use Application\Databases\SellerEngineRepository;
 use Application\Factory\LoggerFactory;
 use Zend\Mvc\Controller\AbstractActionController;
@@ -25,9 +27,10 @@ class UploadController extends AbstractActionController
         $this->logger = LoggerFactory::createLogger('uploadLog.txt', $this->inBrowser, $this->debug);
 
         $this->updateLimit = $this->params()->fromQuery('updateLimit', 15);
+        $this->mode = $this->params()->fromQuery('mode', 'instock');
 
         $prices = new PricesRepository($this->logger);
-        $productsToUpdate = $prices->getPricesToUpdate($this->updateLimit);
+        $productsToUpdate = $prices->getPricesToUpdate($this->mode, $this->updateLimit);
 
 
 
@@ -48,9 +51,12 @@ class UploadController extends AbstractActionController
 
         }
 
-
         return new ViewModel();
     }
+
+    private $warningBuyPriceMultiplier = 1.3;
+    private $createBuyFromTrollBuyMultiplier = 1;
+
 
     /**
      * Update the database with  the buy price and sell price which were just sent to Crystal Commerce
@@ -60,67 +66,132 @@ class UploadController extends AbstractActionController
      */
     private function logAndMarkProductsUpdated($productsToUpdate)
     {
-        $updatedProductsCC = [];
-        $updatedProductsSE = [];
+        $updatedProducts = [];
         foreach ($productsToUpdate as $key => $product) {
             $this->logger->info("{$product['asin']} : {$product['product_name']} : has been updated to : " .
-                "sell : {$product['cc_sell_price']} : buy : {$product['buy_price']}");
-            $updatedProductsCC[$key]['Sell Price'] = $product['cc_sell_price'];
-            $updatedProductsCC[$key]['ASIN'] = $product['asin'];
-            $updatedProductsCC[$key]['Buy Price'] = $product['buy_price'];
+                "sell : {$product['sell_price_new']} : buy : {$product['buy_price_new']}");
 
-            $updatedProductsSE[$key]['Live price on Near Mint Games'] = $product['cc_sell_price'];
-            $updatedProductsSE[$key]['ASIN on amazon.com'] = $product['asin'];
+            $updatedProducts[$key]['sell_price_old'] = $product['cc_sell_price'];
+            $updatedProducts[$key]['sell_price_new'] = $product['cc_sell_price'];
+            $updatedProducts[$key]['asin'] = $product['asin'];
+            $updatedProducts[$key]['buy_price_old'] = $product['buy_price'];
+            $updatedProducts[$key]['buy_price_new'] = $product['buy_price'];
+        }
+
+        $repositoryPU = new PriceUpdatesRepository($this->logger, $this->debug);
+        $repositoryLU = new LastPriceUpdatedRepository($this->logger, $this->debug);
+
+        $result = $repositoryLU->importFromArray($updatedProducts);
+
+        return $repositoryPU->importFromArray($updatedProducts) && $result;
+    }
+
+    private function calculatePrices($productsToUpdate)
+    {
+        $priceUpdates = [];
+
+        foreach($productsToUpdate as $key => $product) {
+
+            $sellPrice = $this->determineSellPrice($product);
+            if ($product['troll_buy_price']) {
+                $buyPrice = $product['troll_buy_price'] * $this->createBuyFromTrollBuyMultiplier;
+            } else {
+                if ($product['sellery_sell_price'] && $product['total_qty'] >0 ) {
+                    $buyPrice = $this->getBuyPrice($sellPrice);
+                } else {
+                    // buy price unchanged
+                    $buyPrice = $product['cc_buy_price'];
+                }
+            }
+            $priceUpdates[$key]['product_name'] = $product['product_name'];
+            $priceUpdates[$key]['sell_price_old'] = $product['cc_sell_price'];
+            $priceUpdates[$key]['sell_price_new'] = $sellPrice;
+            $priceUpdates[$key]['asin'] = $product['asin'];
+            $priceUpdates[$key]['buy_price_old'] = $product['cc_buy_price'];
+            $priceUpdates[$key]['buy_price_new'] = $buyPrice;
 
         }
 
-        $repositoryCC = new CrystalCommerceRepository($this->logger, $this->debug);
 
-        $repositorySE = new SellerEngineRepository($this->logger, $this->debug);
-        $result = $repositorySE->importFromArray($updatedProductsSE);
 
-        return $repositoryCC->importFromArray($updatedProductsCC) && $result;
+        return $priceUpdates;
+    }
+
+    private function determineSellPrice($product)
+    {
+        if ($product['sellery_sell_price'] && $product['total_qty'] >0) {
+            if ($product['troll_buy_price']*$this->warningBuyPriceMultiplier  > $product['sellery_sell_price']) {
+                $sellPrice = $this->getSellPriceFromBuyPrice($product['troll_buy_price']);
+            } else {
+                $sellPrice = $product['sellery_sell_price'];
+            }
+        } else {
+            if ($product['troll_buy_price']) {
+                $sellPrice = $this->getSellPriceFromBuyPrice($product['troll_buy_price']);
+            } else {
+                // in order words, do not change the price
+                $sellPrice = $product['cc_sell_price'];
+            }
+        }
+        return $sellPrice;
     }
 
     /**
-     *  Update and return the array of products with modified by prices.
+     *  For a given sell price, calculate the buy price
      *
-     * @param array $productsToUpdate
-     * @return array
+     * @param float $sellPrice
+     * @return float 2 decimal point precision
      */
-    private function setBuyPrices($productsToUpdate)
+    private function getBuyPrice($sellPrice)
     {
-        foreach ($productsToUpdate as $key => $product) {
-            if ($product['buy_price'] > $product['cc_sell_price'] * 0.75 ) {
-                $sellPrice = $product['cc_sell_price'];
-                switch ($sellPrice ) {
-                    case $sellPrice < 1.5 :
-                        $percentage = 0.25;
-                        break;
-                    case $sellPrice < 3 :
-                        $percentage = 0.35;
-                        break;
-                    case $sellPrice < 6 :
-                        $percentage = 0.40;
-                        break;
-                    case $sellPrice < 15 :
-                        $percentage = 0.50;
-                        break;
-                    case $sellPrice < 30 :
-                        $percentage = 0.55;
-                        break;
-                    case $sellPrice < 60 :
-                        $percentage = 0.25;
-                        break;
-                    default :
-                        $percentage = 0.65;
-                        break;
-                }
-                $product['buy_price'] = $sellPrice * $percentage;
-            }
-            $productsToUpdate[$key]['buy_price'] = number_format($product['buy_price'], 2);
+        switch ($sellPrice ) {
+            case $sellPrice < 1.5 :
+                $percentage = 0.25;
+                break;
+            case $sellPrice < 3 :
+                $percentage = 0.35;
+                break;
+            case $sellPrice < 6 :
+                $percentage = 0.40;
+                break;
+            case $sellPrice < 15 :
+                $percentage = 0.50;
+                break;
+            case $sellPrice < 30 :
+                $percentage = 0.55;
+                break;
+            case $sellPrice < 60 :
+                $percentage = 0.25;
+                break;
+            default :
+                $percentage = 0.65;
+                break;
         }
-        return $productsToUpdate;
+        $buyPrice = $sellPrice * $percentage;
+        return number_format($buyPrice, 2);
+    }
+
+    /**
+     *  For a given sell price, calculate the buy price
+     *
+     * @param float $buyPrice
+     * @return float 2 decimal point precision
+     */
+    private function getSellPriceFromBuyPrice($buyPrice)
+    {
+        switch ($buyPrice ) {
+            case $buyPrice < 2:
+                $percentage = 4;
+                break;
+            case $buyPrice < 4 :
+                $percentage = 3;
+                break;
+            default :
+                $percentage = 2;
+                break;
+        }
+        $sellPrice = $buyPrice * $percentage;
+        return number_format($sellPrice, 2);
     }
 
     /*
@@ -134,7 +205,5 @@ class UploadController extends AbstractActionController
         $30.00 - $59.99 - 60% of retail price
         $60.00 + 65% of retail price
     */
-
-
 
 }

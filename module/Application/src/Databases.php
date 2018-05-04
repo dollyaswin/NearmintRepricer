@@ -159,13 +159,18 @@ abstract class Databases
         }
 
         $keys = '';
-        if (isset($this->config['primary key']) || isset($this->config['unique keys'])) {
+        if (isset($this->config['primary key']) || isset($this->config['unique keys']) || isset($this->config['indexes'])) {
             if (isset($this->config['primary key'])) {
                 $keys .= 'PRIMARY KEY (' . $this->config['primary key'] . "),\n";
             }
             if (isset($this->config['unique keys'])) {
                 foreach ($this->config['unique keys'] as $name => $value) {
                     $keys .= "UNIQUE KEY $name ( $value),";
+                }
+            }
+            if (isset($this->config['indexes'])) {
+                foreach ($this->config['indexes'] as $name => $value) {
+                    $keys .= "KEY $name ( $value),";
                 }
             }
             $keys = trim ($keys, ",\n");
