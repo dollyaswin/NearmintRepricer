@@ -213,7 +213,7 @@ class CrystalCommerce extends ApiConnection
         fclose($fp);
     }
 
-    public function updateProductPrices($productArray)
+    public function updateProductPrices($productArray, $retry = true)
     {
         $url = 'https://' . $this->config['adminDomain'] . '.crystalcommerce.com/inventory/update_multiple';
 
@@ -244,6 +244,13 @@ class CrystalCommerce extends ApiConnection
         if(strpos($result, 'have been made successfully') !== false) {
             // success
             return true;
+        }
+
+        // after first failure, sleep and try again once, and only once.
+        if ($retry) {
+            $this->logger->info("Failed on First Attempt. Sleeping and trying again.");
+            sleep(10);
+            return $this->updateProductPrices($productArray, false);
         }
         $this->logger->warn("The update was not successful " . $result);
         //failure
