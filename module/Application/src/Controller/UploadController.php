@@ -60,7 +60,7 @@ class UploadController extends AbstractActionController
             }
 
         } else {
-            $message = "No Prices to update";
+            $message = "No Prices to update in " . $this->mode . " mode";
         }
         $this->logScript('Prices to CC Update',$message);
         return new ViewModel();
