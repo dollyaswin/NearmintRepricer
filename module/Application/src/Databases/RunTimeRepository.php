@@ -14,20 +14,22 @@ class RunTimeRepository extends Databases
         return array_merge($parent, $child);
     }
 
-    public function getLastRunTime($scriptName)
+    public function getRecentRunTimeInformation($scriptId, $limit = 20)
     {
+        $limit = intval($limit);
+        $scriptId = intval($scriptId);
+
         $query = "SELECT * 
             FROM SCRIPT_RUN_LOG 
-            WHERE script_name = '{$scriptName}'
+            WHERE script_id = $scriptId
             ORDER BY completion_time DESC 
-            LIMIT 1
-            ;";
+            LIMIT $limit";
         $statement = $this->conn->prepare($query);
         $statement->execute();
         if ($statement->rowCount() == 0) {
             return false;
         }
-        $result = $statement->fetch(\PDO::FETCH_ASSOC);
+        $result = $statement->fetchAll(\PDO::FETCH_ASSOC);
         return $result;
     }
 
@@ -49,6 +51,24 @@ class RunTimeRepository extends Databases
         return $result;
     }
 
+    public function getLastRunInformation()
+    {
+        $query = "SELECT newest.*
+            FROM SCRIPT_RUN_LOG as newest
+            LEFT JOIN SCRIPT_RUN_LOG as newer on (newer.script_id=newest.script_id AND newest.start_time < newer.start_time)
+            WHERE newer.script_id IS NULL
+            AND newest.start_time > DATE_SUB(CURRENT_TIME, interval 30 day)
+            ORDER BY completion_time DESC ;";
+        $statement = $this->conn->prepare($query);
+        $statement->execute();
+        if ($statement->rowCount() == 0) {
+            return false;
+        }
+        $result = $statement->fetchAll(\PDO::FETCH_ASSOC);
+        return $result;
+    }
+
+
 
     /*********************************************************
      * Add this script run instance to the log.
@@ -64,10 +84,14 @@ class RunTimeRepository extends Databases
      *********************************************************/
     public function logScriptRun($scriptName, $scriptResult, $scriptErrorMessage, $startTime)
     {
+        // Lookup ScriptId
+        $scriptId = $this->config->scriptList[$scriptName];
+
         $this->logger->debug("Inside " . __METHOD__ );
-        $query = "INSERT INTO SCRIPT_RUN_LOG (script_name, script_result, script_error_message, start_time)  
-            VALUES (:scriptName, :scriptResult, :scriptErrorMessage, :startTime);";
+        $query = "INSERT INTO SCRIPT_RUN_LOG (script_id, script_name, script_result, script_error_message, start_time)  
+            VALUES (:scriptId, :scriptName, :scriptResult, :scriptErrorMessage, :startTime);";
         $statement = $this->conn->prepare($query);
+        $statement->bindValue(':scriptId', $scriptId);
         $statement->bindValue(':scriptName', $scriptName);
         $statement->bindValue(':scriptResult', $scriptResult);
         $statement->bindValue(':scriptErrorMessage', $scriptErrorMessage);

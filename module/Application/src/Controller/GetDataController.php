@@ -26,6 +26,7 @@ use Application\Databases\SellerEngineRepository;
 use Application\Databases\TrollBuyListRepository;
 use Application\Databases\TrollProductRepository;
 use Application\Factory\LoggerFactory;
+use Application\ScriptNames;
 use Zend\Mvc\Controller\AbstractActionController;
 use Zend\View\Model\ViewModel;
 
@@ -62,7 +63,7 @@ class GetDataController extends AbstractActionController
 
         $message = "Successfully ran test Script.";
         //$this->logger->info($message);
-        $this->logScript('Test Script Update', $message);
+        $this->logScript(ScriptNames::SCRIPT_TEST, $message);
     }
 
     /**
@@ -101,7 +102,7 @@ class GetDataController extends AbstractActionController
             } else {
                 $message = "Failed to import CSV File.";
             }
-            $this->logScript('Troll Buy Price Update',$message);
+            $this->logScript(ScriptNames::SCRIPT_GET_TROLL_BUY,$message);
         }
     }
 
@@ -111,7 +112,7 @@ class GetDataController extends AbstractActionController
      */
     public function trollProductsAction()
     {
-        $scriptName = 'Troll Product Import';
+        $scriptName = ScriptNames::SCRIPT_LOAD_TROLL_TRODUCTS;
 
         if (!$this->getRequest()->isPost()) {
             return new ViewModel();
@@ -156,7 +157,7 @@ class GetDataController extends AbstractActionController
 
     public function getSelleryPricingAction()
     {
-        $scriptName = 'Sellery Price Update';
+        $scriptName = ScriptNames::SCRIPT_GET_SELLERY_PRICES;
 
         $this->setLogger('SelleryPricesUpdateLog.txt');
         $this->tempFileName = __DIR__ . '/../../../../logs/tempSelleryLog.txt';
@@ -208,7 +209,7 @@ class GetDataController extends AbstractActionController
      ****************************************/
     public function getCrystalCommerceDataAction()
     {
-        $scriptName  = 'Crystal Commerce Price Update';
+        $scriptName  = ScriptNames::SCRIPT_GET_CC_PRICES;
 
         $this->setLogger('CrystalCommerceGetPricesLog.txt');
         $this->tempFileName = __DIR__ . '/../../../../logs/tempCCLog.txt';
@@ -253,7 +254,7 @@ class GetDataController extends AbstractActionController
 /*
     public function getCrystalProductsUsingApiAction()
     {
-        $scriptName  = 'Crystal Commerce API Price Update';
+        $scriptName  = ScriptNames::SCRIPT_GET_CC_PRICES_API;
 
         $this->setLogger('CrystalCommerceGetDataLog.txt');
         $this->tempFileName = __DIR__ . '/../../../../logs/tempCCLog.txt';
@@ -279,7 +280,6 @@ class GetDataController extends AbstractActionController
         return true;
     }
 */
-
 
     protected function logScript($scriptName, $message)
     {

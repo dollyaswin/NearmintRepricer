@@ -17,13 +17,13 @@ function buildScriptRunString($recentScriptRunData)
         $output = '<table border="1" width="100%">';
         $output .= "<tr>";
         foreach ($recentScriptRunData[0] as $label => $blank) {
-            if ($label == 'script_error_message' || $label == 'record_id') {
+            if ($label == 'record_id' || $label == 'script_id') {
                 continue;
             }
-            if ($label == 'script_id') {
-                $output .= '<td class="btn-success" > See More </td>';
+            if ($label == 'script_error_message') {
+                $output .= '<td class="btn-success limitColumnWidth">' . $label . '</td>';
             } else {
-                $output .= '<td class="btn-success" >' . $label . '</td>';
+               $output .= '<td class="btn-success" >' . $label . '</td>';
             }
         }
         $output .= "</tr>";
@@ -32,11 +32,15 @@ function buildScriptRunString($recentScriptRunData)
         foreach ($recentScriptRunData as $run) {
             $output .= "<tr>";
             foreach ($run as $label => $value) {
-                if ($label == 'script_error_message' || $label == 'record_id') {
+                if ($label == 'record_id' || $label == 'script_id') {
                     continue;
                 }
-                if ($label == 'script_id') {
-                    $output .= '<td> <a href="/reporting/last-run/' . $value . '/20" target="_blank" > See more </a> </td>';
+                if ($label == 'script_error_message') {
+                    if (stripos($run['script_result'],'failed') === false) {
+                        // The script did not error, do not print log
+                        $value = "";
+                    }
+                    $output .= '<td class="limitColumnWidth">' . $value . '</td>';
                 } else {
                     $output .= '<td>' . $value . '</td>';
                 }
@@ -54,14 +58,7 @@ function buildScriptRunString($recentScriptRunData)
 
 ?>
 
-<div class="jumbotron">
-    <h1>Welcome to the Repricer Project</span></h1>
-
-    <p>
-        This is a project by Andrew Stokinger written for Near Mint Games, using Zend Framework 3
-    </p>
-</div>
-
+<!--
 <div class="row">
 
     <div class="col-md-6">
@@ -75,7 +72,7 @@ function buildScriptRunString($recentScriptRunData)
                     They will take quite a while to run, please don't close your browser.
                     <?= buildLinkString($scripts) ?>
                 </p>
-                <!--             <p><a class="btn btn-success pull-right" href="http://framework.zend.com/" target="_blank">ZF Development Portal &raquo;</a></p> -->
+
             </div>
         </div>
     </div>
@@ -89,12 +86,13 @@ function buildScriptRunString($recentScriptRunData)
                 <p>
                     <?= buildLinkString($downloads) ?>
                 </p>
-
-       <!--         <p><a class="btn btn-success pull-right" href="http://modules.zendframework.com/" target="_blank">Explore ZF Modules &raquo;</a></p> -->
             </div>
         </div>
     </div>
 </div>
+-->
+
+
 <div class="row">
     <div class="col-md-15">
         <div class="panel panel-default">

@@ -12,7 +12,6 @@
  *
  ******************************************/
 
-
 namespace Application\Controller;
 
 use Application\ApiConnection\CrystalApi;
@@ -68,7 +67,7 @@ class IndexController extends AbstractActionController
         ];
 
         $scriptRunRepo = new RunTimeRepository($this->logger, $this->debug);
-        $recentRunData = $scriptRunRepo->getRunInformation(10);
+        $recentRunData = $scriptRunRepo->getLastRunInformation();
 
         $variables = [
             'scripts' => $scripts,
