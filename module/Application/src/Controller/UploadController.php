@@ -9,6 +9,7 @@ use Application\Databases\PricesRepository;
 use Application\Databases\PriceUpdatesRepository;
 use Application\Databases\RunTimeRepository;
 use Application\Factory\LoggerFactory;
+use Application\ScriptNames;
 use Zend\Mvc\Controller\AbstractActionController;
 use Zend\View\Model\ViewModel;
 
@@ -36,10 +37,10 @@ class UploadController extends AbstractActionController
         $this->addTempLogger($this->tempFileName);
 
         $this->updateLimit = intval($this->params()->fromQuery('updateLimit', 15));
-        $this->mode = $this->params()->fromQuery('mode', 'instock');
+        $mode = $this->params()->fromQuery('mode', 'instock');
 
         $prices = new PricesRepository($this->logger);
-        $productsToUpdate = $prices->getPricesToUpdate($this->mode, $this->updateLimit);
+        $productsToUpdate = $prices->getPricesToUpdate($mode, $this->updateLimit);
 
 
 
@@ -51,18 +52,25 @@ class UploadController extends AbstractActionController
 
             if ($result) {
                 if($this->logAndMarkProductsUpdated($productsToUpdate)) {
-                    $message = "Upload Successful in " . $this->mode . " mode";
+                    $message = "Upload Successful in " . $mode . " mode";
                 } else {
-                    $message = "Upload Successful in " . $this->mode . " mode, but database update failed.";
+                    $message = "Upload Successful in " . $mode . " mode, but database update failed.";
                 }
             } else {
                 $message = "Failed to Upload prices to CC";
             }
 
         } else {
-            $message = "No Prices to update in " . $this->mode . " mode";
+            $message = "No Prices to update in " . $mode. " mode";
         }
-        $this->logScript('Prices to CC Update',$message);
+
+        if ($mode == 'instock') {
+            $scriptName = ScriptNames::SCRIPT_PRICES_TO_CC_INSTOCK;
+        } else {
+            $scriptName = ScriptNames::SCRIPT_PRICES_TO_CC_BUY;
+        }
+
+        $this->logScript($scriptName,$message);
         return new ViewModel();
     }
 

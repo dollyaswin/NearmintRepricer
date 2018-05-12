@@ -62,7 +62,6 @@ class GetDataController extends AbstractActionController
         $this->addTempLogger($this->tempFileName);
 
         $message = "Successfully ran test Script.";
-        //$this->logger->info($message);
         $this->logScript(ScriptNames::SCRIPT_TEST, $message);
     }
 

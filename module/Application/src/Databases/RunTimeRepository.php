@@ -84,8 +84,8 @@ class RunTimeRepository extends Databases
      *********************************************************/
     public function logScriptRun($scriptName, $scriptResult, $scriptErrorMessage, $startTime)
     {
-        // Lookup ScriptId
-        $scriptId = $this->config->scriptList[$scriptName];
+        // Lookup ScriptId default to 1, ?? is coalesce operator
+        $scriptId = $this->config['scriptList'][$scriptName] ?? 1;
 
         $this->logger->debug("Inside " . __METHOD__ );
         $query = "INSERT INTO SCRIPT_RUN_LOG (script_id, script_name, script_result, script_error_message, start_time)  

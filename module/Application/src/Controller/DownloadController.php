@@ -127,6 +127,68 @@ class DownloadController extends AbstractActionController
         return $outputArray;
     }
 
+    public function getUnmatchedAsinsAction()
+    {
+
+        $source = $this->params()->fromQuery('source', 'crystal');
+
+        // Get data from mysql
+        $pricesRepo = new PricesRepository($this->logger, $this->debug);
+        $records = $pricesRepo->getUnmatchedProductsByAsin($source);
+
+        $downloadPath = $this->config['tempDownloadName'];
+        $downloadPath = str_replace(['\\','/'],DIRECTORY_SEPARATOR, $downloadPath);
+
+        $this->logger->debug("Download Path $downloadPath");
+        if (file_exists($downloadPath)) {
+            unlink($downloadPath);
+        }
+
+        if ($records) {
+            $this->logger->debug( "Prices array exists");
+            $this->createFileForImport($records, $downloadPath);
+            // Read data into string
+            $csvString = file_get_contents($downloadPath);
+            // send data to browser with a filename.
+            $timestamp = date('Y-m-d-His');
+            return $this->returnFileFromString('productsWithUnmatchedAsins' . $timestamp . '.csv', $csvString);
+        } else {
+            print "There are no records with bad ASINs.";
+            return new ViewModel();
+        }
+    }
+
+    public function getRecentPriceChangesAction()
+    {
+        $days = $this->params()->fromQuery('range', 1);
+
+        // Get data from mysql
+        $pricesRepo = new PricesRepository($this->logger, $this->debug);
+        $records = $pricesRepo->getRecentPriceChanges($days);
+
+        $downloadPath = $this->config['tempDownloadName'];
+        $downloadPath = str_replace(['\\','/'],DIRECTORY_SEPARATOR, $downloadPath);
+
+        $this->logger->debug("Download Path $downloadPath");
+        if (file_exists($downloadPath)) {
+            unlink($downloadPath);
+        }
+
+        if ($records) {
+            $this->logger->debug( "Prices array exists");
+            $this->createFileForImport($records, $downloadPath);
+            // Read data into string
+            $csvString = file_get_contents($downloadPath);
+            // send data to browser with a filename.
+            $timestamp = date('Y-m-d-His');
+            return $this->returnFileFromString('recentPriceChanges' . $timestamp . '.csv', $csvString);
+        } else {
+            print "There are price changes in that many days";
+            return new ViewModel();
+        }
+    }
+
+
     /**
      *  Process the Form POST action to create a CSV file from the database
      *  and return that file to the user.
