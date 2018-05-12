@@ -236,6 +236,56 @@ class PricesRepository
         return $result;
     }
 
+    public function getUnmatchedProductsByAsin($source = 'crystal')
+    {
+        if ($source == 'crystal') {
+            $query = "SELECT CC.asin, CC.product_name, CC.category_name, CC.cc_sell_price, CC.total_qty, 'Crystal' AS asin_source
+                FROM crystal_commerce AS CC 
+                LEFT JOIN sellery AS SE ON (SE.asin=CC.asin)
+                WHERE SE.asin IS NULL 
+                AND CC.total_qty > 0;";
+        } else {
+            $query = "SELECT SE.asin, SE.amazon_title, SE.sellery_sell_price, amazon_sold_in_180, 'Sellery' AS asin_source
+                FROM sellery AS SE
+                LEFT JOIN crystal_commerce AS CC ON (SE.asin=CC.asin)
+                WHERE CC.asin IS NULL
+                AND SE.asin IS NOT NULL;";
+        }
+        $statement = $this->conn->prepare($query);
+        $statement->execute();
+        $result = $statement->fetchAll(\PDO::FETCH_ASSOC);
+
+        if (count($result) == 0) {
+            $this->logger->info("No products without matching ASINS" );
+
+            return false;
+        }
+        return $result;
+    }
+
+    public function getRecentPriceChanges($days)
+    {
+        $days = intval($days);
+        $query = "SELECT PU.asin, 
+            CC.product_name, CC.category_name, CC.total_qty, 
+            PU.sell_price_old, PU.sell_price_new, PU.buy_price_old, PU.buy_price_new, PU.last_updated 
+            FROM price_updates as PU
+            LEFT JOIN crystal_commerce as CC on (CC.asin=PU.asin) 
+            WHERE PU.last_updated > DATE_SUB(CURRENT_TIMESTAMP, interval $days day)
+            ORDER BY PU.asin, PU.last_updated
+            LIMIT 30000;";
+
+        $statement = $this->conn->prepare($query);
+        $statement->execute();
+        $result = $statement->fetchAll(\PDO::FETCH_ASSOC);
+
+        if (count($result) == 0) {
+            $this->logger->info("No products were repriced during the last $days days" );
+            return false;
+        }
+        return $result;
+    }
+
     /**********************************************************
      * This is the heart of the repricing calculation. The logic for what price is uploaded to CC
      * is determined in this clause of the query.  Replace or modify here and update the below comment

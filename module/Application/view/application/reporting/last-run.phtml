@@ -1,0 +1,74 @@
+<?php
+
+function buildLinkString($links)
+{
+    $output = '<table border="0" >';
+    foreach ($links as $label => $url) {
+        $output .= '<tr><td><a href="' . $url . '" target="_blank">' . $label . '</a></td></tr>';
+    }
+
+    $output .= "</table>";
+    return $output;
+}
+
+function buildScriptRunString($recentScriptRunData)
+{
+    if ($recentScriptRunData ) {
+        $output = '<table border="1" width="100%">';
+        $output .= "<tr>";
+        foreach ($recentScriptRunData[0] as $label => $blank) {
+            if ($label == 'record_id' || $label == 'script_id') {
+                continue;
+            }
+            if ($label == 'script_error_message') {
+                $output .= '<td class="btn-success limitColumnWidth">' . $label . '</td>';
+            } else {
+               $output .= '<td class="btn-success" >' . $label . '</td>';
+            }
+        }
+        $output .= "</tr>";
+
+
+        foreach ($recentScriptRunData as $run) {
+            $output .= "<tr>";
+            foreach ($run as $label => $value) {
+                if ($label == 'record_id' || $label == 'script_id') {
+                    continue;
+                }
+                if ($label == 'script_error_message') {
+                    if (stripos($run['script_result'],'failed') === false) {
+                        // The script did not error, do not print log
+                        $value = "";
+                    }
+                    $output .= '<td class="limitColumnWidth">' . $value . '</td>';
+                } else {
+                    $output .= '<td>' . $value . '</td>';
+                }
+            }
+            $output .= "</tr>";
+        }
+        $output .= "</table>";
+    } else {
+        $output = "There is no script run data available.";
+    }
+
+    return $output;
+}
+
+
+?>
+<div class="row">
+    <div class="col-md-15">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">Recently Run Scripts : </h3>
+            </div>
+            <div class="panel-body">
+                <p>
+                    <?= buildScriptRunString($recentScriptRunData) ?>
+                </p>
+
+            </div>
+        </div>
+    </div>
+</div>

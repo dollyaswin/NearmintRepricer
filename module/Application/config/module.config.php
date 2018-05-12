@@ -56,6 +56,20 @@ return [
                     ],
                 ],
             ],
+            'reporting' => [
+                'type'    => Segment::class,
+                'options' => [
+                    'route'    => '/reporting[/:action/:reportId/:limit]',
+                    'constraints' => [
+                        'reportId' => '[0-9]*',
+                        'limit' => '[0-9]*'
+                    ],
+                    'defaults' => [
+                        'controller'    => Controller\ReportingController::class,
+                        'action'        => 'index',
+                    ],
+                ],
+            ],
             'application' => [
                 'type'    => Segment::class,
                 'options' => [
@@ -74,6 +88,7 @@ return [
             Controller\UploadController::class => InvokableFactory::class,
             Controller\DownloadController::class => InvokableFactory::class,
             Controller\GetDataController::class => InvokableFactory::class,
+            Controller\ReportingController::class => InvokableFactory::class,
         ],
     ],
     'view_manager' => [

@@ -12,7 +12,6 @@
  *
  ******************************************/
 
-
 namespace Application\Controller;
 
 use Application\ApiConnection\CrystalApi;
@@ -50,25 +49,26 @@ class IndexController extends AbstractActionController
         ];
 
         if (getenv('APPLICATION_ENV') == 'development') {
-            $scripts['Crystal Commerce Data'] = '/get-data/get-crystal-products-using-api?inBrowser=true&debug=true';
+            //$scripts['Crystal Commerce Data'] = '/get-data/get-crystal-products-using-api?inBrowser=true&debug=true';
             $scripts['Download Crystal Commerce Prices Skip Import'] = '/get-data/get-crystal-commerce-data?skipImport=true&inBrowser=true&debug=true';
             $scripts['Download Crystal Commerce Prices Skip Import Include OOS'] = '/get-data/get-crystal-commerce-data?skipImport=true&includeOutOfStock=true&inBrowser=true&debug=true';
+            $scripts['Download Sellery Prices Skip Import'] = '/get-data/get-sellery-pricing?skipImport=true&inBrowser=true&debug=true';
             $scripts['Load Crystal Commerce Prices From Local File'] = '/get-data/get-crystal-commerce-data?skipDownload=true&inBrowser=true&debug=true';
             $scripts['Load Sellery Prices From Local File'] = '/get-data/get-sellery-pricing?skipDownload=true&inBrowser=true&debug=true';
-            $scripts['Download Sellery Prices Skip Import'] = '/get-data/get-sellery-pricing?skipImport=true&inBrowser=true&debug=true';
-            //$scripts['Test Script'] = 'http://localhost:8080/get-data/test-script';
+            $scripts['Test Script'] = 'http://localhost:8080/get-data/test-script';
         }
 
         $downloads = [
             'Spreadsheet Generator' => '/download',
             'Import Troll Product List' => '/get-data/troll-products',
             'Download Unmatched Troll Products' => '/download/unmatched-troll-products',
-            //'Download Prices With > 2% and > $0.05 changes' => '/download/prices-to-update?daysLimit=1&changesOnly=true',
-            //'Download Price List for Quick Upload' => '/download/prices-to-update?quickUploadOnly=true&changesOnly=true',
+            'Download Unmatched ASINs on CC' => '/download/get-unmatched-asins?source=crystal',
+            'Download Unmatched ASINs on Sellery' => '/download/get-unmatched-asins?source=sellery',
+            'Download Recent Price Changes' => '/download/get-recent-price-changes?days=1',
         ];
 
         $scriptRunRepo = new RunTimeRepository($this->logger, $this->debug);
-        $recentRunData = $scriptRunRepo->getRunInformation(10);
+        $recentRunData = $scriptRunRepo->getLastRunInformation();
 
         $variables = [
             'scripts' => $scripts,

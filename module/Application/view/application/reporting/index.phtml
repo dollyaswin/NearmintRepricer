@@ -20,11 +20,7 @@ function buildScriptRunString($recentScriptRunData)
             if ($label == 'script_error_message' || $label == 'record_id') {
                 continue;
             }
-            if ($label == 'script_id') {
-                $output .= '<td class="btn-success" > See More </td>';
-            } else {
-                $output .= '<td class="btn-success" >' . $label . '</td>';
-            }
+            $output .= '<td class="btn-success" >' . $label . '</td>';
         }
         $output .= "</tr>";
 
@@ -35,11 +31,7 @@ function buildScriptRunString($recentScriptRunData)
                 if ($label == 'script_error_message' || $label == 'record_id') {
                     continue;
                 }
-                if ($label == 'script_id') {
-                    $output .= '<td> <a href="/reporting/last-run/' . $value . '/20" target="_blank" > See more </a> </td>';
-                } else {
-                    $output .= '<td>' . $value . '</td>';
-                }
+                $output .= '<td>' . $value . '</td>';
             }
             $output .= "</tr>";
         }
