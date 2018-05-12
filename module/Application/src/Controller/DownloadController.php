@@ -183,7 +183,7 @@ class DownloadController extends AbstractActionController
             $timestamp = date('Y-m-d-His');
             return $this->returnFileFromString('recentPriceChanges' . $timestamp . '.csv', $csvString);
         } else {
-            print "There are price changes in that many days";
+            print "There are no price changes in that many days";
             return new ViewModel();
         }
     }
