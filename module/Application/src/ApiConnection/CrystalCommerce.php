@@ -213,18 +213,57 @@ class CrystalCommerce extends ApiConnection
         fclose($fp);
     }
 
-    public function updateProductPrices($productArray, $retry = true)
+    /**
+     * Build the post variables array in order to submit to CC's inventory update page.
+     * This specifically only looks for price changes in the $productArrray
+     *
+     * @param array $productArray
+     * @return bool success or failure to update CC
+     */
+    public function updateProductPrices($productArray)
     {
-        $url = 'https://' . $this->config['adminDomain'] . '.crystalcommerce.com/inventory/update_multiple';
-
         $postVariables =[];
 
         foreach ($productArray as $product) {
             $postVariables["products[{$product['productId']}][buy_price]"] = $product['buy_price_new'];
             $postVariables["products[{$product['productId']}][sell_price]"] = $product['sell_price_new'];
         }
-
         $postVariables['save_products'] = 'Save';
+
+        return $this->updateMultipleInventory($postVariables);
+    }
+
+    /**
+     * Build the post variables array in order to submit to CC's inventory update page.
+     * This specifically only looks for quantity changes in the $productArrray
+     *
+     * @param array $productArray - must be an array of products, which
+     * @return bool success or failure to update CC
+     */
+    public function updateProductQuantity($productArray)
+    {
+        $postVariables =[];
+
+        foreach ($productArray as $product) {
+            $postVariables["products[{$product['productId']}][variant_items_attributes][english_nm][qty]"] = $product['quantity_new'];
+            $postVariables["products[{$product['productId']}][variant_items_attributes][english_nm][opt_qty]"] = $product['target_inventory_new'];
+        }
+        $postVariables['save_products'] = 'Save';
+
+        return $this->updateMultipleInventory($postVariables);
+    }
+
+    /**
+     * Submits up to 50 product updates to CC at once using a form submission on their inventory update page.
+     * This method assumes you have built the post variables array correctly
+     *
+     * @param array $postVariables
+     * @param bool $retry - should this recursively call itself on failure
+     * @return bool success or failure to update CC
+     */
+    private function updateMultipleInventory($postVariables, $retry = true)
+    {
+        $url = 'https://' . $this->config['adminDomain'] . '.crystalcommerce.com/inventory/update_multiple';
 
         $headers = [
             "accept: text/javascript, text/html, application/xml, text/xml, */*",
@@ -250,15 +289,12 @@ class CrystalCommerce extends ApiConnection
         if ($retry) {
             $this->logger->info("Failed on First Attempt. Sleeping and trying again.");
             sleep(10);
-            return $this->updateProductPrices($productArray, false);
+            return $this->updateMultipleInventory($postVariables, false);
         }
         $this->logger->warn("The update was not successful " . $result);
         //failure
         return false;
-
     }
-
-
 
     public function downloadCsv($includeOutOfStock = false)
     {
