@@ -44,17 +44,27 @@ class IndexController extends AbstractActionController
             'Get Prices From Crystal Commerce, Include OOS' => '/get-data/get-crystal-commerce-data?includeOutOfStock=true',
             'Get Prices From Sellery' => '/get-data/get-sellery-pricing',
             'Get Buy Prices From Troll and Toad' => '/get-data/troll-buy-prices',
+            'Get Evo Inventory Troll and Toad' => '/get-data/troll-evo-inventory',
             'Upload In Stock Prices to Crystal Commerce' => '/upload?inBrowser=true&updateLimit=20&mode=instock',
             'Upload On Buy List Prices to Crystal Commerce' => '/upload?inBrowser=true&updateLimit=20&mode=onBuyList',
         ];
 
         if (getenv('APPLICATION_ENV') == 'development') {
             //$scripts['Crystal Commerce Data'] = '/get-data/get-crystal-products-using-api?inBrowser=true&debug=true';
-            $scripts['Download Crystal Commerce Prices Skip Import'] = '/get-data/get-crystal-commerce-data?skipImport=true&inBrowser=true&debug=true';
-            $scripts['Download Crystal Commerce Prices Skip Import Include OOS'] = '/get-data/get-crystal-commerce-data?skipImport=true&includeOutOfStock=true&inBrowser=true&debug=true';
-            $scripts['Download Sellery Prices Skip Import'] = '/get-data/get-sellery-pricing?skipImport=true&inBrowser=true&debug=true';
-            $scripts['Load Crystal Commerce Prices From Local File'] = '/get-data/get-crystal-commerce-data?skipDownload=true&inBrowser=true&debug=true';
-            $scripts['Load Sellery Prices From Local File'] = '/get-data/get-sellery-pricing?skipDownload=true&inBrowser=true&debug=true';
+            $scripts['Download Crystal Commerce Prices Skip Import'] =
+                '/get-data/get-crystal-commerce-data?skipImport=true&inBrowser=true&debug=true';
+            $scripts['Download Crystal Commerce Prices Skip Import Include OOS'] =
+                '/get-data/get-crystal-commerce-data?skipImport=true&includeOutOfStock=true&inBrowser=true&debug=true';
+            $scripts['Download Sellery Prices Skip Import'] =
+                '/get-data/get-sellery-pricing?skipImport=true&inBrowser=true&debug=true';
+            $scripts['Download Evo Skip Import'] =
+                '/get-data/troll-evo-inventory?skipImport=true&inBrowser=true&debug=true';
+            $scripts['Load Evo From Local File'] =
+                '/get-data/troll-evo-inventory?skipDownload=true&inBrowser=true&debug=true';
+            $scripts['Load Crystal Commerce Prices From Local File'] =
+                '/get-data/get-crystal-commerce-data?skipDownload=true&inBrowser=true&debug=true';
+            $scripts['Load Sellery Prices From Local File'] =
+                '/get-data/get-sellery-pricing?skipDownload=true&inBrowser=true&debug=true';
             $scripts['Test Script'] = 'http://localhost:8080/get-data/test-script';
         }
 

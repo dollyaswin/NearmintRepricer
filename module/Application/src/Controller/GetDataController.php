@@ -24,6 +24,7 @@ use Application\Databases\PricesRepository;
 use Application\Databases\RunTimeRepository;
 use Application\Databases\SellerEngineRepository;
 use Application\Databases\TrollBuyListRepository;
+use Application\Databases\TrollEvoInventoryRepository;
 use Application\Databases\TrollProductRepository;
 use Application\Factory\LoggerFactory;
 use Application\ScriptNames;
@@ -104,6 +105,44 @@ class GetDataController extends AbstractActionController
             $this->logScript(ScriptNames::SCRIPT_GET_TROLL_BUY,$message);
         }
     }
+
+    /**
+     *  Loads the merchant's inventory from the troll and toad EVO program.
+     *
+     */
+    public function trollEvoInventoryAction()
+    {
+        $this->setLogger('TrollEvoInventoryUpdateLog.txt');
+        $this->tempFileName = __DIR__ . '/../../../../logs/tempTrollEvoLog.txt';
+        $this->addTempLogger($this->tempFileName);
+
+        $skipDownload = $this->params()->fromQuery('skipDownload', false);
+        $skipImport = $this->params()->fromQuery('skipImport', false);
+
+        // Get API Connection
+        $troll = new TrollandToad($this->logger, $this->debug);
+        if (!$skipDownload) {
+            $pricesArray = $troll->evoDownload();
+            $this->logger->info("There are " . count($pricesArray) . " Evo Listings to be updated");
+        } else {
+            $pricesArray = $troll->createArrayfromFile();
+        }
+
+        if ($skipImport) {
+            $this->logger->info("Skipping importing the CSV File.");
+        } else {
+            // Get Database Connection
+            $pricesRepo = new TrollEvoInventoryRepository($this->logger, $this->debug);
+
+            if ($pricesRepo->importFromArray($pricesArray)) {
+                $message = "Successfully imported CSV File.";
+            } else {
+                $message = "Failed to import CSV File.";
+            }
+            $this->logScript(ScriptNames::SCRIPT_GET_TROLL_EVO_INVENTORY, $message);
+        }
+    }
+
 
     /**
      *  Loads the troll and toad buy list CSV download files into the database

@@ -55,12 +55,11 @@ abstract class ApiConnection
         $body = substr($response, $header_size);
         $this->headers = $headers;
 
-        // close curl resource to free up system resources
         curl_close($ch);
         return $body;
     }
 
-    protected function downloadToFile($remoteUrl, $localFileLocation)
+    protected function downloadToFile($remoteUrl, $localFileLocation, $postVariables = false)
     {
         $ch = curl_init($remoteUrl);
         $fp = fopen($localFileLocation, "w");
@@ -70,6 +69,13 @@ abstract class ApiConnection
         curl_setopt($ch, CURLOPT_COOKIESESSION, true );
         curl_setopt($ch, CURLOPT_COOKIEJAR, $this->config['cookieFile'] );
         curl_setopt($ch, CURLOPT_COOKIEFILE, $this->config['cookieFile'] );
+
+        if ($postVariables) {
+            $postString = http_build_query($postVariables);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $postString);
+        }
+
         curl_exec($ch);
         $returnCode = true;
         if (curl_error($ch)) {

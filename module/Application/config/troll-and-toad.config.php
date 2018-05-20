@@ -8,7 +8,8 @@ return [
     'username' => 'derp@nearmintgames.com',
     'password' => getenv('TROLL_AND_TOAD_PASS'),
     'cookieFile' => __DIR__ . '/../../../data/cookiefile',
-    'localFileLocation' => __DIR__ . '/../../../data/mostRecentDownloadTrollAndToad.csv',
+    'localFileLocation' => __DIR__ . '/../../../data/mostRecentBuylistDownloadTrollAndToad.csv',
+    'localEvoFileLocation' => __DIR__ . '/../../../data/mostRecentEvoDownloadTrollAndToad.csv',
     'referer' => '',
     'downloadType' => [
         'buyListPokemonSingles' => [
@@ -25,4 +26,6 @@ return [
         ],
 
     ],
+    'merchantInventoryUrl' => 'merchant/InventoryManager.php',
+
 ];

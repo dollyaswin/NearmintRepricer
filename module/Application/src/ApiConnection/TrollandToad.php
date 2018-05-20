@@ -79,4 +79,18 @@ class TrollandToad extends ApiConnection
          return $buyListsArray;
      }
 
+     public function evoDownload()
+     {
+         $this->logger->debug("Inside " . __METHOD__ );
+
+         $remoteUrl = $this->config['baseUrl'] . $this->config['merchantInventoryUrl'];
+
+         $postVariables = [
+             'CSVDownload' => "Download CSV",
+         ];
+
+         $this->downloadToFile($remoteUrl, $this->config['localEvoFileLocation'], $postVariables);
+         return($this->config['localEvoFileLocation']);
+     }
+
 }
