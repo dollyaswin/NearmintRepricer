@@ -14,6 +14,7 @@ abstract class ApiConnection
 {
     protected $authorizePostVariables;
     protected $config;
+    protected $logger;
 
     // @var string
     public $mostRecentCurlError;
@@ -81,6 +82,7 @@ abstract class ApiConnection
         if (curl_error($ch)) {
             $returnCode = false;
         }
+
         curl_close($ch);
         fclose($fp);
         return $returnCode;
@@ -105,7 +107,7 @@ abstract class ApiConnection
             CURLOPT_URL => $url,
             CURLOPT_FOLLOWLOCATION => true,
             CURLOPT_RETURNTRANSFER => true,
-//            CURLOPT_ENCODING => "",
+            CURLINFO_HEADER_OUT  => true,
             CURLOPT_MAXREDIRS => 10,
             CURLOPT_TIMEOUT => 30,
             CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
@@ -119,7 +121,7 @@ abstract class ApiConnection
         }
 
         // cookies!!!
-        curl_setopt($ch, CURLOPT_COOKIESESSION, true );
+        //curl_setopt($ch, CURLOPT_COOKIESESSION, true );
         curl_setopt($ch, CURLOPT_COOKIEJAR, $this->config['cookieFile'] );
         curl_setopt($ch, CURLOPT_COOKIEFILE, $this->config['cookieFile'] );
         if ($refererOverride) {
@@ -287,6 +289,10 @@ abstract class ApiConnection
             if (count($headerArray) == 0) {
                 $headerArray = $line;
             } else {
+                if ($line[0] == NULL && count($line) == 1) {
+                    //skip blank lines
+                    continue;
+                }
                 $resultArray[] = array_combine($headerArray, $line);
             }
         }

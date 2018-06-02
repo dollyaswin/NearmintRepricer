@@ -122,10 +122,11 @@ class GetDataController extends AbstractActionController
         // Get API Connection
         $troll = new TrollandToad($this->logger, $this->debug);
         if (!$skipDownload) {
-            $pricesArray = $troll->evoDownload();
+            $fileName = $troll->evoDownload();
+            $pricesArray = $troll->createArrayfromFile($fileName);
             $this->logger->info("There are " . count($pricesArray) . " Evo Listings to be updated");
         } else {
-            $pricesArray = $troll->createArrayfromFile();
+            $pricesArray = $troll->createArrayfromFile($troll->getEvoFileName());
         }
 
         if ($skipImport) {

@@ -3,7 +3,7 @@
 namespace Application\ApiConnection;
 
 return [
-    'authorizeUrl' => 'https://www.trollandtoad.com/myaccount/logon.php',
+    'authorizeUrl' => 'https://www.trollandtoad.com/ajax_scripts/logon.php',
     'baseUrl' => 'https://www.trollandtoad.com/',
     'username' => 'derp@nearmintgames.com',
     'password' => getenv('TROLL_AND_TOAD_PASS'),
@@ -26,6 +26,6 @@ return [
         ],
 
     ],
-    'merchantInventoryUrl' => 'merchant/InventoryManager.php',
+    'merchantInventoryUrl' => 'https://www.trollandtoad.com/merchant/InventoryManager.php?',
 
 ];

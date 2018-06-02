@@ -34,10 +34,12 @@ class TrollandToad extends ApiConnection
         $this->logger = $logger;
         $this->debug = $debug;
         $this->setConfig();
+        $this->transmit("https://www.trollandtoad.com/myaccount/logon.php?action=logout");
+
         $this->setAuthorizeVariables();
         $apiResult = $this->authorize();
 
-        if (!$apiResult) {
+        if (!$apiResult || strpos($apiResult, 'invalid') !== false) {
             throw new \Exception("Unable to authorize Troll And Toad ");
         }
     }
@@ -45,9 +47,10 @@ class TrollandToad extends ApiConnection
     protected function setAuthorizeVariables()
     {
         $this->authorizePostVariables = [
-            'emailBox' => $this->config['username'],
+            'username' => $this->config['username'],
             'password' => $this->config['password'],
-            'action' => 'Sign in',
+            'action' => '',
+            'firsttimeflag' => '',
         ];
     }
 
@@ -78,18 +81,22 @@ class TrollandToad extends ApiConnection
          }
          return $buyListsArray;
      }
+     public function getEvoFileName()
+     {
+         return $this->config['localEvoFileLocation'];
+     }
 
      public function evoDownload()
      {
          $this->logger->debug("Inside " . __METHOD__ );
 
-         $remoteUrl = $this->config['baseUrl'] . $this->config['merchantInventoryUrl'];
-
          $postVariables = [
-             'CSVDownload' => "Download CSV",
+             'CSVDownload' => 'Download CSV',
          ];
 
-         $this->downloadToFile($remoteUrl, $this->config['localEvoFileLocation'], $postVariables);
+         $fileDownload = $this->transmit($this->config['merchantInventoryUrl'],  $postVariables);
+         file_put_contents($this->config['localEvoFileLocation'], $fileDownload);
+
          return($this->config['localEvoFileLocation']);
      }
 
