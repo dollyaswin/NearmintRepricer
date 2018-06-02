@@ -48,6 +48,7 @@ class IndexController extends AbstractActionController
             'Get Evo Inventory Troll and Toad' => '/get-data/troll-evo-inventory',
             'Upload In Stock Prices to Crystal Commerce' => '/upload?inBrowser=true&updateLimit=20&mode=instock',
             'Upload On Buy List Prices to Crystal Commerce' => '/upload?inBrowser=true&updateLimit=20&mode=onBuyList',
+            'Upload Product Updates to EVO ' => '/upload/troll-evo-update?updateLimit=20&inBrowser=true',
         ];
 
         if (getenv('APPLICATION_ENV') == 'development') {

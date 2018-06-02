@@ -38,7 +38,7 @@ class UploadController extends AbstractActionController
         $this->tempFileName = __DIR__ . '/../../../../logs/tempEvoPriceUpdateLog.txt';
         $this->addTempLogger($this->tempFileName);
 
-        $updateLimit = intval($this->params()->fromQuery('updateLimit', 15));
+        $updateLimit = intval($this->params()->fromQuery('updateLimit', 20));
         $maxPrice = intval($this->params()->fromQuery('maxPrice', 0));
 
         $prices = new PricesRepository($this->logger);
