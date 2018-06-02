@@ -94,10 +94,50 @@ class TrollandToad extends ApiConnection
              'CSVDownload' => 'Download CSV',
          ];
 
-         $fileDownload = $this->transmit($this->config['merchantInventoryUrl'],  $postVariables);
+         $fileDownload = $this->transmit($this->config['merchantInventoryDownloadUrl'],  $postVariables);
          file_put_contents($this->config['localEvoFileLocation'], $fileDownload);
 
          return($this->config['localEvoFileLocation']);
      }
+
+    public function evoUploadArray($productArray)
+    {
+        $this->logger->debug("Inside " . __METHOD__ );
+        $csvAsString = '';
+
+        // ORDER IS IMPORTANT!!!!!!
+        // PDID, hold, price, cost
+        $requiredColumns = [
+            'product_detail_id',
+            'evo_hold_quantity',
+            'evo_sell_price',
+            'evo_cost',
+        ];
+
+        foreach ($productArray as $product) {
+            // csv string is a concatenated string of PDID, hold, price, cost
+            // with NO new lines.  Trailing Commas are ok.   Blank fields must exist as empty strings and commas.
+            // For example:   4482372,299,0.89,,
+            foreach ($requiredColumns as $column) {
+                $csvAsString .= $product[$column] . ",";
+            }
+        }
+
+        $this->logger->debug("Csv String to be uploaded" .$csvAsString);
+
+        $postVariables = [
+            'action' => 'uploadcsv',
+            'csv' => $csvAsString,
+        ];
+
+        $response = $this->transmit($this->config['merchantInventoryUploadUrl'],  $postVariables);
+
+        if (strpos($response, 'Upload Successful') === false) {
+            // failed
+            return false;
+        }
+        return true;
+
+    }
 
 }

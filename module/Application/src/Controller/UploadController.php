@@ -4,6 +4,8 @@ namespace Application\Controller;
 
 
 use Application\ApiConnection\CrystalCommerce;
+use Application\ApiConnection\TrollandToad;
+use Application\Databases\LastEvoPriceUpdateRepository;
 use Application\Databases\LastPriceUpdatedRepository;
 use Application\Databases\PricesRepository;
 use Application\Databases\PriceUpdatesRepository;
@@ -30,9 +32,47 @@ class UploadController extends AbstractActionController
         $this->debug = true;
     }
 
+    public function trollEvoUpdateAction()
+    {
+        $this->setLogger('uploadEvoLog.txt');
+        $this->tempFileName = __DIR__ . '/../../../../logs/tempEvoPriceUpdateLog.txt';
+        $this->addTempLogger($this->tempFileName);
+
+        $this->updateLimit = intval($this->params()->fromQuery('updateLimit', 15));
+        $mode = $this->params()->fromQuery('mode', 'instock');
+
+        $prices = new PricesRepository($this->logger);
+        $productsToUpdate = $prices->getPricesToUpdate($mode, $this->updateLimit);
+
+        if (count($productsToUpdate) > 0 ) {
+            $productsToUpdate = $this->calculatePrices($productsToUpdate);
+
+            $crystal = new TrollandToad($this->logger, $this->debug);
+            $result = $crystal->evoUploadArray($productsToUpdate);
+
+            if ($result) {
+                if($this->logAndMarkEvoProductsUpdated($productsToUpdate)) {
+                    $message = "Upload Successful in " . $mode . " mode";
+                } else {
+                    $message = "Upload Successful in " . $mode . " mode, but database update failed.";
+                }
+            } else {
+                $message = "Failed to Upload prices to Troll Evo";
+            }
+
+        } else {
+            $message = "No Prices to update";
+        }
+
+        $scriptName = ScriptNames::SCRIPT_UPDATE_TROLL_EVO_INVENTORY;
+        $this->logScript($scriptName,$message);
+        return new ViewModel();
+    }
+
+
     public function indexAction()
     {
-        $this->setLogger('uploadLog.txt');
+        $this->setLogger('uploadCCLog.txt');
         $this->tempFileName = __DIR__ . '/../../../../logs/tempCCPriceUpdateLog.txt';
         $this->addTempLogger($this->tempFileName);
 
@@ -77,6 +117,27 @@ class UploadController extends AbstractActionController
     private $warningBuyPriceMultiplier = 1.3;
     private $createBuyFromTrollBuyMultiplier = 1;
 
+
+    /**
+     * Update the database with  the buy price and sell price which were just sent to Crystal Commerce
+     *
+     * @param array $productsToUpdate numerically indexed array of products from Database
+     * @return bool success or failure
+     */
+    private function logAndMarkEvoProductsUpdated($productsToUpdate)
+    {
+        $updatedProducts = [];
+        foreach ($productsToUpdate as $key => $product) {
+            $this->logger->info("{$product['product_detail_id']} : {$product['product_name']} : has been updated to : " .
+                "sell : {$product['sell_price_new']} : hold : {$product['hold_qty_new']}");
+        }
+
+        //$repositoryPU = new PriceUpdatesRepository($this->logger, $this->debug);
+        $repositoryLU = new LastEvoPriceUpdateRepository($this->logger, $this->debug);
+
+        //$result = $repositoryPU->importFromArray($productsToUpdate);
+        return $repositoryLU->importFromArray($productsToUpdate);
+    }
 
     /**
      * Update the database with  the buy price and sell price which were just sent to Crystal Commerce

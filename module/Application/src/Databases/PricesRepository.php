@@ -236,6 +236,46 @@ class PricesRepository
         return $result;
     }
 
+    public function getProductsToUpdateOnTrollEvo($limit = 20)
+    {
+        $limit = intval($limit);
+        $extraSort = "";
+        $whereClause = "";
+
+        $query = "
+        SELECT TEI.troll_product_name,
+            TEI.product_detail_id, 
+            TEI.evo_hold_quantity,
+            TEI.evo_sell_price,
+            TEI.evo_cost,
+            TEI.lowest_evo_competitor_sell_price,
+            TEI.troll_sell_price,
+            SE.sellery_sell_price
+            FROM troll_evo_inventory as TEI
+            LEFT JOIN troll_products as TP on (TP.product_detail_id=TEI.product_detail_id) 
+            LEFT JOIN sellery as SE on (TP.asin=SE.asin)
+            WHERE TEI.evo_hold_quantity >0
+            AND TEI.evo_quantity = 0
+            ORDER BY evo_sell_price DESC, sellery_sell_price DESC
+            LIMIT $limit;
+
+            WHERE (LU.asin IS NULL OR date_sub(CURRENT_TIMESTAMP, interval 1 day) > LU.last_updated )
+            $whereClause
+            ORDER BY LU.asin IS NOT NULL, LU.last_updated $extraSort ";
+        $statement = $this->conn->prepare($query);
+        $statement->execute();
+        $result = $statement->fetchAll(\PDO::FETCH_ASSOC);
+        //$this->logger->debug("The query : $query");
+
+        if (count($result) == 0) {
+            $this->logger->info("No prices to update" );
+
+            return false;
+        }
+        return $result;
+    }
+
+
     public function getUnmatchedProductsByAsin($source = 'crystal')
     {
         if ($source == 'crystal') {

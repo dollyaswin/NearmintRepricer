@@ -48,6 +48,7 @@ return [
         ScriptNames::SCRIPT_TEST => 8,
         ScriptNames::SCRIPT_PRICES_TO_CC_BUY => 9,
         ScriptNames::SCRIPT_GET_TROLL_EVO_INVENTORY => 10,
+        ScriptNames::SCRIPT_UPDATE_TROLL_EVO_INVENTORY => 11,
     ],
 
 ];

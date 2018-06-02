@@ -26,6 +26,6 @@ return [
         ],
 
     ],
-    'merchantInventoryUrl' => 'https://www.trollandtoad.com/merchant/InventoryManager.php?',
-
+    'merchantInventoryDownloadUrl' => 'https://www.trollandtoad.com/merchant/InventoryManager.php?',
+    'merchantInventoryUploadUrl' => 'https://www.trollandtoad.com/ajax_scripts/inventory_manager_handle.php',
 ];
