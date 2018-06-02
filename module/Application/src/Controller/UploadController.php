@@ -222,10 +222,8 @@ class UploadController extends AbstractActionController
                 "sell : {$product['sell_price_new']} : hold : {$product['hold_qty_new']}");
         }
 
-        //$repositoryPU = new PriceUpdatesRepository($this->logger, $this->debug);
         $repositoryLU = new LastEvoPriceUpdateRepository($this->logger, $this->debug);
 
-        //$result = $repositoryPU->importFromArray($productsToUpdate);
         return $repositoryLU->importFromArray($productsToUpdate);
     }
 
