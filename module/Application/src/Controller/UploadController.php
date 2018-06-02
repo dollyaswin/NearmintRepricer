@@ -47,8 +47,8 @@ class UploadController extends AbstractActionController
         if (count($productsToUpdate) > 0 ) {
             $productsToUpdate = $this->calculateEvoPrices($productsToUpdate);
 
-            $crystal = new TrollandToad($this->logger, $this->debug);
-            $result = $crystal->evoUploadArray($productsToUpdate);
+            $troll = new TrollandToad($this->logger, $this->debug);
+            $result = $troll->evoUploadArray($productsToUpdate);
 
             if ($result) {
                 if($this->logAndMarkEvoProductsUpdated($productsToUpdate)) {
