@@ -17,6 +17,7 @@ namespace Application\Controller;
 use Application\ApiConnection\CrystalApi;
 use Application\ApiConnection\CrystalCommerce;
 use Application\ApiConnection\CrystalApi\ProductModel;
+use Application\Databases\LastEvoPriceUpdateRepository;
 use Application\Databases\LastPriceUpdatedRepository;
 use Application\Databases\PricesRepository;
 use Application\Databases\PriceUpdatesRepository;
@@ -51,12 +52,15 @@ class IndexController extends AbstractActionController
 
         if (getenv('APPLICATION_ENV') == 'development') {
             //$scripts['Crystal Commerce Data'] = '/get-data/get-crystal-products-using-api?inBrowser=true&debug=true';
+            /*
             $scripts['Download Crystal Commerce Prices Skip Import'] =
                 '/get-data/get-crystal-commerce-data?skipImport=true&inBrowser=true&debug=true';
             $scripts['Download Crystal Commerce Prices Skip Import Include OOS'] =
                 '/get-data/get-crystal-commerce-data?skipImport=true&includeOutOfStock=true&inBrowser=true&debug=true';
             $scripts['Download Sellery Prices Skip Import'] =
                 '/get-data/get-sellery-pricing?skipImport=true&inBrowser=true&debug=true';
+            */
+            $scripts['----- DEBUG Scripts ------'] = '/';
             $scripts['Download Evo Skip Import'] =
                 '/get-data/troll-evo-inventory?skipImport=true&inBrowser=true&debug=true';
             $scripts['Load Evo From Local File'] =
@@ -65,7 +69,8 @@ class IndexController extends AbstractActionController
                 '/get-data/get-crystal-commerce-data?skipDownload=true&inBrowser=true&debug=true';
             $scripts['Load Sellery Prices From Local File'] =
                 '/get-data/get-sellery-pricing?skipDownload=true&inBrowser=true&debug=true';
-            $scripts['Test Script'] = 'http://localhost:8080/get-data/test-script';
+            $scripts['Test Script'] = '/get-data/test-script';
+            $scripts['Reprice One EVO Product'] = '/upload/troll-evo-update?updateLimit=1&maxPrice=0.99&inBrowser=true&debug=true';
         }
 
         $downloads = [
@@ -98,14 +103,17 @@ class IndexController extends AbstractActionController
                 'product_name' => 'Test',
                 'sell_price_old' => 1.20,
                 'sell_price_new' => 1.25,
-                'asin' => 'RANDOMLETTERS',
-                'buy_price_old' => 0.50,
-                'buy_price_new' => 0.75,
+                'product_detail_id' => 123456789,
+                'quantity_old' => 1,
+                'quantity_new' => 5,
+                'hold_qty_old' => 4,
+                'hold_qty_new' => 0,
             ]
         ];
-        $repo = new LastPriceUpdatedRepository($this->logger, $this->debug);
+        $repo = new LastEvoPriceUpdateRepository($this->logger, $this->debug);
         $repo->importFromArray($arrayUpdate);
         */
+
     }
 
 

@@ -109,8 +109,8 @@ class TrollandToad extends ApiConnection
         // PDID, hold, price, cost
         $requiredColumns = [
             'product_detail_id',
-            'evo_hold_quantity',
-            'evo_sell_price',
+            'hold_qty_new',
+            'sell_price_new',
             'evo_cost',
         ];
 
@@ -123,7 +123,7 @@ class TrollandToad extends ApiConnection
             }
         }
 
-        $this->logger->debug("Csv String to be uploaded" .$csvAsString);
+        $this->logger->debug("Csv String to be uploaded : " .$csvAsString);
 
         $postVariables = [
             'action' => 'uploadcsv',
@@ -136,6 +136,8 @@ class TrollandToad extends ApiConnection
             // failed
             return false;
         }
+        $this->logger->debug("Response from Troll Evo : " . $response);
+
         return true;
 
     }

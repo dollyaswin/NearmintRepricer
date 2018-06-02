@@ -29,6 +29,14 @@ return [
             'definition' => 'decimal(9,2) DEFAULT NULL',
             'mapping' => 'sell_price_new',
         ],
+        'quantity_old' => [
+            'definition' => 'int(11) DEFAULT NULL',
+            'mapping' => 'quantity_old',
+        ],
+        'quantity_new' => [
+            'definition' => 'int(11) DEFAULT NULL',
+            'mapping' => 'quantity_new',
+        ],
         'hold_qty_old' => [
             'definition' => 'int(11) DEFAULT NULL',
             'mapping' => 'hold_qty_old',

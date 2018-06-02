@@ -38,23 +38,23 @@ class UploadController extends AbstractActionController
         $this->tempFileName = __DIR__ . '/../../../../logs/tempEvoPriceUpdateLog.txt';
         $this->addTempLogger($this->tempFileName);
 
-        $this->updateLimit = intval($this->params()->fromQuery('updateLimit', 15));
-        $mode = $this->params()->fromQuery('mode', 'instock');
+        $updateLimit = intval($this->params()->fromQuery('updateLimit', 15));
+        $maxPrice = intval($this->params()->fromQuery('maxPrice', 0));
 
         $prices = new PricesRepository($this->logger);
-        $productsToUpdate = $prices->getPricesToUpdate($mode, $this->updateLimit);
+        $productsToUpdate = $prices->getProductsToUpdateOnTrollEvo($updateLimit, $maxPrice);
 
         if (count($productsToUpdate) > 0 ) {
-            $productsToUpdate = $this->calculatePrices($productsToUpdate);
+            $productsToUpdate = $this->calculateEvoPrices($productsToUpdate);
 
             $crystal = new TrollandToad($this->logger, $this->debug);
             $result = $crystal->evoUploadArray($productsToUpdate);
 
             if ($result) {
                 if($this->logAndMarkEvoProductsUpdated($productsToUpdate)) {
-                    $message = "Upload Successful in " . $mode . " mode";
+                    $message = "Upload Successful to EVO";
                 } else {
-                    $message = "Upload Successful in " . $mode . " mode, but database update failed.";
+                    $message = "Upload Successful to EVO, but database update failed.";
                 }
             } else {
                 $message = "Failed to Upload prices to Troll Evo";
@@ -69,6 +69,98 @@ class UploadController extends AbstractActionController
         return new ViewModel();
     }
 
+    private function calculateEvoPrices($productsToUpdate)
+    {
+        $priceUpdates = [];
+
+        foreach($productsToUpdate as $key => $product) {
+
+            $sellPrice = $this->calculateEvoSellPrice($product);
+
+            $quantity = $product['evo_quantity'];
+            $holdQuantity = $product['evo_hold_quantity'];
+
+            if ($quantity == 0) {
+                if ($holdQuantity < 2) {
+                    $holdQuantity = 0;
+                } else {
+                    if ($holdQuantity > 12 ) {
+                        // Release One Third
+                        $holdQuantity = round($holdQuantity / 3, 0, PHP_ROUND_HALF_DOWN);
+                    } else {
+                        // Hold quantity between 2 and 11, Release half, max 4
+                        if ($holdQuantity < 8) {
+                            $holdQuantity = round($holdQuantity / 2, 0, PHP_ROUND_HALF_DOWN);
+                        } else {
+                            $holdQuantity = $holdQuantity - 4;
+                        }
+                    }
+                }
+                // Product was just released from hold.  Price it up 10% for a day
+                $sellPrice *= 1.1;
+                // record new quantity
+                $quantity += $product['evo_hold_quantity'] - $holdQuantity;
+            }
+
+            // Build Update Array
+            $priceUpdates[$key]['product_detail_id'] = $product['product_detail_id'];
+            $priceUpdates[$key]['sell_price_old'] = $product['evo_sell_price'];
+            $priceUpdates[$key]['sell_price_new'] = $sellPrice;
+            $priceUpdates[$key]['hold_qty_old'] = $product['evo_hold_quantity'];
+            $priceUpdates[$key]['hold_qty_new'] = $holdQuantity;
+            //For logging only, not actually updated
+            $priceUpdates[$key]['product_name'] = $product['product_name'];
+            $priceUpdates[$key]['quantity_old'] = $product['evo_quantity'];
+            $priceUpdates[$key]['quantity_new'] = $quantity;
+            $priceUpdates[$key]['evo_cost'] = $product['evo_cost'];
+        }
+        return $priceUpdates;
+    }
+
+    private function calculateEvoSellPrice($product)
+    {
+        $sellPrice = $product['evo_sell_price'];
+
+        if ($product['troll_sell_price']) {
+            if ($product['troll_sell_price'] < 10) {
+                $sellPrice = $product['troll_sell_price'] - 0.10;
+            } else {
+                $sellPrice = $product['troll_sell_price'] * 0.99;
+            }
+        }
+        // lowest_evo_competitor_sell_price is actually lowest price and can include yourself
+        // don't try to price below yourself
+        if ($product['lowest_evo_competitor_sell_price'] && $product['lowest_evo_competitor_sell_price'] < $sellPrice) {
+            $sellPrice = $product['lowest_evo_competitor_sell_price'];
+        }
+        // Sellery price being higher should override troll prices
+        // In the future, only use this if Troll is sold out
+        if ($product['sellery_sell_price'] && $product['sellery_sell_price'] > $sellPrice) {
+            $sellPrice = $product['sellery_sell_price'];
+        }
+        // Buy price warning catch all. If you are about to price too low compared to troll Buy
+        // Price above troll buy.
+        if ($product['troll_buy_price']) {
+            if ($sellPrice < $product['troll_buy_price'] * $this->warningBuyPriceMultiplier)
+                $sellPrice = $product['troll_buy_price'] * $this->warningBuyPriceMultiplier;
+        }
+
+        // Price Floor of $0.69 for anything not already priced below $0.59
+        if ($sellPrice < 0.69 ) {
+            if ($product['evo_sell_price'] > 0.59) {
+                $sellPrice = 0.69;
+            } else {
+                $sellPrice = $product['evo_sell_price'];
+            }
+        }
+        $sellPrice = round($sellPrice, 2, PHP_ROUND_HALF_DOWN);
+
+        $this->logger->debug("Inside Repricer : " . $product['product_name'] .
+            " : sellPrice : $sellPrice : Old Sell Price : " . $product['evo_sell_price']);
+
+        return $sellPrice;
+    }
+
 
     public function indexAction()
     {
@@ -81,8 +173,6 @@ class UploadController extends AbstractActionController
 
         $prices = new PricesRepository($this->logger);
         $productsToUpdate = $prices->getPricesToUpdate($mode, $this->updateLimit);
-
-
 
         if (count($productsToUpdate) > 0 ) {
             $productsToUpdate = $this->calculatePrices($productsToUpdate);
