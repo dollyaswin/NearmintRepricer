@@ -17,6 +17,7 @@ return [
         Repricer::RR_EXCEPTION_SELL_PRICE_FLOOR => 'Existing Item Price below minimum price. No Change',
         Repricer::RR_HOLD_ALL => 'Hold all inventory. No Price Change',
         Repricer::RR_RELEASE_FROM_HOLD_PRICE_UP => 'Quantity on site sold out, release some, price up',
+        Repricer::RR_OOS_TRY_PRICE_DOWN_NO_CHANGE => 'Tried to Price down while out of stock.  No Change made',
     ],
 
 ];

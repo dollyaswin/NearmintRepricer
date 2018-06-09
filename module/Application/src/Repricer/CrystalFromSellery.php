@@ -31,10 +31,12 @@ class CrystalFromSellery extends Repricer
                 }
             }
             $priceUpdates[$key]['product_name'] = $product['product_name'];
+            $priceUpdates[$key]['productId'] = $product['productId'];
+            $priceUpdates[$key]['asin'] = $product['asin'];
+            $priceUpdates[$key]['reprice_rule'] = $repriceRuleId;
+
             $priceUpdates[$key]['sell_price_old'] = $product['cc_sell_price'];
             $priceUpdates[$key]['sell_price_new'] = $sellPrice;
-            $priceUpdates[$key]['asin'] = $product['asin'];
-            $priceUpdates[$key]['productId'] = $product['productId'];
             $priceUpdates[$key]['buy_price_old'] = $product['cc_buy_price'];
             $priceUpdates[$key]['buy_price_new'] = $buyPrice;
 
@@ -56,24 +58,22 @@ class CrystalFromSellery extends Repricer
     private function determineSellPrice($product)
     {
         $repriceRuleId = Repricer::RR_NO_CHANGE;
+        $sellPrice = $product['cc_sell_price'];
 
         if ($product['sellery_sell_price'] && $product['total_qty'] >0) {
             if ($product['troll_buy_price']*$this->warningBuyPriceMultiplier  > $product['sellery_sell_price']) {
-                $sellPrice = $this->getSellPriceFromBuyPrice($product['troll_buy_price']);
-                $repriceRuleId = Repricer::RR_TROLL_BUY_PRICE_LOWER_BOUND;
+                list ($sellPrice, $repriceRuleId ) = $this->getSellPriceFromBuyPrice($product);
             } else {
                 $sellPrice = $product['sellery_sell_price'];
                 $repriceRuleId = Repricer::RR_SET_TO_SELLERY_PRICE;
             }
         } else {
             if ($product['troll_buy_price']) {
-                $sellPrice = $this->getSellPriceFromBuyPrice($product['troll_buy_price']);
-                $repriceRuleId = Repricer::RR_TROLL_BUY_PRICE_LOWER_BOUND;
-            } else {
-                // in order words, do not change the price
-                $sellPrice = $product['cc_sell_price'];
+                list ($sellPrice, $repriceRuleId ) = $this->getSellPriceFromBuyPrice($product);
             }
         }
+
+        $sellPrice = $this->roundPrice($sellPrice);
         return [$sellPrice, $repriceRuleId];
     }
 
@@ -109,17 +109,18 @@ class CrystalFromSellery extends Repricer
                 break;
         }
         $buyPrice = $sellPrice * $percentage;
-        return number_format($buyPrice, 2);
+        return $this->roundPrice($buyPrice);
     }
 
     /**
      *  For a given sell price, calculate the buy price
      *
-     * @param float $buyPrice
-     * @return float 2 decimal point precision
+     * @param array $product
+     * @return array Sell Price and Rule Id
      */
-    private function getSellPriceFromBuyPrice($buyPrice)
+    private function getSellPriceFromBuyPrice(Array $product)
     {
+        $buyPrice = $product['troll_buy_price'];
         switch ($buyPrice ) {
             case $buyPrice < 2:
                 $percentage = 4;
@@ -132,7 +133,13 @@ class CrystalFromSellery extends Repricer
                 break;
         }
         $sellPrice = $buyPrice * $percentage;
-        return number_format($sellPrice, 2);
+        $repriceRuleId = Repricer::RR_TROLL_BUY_PRICE_LOWER_BOUND;
+        if ($product['cc_sell_price'] > $sellPrice && $product['total_qty'] == 0 ) {
+            $sellPrice = $product['cc_sell_price'];
+            $repriceRuleId = Repricer::RR_NO_CHANGE;
+        }
+
+        return [$sellPrice, $repriceRuleId];
     }
 
     /*

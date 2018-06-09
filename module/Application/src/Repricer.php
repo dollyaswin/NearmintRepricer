@@ -20,6 +20,7 @@ abstract class Repricer
     public const RR_EXCEPTION_SELL_PRICE_FLOOR = 8;
     public const RR_HOLD_ALL = 9;
     public const RR_RELEASE_FROM_HOLD_PRICE_UP = 10;
+    public const RR_OOS_TRY_PRICE_DOWN_NO_CHANGE = 10;
 
     public function getConfig()
     {
