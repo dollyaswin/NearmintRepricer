@@ -18,6 +18,10 @@ return [
             'definition' => 'varchar(25) NOT NULL',
             'mapping' => 'asin',
         ],
+        'reprice_rule_id' => [
+            'definition' => 'int(11) NOT NULL',
+            'mapping' => 'reprice_rule',
+        ],
         'sell_price_old' => [
             'definition' => 'decimal(9,2) DEFAULT NULL',
             'mapping' => 'sell_price_old',
