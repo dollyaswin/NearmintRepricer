@@ -11,4 +11,6 @@ class ScriptNames {
     public const SCRIPT_LOAD_TROLL_TRODUCTS = 'Troll Product Import';
     public const SCRIPT_TEST = 'Test Script Update';
     public const SCRIPT_PRICES_TO_CC_BUY = 'Prices to CC Update on Buylist';
+    public const SCRIPT_GET_TROLL_EVO_INVENTORY = 'Troll Evo Get Inventory';
+    public const SCRIPT_UPDATE_TROLL_EVO_INVENTORY = 'Troll Evo Update Inventory';
 }

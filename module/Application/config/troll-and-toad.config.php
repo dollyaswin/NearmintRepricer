@@ -3,12 +3,13 @@
 namespace Application\ApiConnection;
 
 return [
-    'authorizeUrl' => 'https://www.trollandtoad.com/myaccount/logon.php',
+    'authorizeUrl' => 'https://www.trollandtoad.com/ajax_scripts/logon.php',
     'baseUrl' => 'https://www.trollandtoad.com/',
     'username' => 'derp@nearmintgames.com',
     'password' => getenv('TROLL_AND_TOAD_PASS'),
     'cookieFile' => __DIR__ . '/../../../data/cookiefile',
-    'localFileLocation' => __DIR__ . '/../../../data/mostRecentDownloadTrollAndToad.csv',
+    'localFileLocation' => __DIR__ . '/../../../data/mostRecentBuylistDownloadTrollAndToad.csv',
+    'localEvoFileLocation' => __DIR__ . '/../../../data/mostRecentEvoDownloadTrollAndToad.csv',
     'referer' => '',
     'downloadType' => [
         'buyListPokemonSingles' => [
@@ -25,4 +26,6 @@ return [
         ],
 
     ],
+    'merchantInventoryDownloadUrl' => 'https://www.trollandtoad.com/merchant/InventoryManager.php?',
+    'merchantInventoryUploadUrl' => 'https://www.trollandtoad.com/ajax_scripts/inventory_manager_handle.php',
 ];

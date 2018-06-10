@@ -219,7 +219,7 @@ class PricesRepository
             LEFT JOIN troll_products as TP on (CC.asin=TP.asin)
             LEFT JOIN troll_buy_list as BL ON (TP.product_detail_id=BL.product_detail_id AND BL.troll_buy_quantity > 0)
             LEFT JOIN last_price_update as LU ON (LU.asin=CC.asin)
-            WHERE (LU.asin IS NULL OR date_sub(CURRENT_TIMESTAMP, interval 1 day) > LU.last_updated )
+            WHERE (LU.asin IS NULL OR date_sub(CURRENT_TIMESTAMP, interval 8 hour) > LU.last_updated )
             $whereClause
             ORDER BY LU.asin IS NOT NULL, LU.last_updated $extraSort
             LIMIT $limit;  ";
@@ -235,6 +235,53 @@ class PricesRepository
         }
         return $result;
     }
+
+    public function getProductsToUpdateOnTrollEvo($limit = 20, $maxPrice = 0)
+    {
+        $limit = intval($limit);
+        $whereClause = "";
+        if ($maxPrice > 0 AND is_numeric($maxPrice)) {
+            $whereClause = " AND TEI.evo_sell_price < $maxPrice ";
+        }
+
+        $query = "SELECT TEI.troll_product_name as product_name,
+            TEI.product_detail_id, 
+            TEI.evo_quantity,
+            TEI.evo_hold_quantity,
+            TEI.evo_sell_price,
+            TEI.evo_cost,
+            TEI.lowest_evo_competitor_sell_price,
+            TEI.troll_sell_price,
+            SE.sellery_sell_price,
+            SE.amazon_sales_rank,
+            LU.last_updated,
+            TBL.troll_buy_price,
+            CC.total_qty as cc_quantity
+            FROM troll_evo_inventory as TEI
+            LEFT JOIN troll_buy_list as TBL on (TBL.product_detail_id=TEI.product_detail_id)
+            LEFT JOIN troll_products as TP on (TP.product_detail_id=TEI.product_detail_id)
+            LEFT JOIN crystal_commerce as CC on (TP.asin=CC.asin)
+            LEFT JOIN sellery as SE on (TP.asin=SE.asin AND SE.asin=CC.asin AND CC.total_qty > 0)
+            LEFT JOIN last_evo_price_update as LU ON (LU.product_detail_id=TEI.product_detail_id)
+            WHERE (TEI.evo_hold_quantity >0 OR TEI.evo_quantity > 0)
+            AND (LU.product_detail_id IS NULL OR date_sub(CURRENT_TIMESTAMP, interval 1 day) > LU.last_updated )
+            AND (TEI.evo_sell_price < 100 OR TEI.evo_sell_price = 1000)
+            $whereClause
+            ORDER BY LU.product_detail_id IS NOT NULL, (TEI.evo_quantity+TEI.evo_hold_quantity)*TEI.evo_sell_price DESC 
+            LIMIT $limit;";
+        $statement = $this->conn->prepare($query);
+        $statement->execute();
+        $result = $statement->fetchAll(\PDO::FETCH_ASSOC);
+        //$this->logger->debug("The query : $query");
+
+        if (count($result) == 0) {
+            $this->logger->info("No prices to update" );
+
+            return false;
+        }
+        return $result;
+    }
+
 
     public function getUnmatchedProductsByAsin($source = 'crystal')
     {
