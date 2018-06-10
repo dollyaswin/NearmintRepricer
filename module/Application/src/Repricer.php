@@ -71,7 +71,7 @@ abstract class Repricer
         foreach ($productsToUpdate as $key => $product) {
             $message = "";
             foreach ($product as $label => $productDetail) {
-                if ($label = 'reprice_rule') {
+                if ($label == 'reprice_rule') {
                     // Print the reprice rule text
                     $message .= $this->config['repriceRuleList'][$productDetail] . " : ";
                 } else {

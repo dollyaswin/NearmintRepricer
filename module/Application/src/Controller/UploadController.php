@@ -84,7 +84,7 @@ class UploadController extends AbstractActionController
         $prices = new PricesRepository($this->logger);
         $productsToUpdate = $prices->getPricesToUpdate($mode, $this->updateLimit);
 
-        if (count($productsToUpdate) > 0) {
+        if ($productsToUpdate && count($productsToUpdate) > 0) {
             $repricer = new CrystalFromSellery($this->logger, $this->debug);
             $productsToUpdate = $repricer->calculatePrices($productsToUpdate);
 

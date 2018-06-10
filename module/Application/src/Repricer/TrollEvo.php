@@ -11,6 +11,13 @@ class TrollEvo extends Repricer
 
     protected $warningBuyPriceMultiplier = 1.3;
 
+    /*
+     * $1000 evo sell price is a magic number.  It is the price which all newly listed products are set
+     * to automatically when a new listing is created on EVO.  This must be handled such that
+     * this repricer does not treat a sold out item at $1000 price as having actually sold for
+     * that price.
+     * */
+
     public function calculatePrices(Array $productsToUpdate)
     {
         $priceUpdates = [];
@@ -39,8 +46,12 @@ class TrollEvo extends Repricer
                     }
                 }
                 // Product was just released from hold.  Price it up 10% for a day
+                if ($product['evo_sell_price'] > $sellPrice && $product['evo_sell_price'] != 1000) {
+                    // Make sure the calculations are not pricing it down
+                    $sellPrice = $product['evo_sell_price'];
+                }
                 $sellPrice *= 1.1;
-                $repriceRuleId =
+                $repriceRuleId = Repricer::RR_RELEASE_FROM_HOLD_PRICE_UP;
                 // record new quantity
                 $quantity += $product['evo_hold_quantity'] - $holdQuantity;
             }
