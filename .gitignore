@@ -4,6 +4,8 @@ config/development.config.php
 data/
 phpunit.xml
 .idea/
+.project
 public/.htaccess
 public/myTestApplication.php
-logs/
+logs/*
+!logs/.gitkeep
