@@ -7,7 +7,7 @@
 namespace Application\Databases;
 
 return [
-    'defaultDb' => 'nearmintgames',
-    'host' => 'localhost',
-    'username' => 'derp',
+    'defaultDb' => 'stokinger',
+    'host' => 'mysql',
+    'username' => 'stokinger',
 ];

@@ -11,9 +11,9 @@
 namespace Application\Databases;
 
 return [
-    'defaultDb' => 'nearmintgames',
-    'host' => 'localhost',
-    'username' => 'derp',
+    'defaultDb' => 'stokinger',
+    'host' => 'mysql',
+    'username' => 'stokinger',
     // Name on Crystal Commerce Download => database Column Name
     'crystalCommerceMapping' => [
         'Product Name'     => 'product_name',
