@@ -1,0 +1,21 @@
+<?php
+return [
+    'doctrine' => [
+        'connection' => [
+            // default connection name
+            'orm_default' => [
+                'driverClass' => \Doctrine\DBAL\Driver\PDOMySql\Driver::class,
+                'params' => [
+                    'host'     => 'localhost',
+                    'port'     => '3306',
+                    'user'     => 'derp',
+                    'password' => getenv('MYSQL_PASS'),
+                    'dbname'   => 'nearmintgames',
+                ],
+            ],
+        ],
+        'fixture' => [
+            'User' => __DIR__ . '/../../module/User/src/Fixtures'
+        ]
+    ],
+];
