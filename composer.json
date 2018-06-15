@@ -26,11 +26,12 @@
         "zendframework/zend-test": "^3.1",
         "zendframework/zend-authentication": "^2.5",
         "doctrine/doctrine-orm-module": "^1.1",
-        "doctrine/doctrine-module": "dev-master",
         "doctrine/migrations": "^1.4",
         "zendframework/zend-math": "^3.0",
         "zendframework/zend-crypt": "^3.1",
-        "zendframework/zend-captcha": "^2.6"
+        "zendframework/zend-captcha": "^2.6",
+        "zf-commons/zfc-user-doctrine-orm": "^2.0",
+        "dkorsak/doctrine-data-fixture-module": "^1.0"
     },
     "autoload": {
         "psr-4": {

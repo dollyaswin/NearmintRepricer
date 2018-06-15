@@ -9,3 +9,5 @@ public/.htaccess
 public/myTestApplication.php
 logs/*
 !logs/.gitkeep
+.buildpath
+.settings
