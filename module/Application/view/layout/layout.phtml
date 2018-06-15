@@ -40,6 +40,11 @@
                     <ul class="nav navbar-nav">
                         <li class="active"><a href="<?= $this->url('home') ?>">Home</a></li>
                     </ul>
+                    <?php if ($this->zfcUserIdentity() !== false): ?>
+                    	<ul class="nav navbar-nav navbar-right">
+                    		<li><a href="<?php echo $this->url('zfcuser/logout') ?>"><i class="fa fa-power-off"></i> &nbsp; Logout</a></li>
+                    	</ul>
+                    <?php endif ?>
                 </div>
             </div>
         </nav>
