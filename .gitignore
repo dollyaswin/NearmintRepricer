@@ -1,8 +1,9 @@
 .vagrant/
 vendor/
 config/development.config.php
-data/
 phpunit.xml
+data/*
+!data/DoctrineORMModule
 .idea/
 .project
 public/.htaccess
