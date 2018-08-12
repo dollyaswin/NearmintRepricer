@@ -26,6 +26,16 @@ return [
                                 'action'     => 'requestresetpassword',
                             ],
                         ],
+                    ],
+                    'reset_password' => [
+                        'type' => 'Segment',
+                        'options' => [
+                            'route' => '/reset-password[/:uuid]',
+                            'defaults' => [
+                                'controller' => Controller\UserController::class,
+                                'action'     => 'resetpassword',
+                            ],
+                        ],
                     ]
                 ]
             ]
