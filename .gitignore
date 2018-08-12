@@ -3,7 +3,7 @@ vendor/
 config/development.config.php
 phpunit.xml
 data/*
-!data/DoctrineORMModule
+data/DoctrineORMModule/Proxy
 .idea/
 .project
 public/.htaccess

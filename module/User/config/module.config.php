@@ -8,6 +8,11 @@ return [
             Controller\UserController::class => Controller\UserControllerFactory::class,
         ],
     ],
+    'service_manager' => [
+        'factories' => [
+            Mapper\ResetPasswordRequest::class => Mapper\ResetPasswordRequestFactory::class
+        ]
+    ],
     'router' => [
         'routes' => [
             'zfcuser' => [

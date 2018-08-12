@@ -9,7 +9,8 @@ class UserControllerFactory implements FactoryInterface
     public function __invoke(ContainerInterface $container, $requestedName, array $options = null)
     {
 //         $config = $container->get("Config");
-        $userController = new UserController();
+        $resetPasswordRequestMapper = $container->get(\User\Mapper\ResetPasswordRequest::class);
+        $userController = new UserController($resetPasswordRequestMapper);
         return $userController;
     }
 }
