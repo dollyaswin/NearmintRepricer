@@ -28,4 +28,5 @@ return [
     'ZfcUser',
     'ZfcUserDoctrineORM',
     'Application',
+    'User'
 ];
