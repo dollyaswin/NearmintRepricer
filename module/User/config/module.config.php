@@ -10,7 +10,8 @@ return [
     ],
     'service_manager' => [
         'factories' => [
-            Mapper\ResetPasswordRequest::class => Mapper\ResetPasswordRequestFactory::class
+            Mapper\ResetPasswordRequest::class => Mapper\ResetPasswordRequestFactory::class,
+            Form\ResetPasswordRequest::class   => Form\ResetPasswordRequestFactory::class
         ]
     ],
     'router' => [

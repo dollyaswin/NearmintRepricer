@@ -11,6 +11,7 @@ class UserControllerFactory implements FactoryInterface
 //         $config = $container->get("Config");
         $resetPasswordRequestMapper = $container->get(\User\Mapper\ResetPasswordRequest::class);
         $userController = new UserController($resetPasswordRequestMapper);
+        $userController->setRequestResetPasswordForm($container->get(\User\Form\ResetPasswordRequest::class));
         return $userController;
     }
 }
