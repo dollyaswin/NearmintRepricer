@@ -1,9 +1,14 @@
 .vagrant/
+composer.phar
 vendor/
 config/development.config.php
 phpunit.xml
-data/*
 data/DoctrineORMModule/Proxy
+data/DoctrineORMModule/Migrations/*
+!data/DoctrineORMModule/Migrations/.gitkeep
+data/cache/*
+!data/cache/.gitkeep
+data/cookiefile
 .idea/
 .project
 public/.htaccess
@@ -12,3 +17,5 @@ logs/*
 !logs/.gitkeep
 .buildpath
 .settings
+docker/mysql/db/*
+!docker/mysql/db/.gitkeep
