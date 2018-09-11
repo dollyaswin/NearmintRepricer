@@ -4,6 +4,8 @@ namespace User\Mapper;
 
 use Doctrine\ORM\EntityManagerInterface;
 use ZfcUserDoctrineORM\Options\ModuleOptions;
+use ZfcUserDoctrineORM\Mapper\User as UserEnity;
+use ZfcUser\Mapper\User as UserMapper;
 use Zend\Stdlib\Hydrator\HydratorInterface;
 
 class ResetPasswordRequest
@@ -16,6 +18,18 @@ class ResetPasswordRequest
     public function __construct(EntityManagerInterface $em)
     {
         $this->em = $em;
+    }
+
+    public function getUserEntity()
+    {
+        $userEntity = new UserEnity($this->em, new ModuleOptions);
+        return $userEntity;
+    }
+
+    public function getUserMapper()
+    {
+        $userMapper = new UserMapper();
+        return $userMapper;
     }
 
     /**

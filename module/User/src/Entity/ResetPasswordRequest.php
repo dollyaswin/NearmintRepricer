@@ -15,6 +15,7 @@ class ResetPasswordRequest
     private $uuid;
 
     /**
+     * @var string|null
      */
     private $email;
 

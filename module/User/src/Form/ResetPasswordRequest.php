@@ -8,6 +8,7 @@ namespace User\Form;
 use Zend\Form\Form;
 use Zend\Form\Element\Button;
 use Zend\Form\Element\Email;
+use Zend\Form\Element\Password;
 
 class ResetPasswordRequest extends Form
 {
