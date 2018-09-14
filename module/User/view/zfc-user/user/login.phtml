@@ -1,5 +1,7 @@
 <h1><?php echo $this->translate('Sign In'); ?></h1>
 
+<?php echo $this->flashMessenger()->render('reset-password-success', ['alert', 'alert-dismissible', 'alert-success']) ?>
+
 <?php
 $form = $this->loginForm;
 $form->prepare();

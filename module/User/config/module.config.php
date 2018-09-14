@@ -3,6 +3,31 @@
 namespace User;
 
 return [
+    'mail' => [
+        'transport' => [
+            'notification' => [
+                'reset_password' => [
+                    'template' => 'user/user/resetpasswordlink.phtml',
+                    'subject'  => 'Reset Your Password',
+                    'url' => ':scheme://:host/user/reset-password/:key'
+                ],
+                'sender' => [
+                    'name' => 'Repricer Project Admin',
+                    'from' => '',
+                ],
+                'options' => [
+                    'host'   => '',
+                    'connection_class'  => 'login',
+                    'connection_config' => [
+                        'username' => '',
+                        'password' => '',
+                        'ssl' => 'tls'
+                    ],
+                    'port' => 587
+                ]
+            ]
+        ]
+    ],
     'controllers' => [
         'factories' => [
             Controller\UserController::class => Controller\UserControllerFactory::class,
@@ -27,6 +52,16 @@ return [
                             'defaults' => [
                                 'controller' => Controller\UserController::class,
                                 'action'     => 'requestresetpassword',
+                            ],
+                        ],
+                    ],
+                    'request_reset_password_success' => [
+                        'type' => 'Literal',
+                        'options' => [
+                            'route' => '/request-reset-password-success',
+                            'defaults' => [
+                                'controller' => Controller\UserController::class,
+                                'action'     => 'requestresetpasswordsuccess',
                             ],
                         ],
                     ],

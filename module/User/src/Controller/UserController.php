@@ -58,11 +58,11 @@ class UserController extends AbstractActionController
                 $generateResetPasswordKey = $service->generateResetPasswordKey($email);
             }
 
-            if ($generateResetPasswordKey  === false) {
+            if ($generateResetPasswordKey === false) {
                 $this->flashMessenger()
                      ->setNamespace('request-reset-password-error')
                      ->addMessage('Request Reset Password Error');
-                if (!empty($errorMessage)) {
+                if (! empty($errorMessage)) {
                     $this->flashMessenger()->addMessage($errorMessage);
                 }
             } else {
@@ -71,12 +71,20 @@ class UserController extends AbstractActionController
                      ->addMessage('Request Reset Password Success');
             }
 
-            $this->redirect()->toRoute('zfcuser/request_reset_password');
+            $this->redirect()->toRoute('zfcuser/request_reset_password_success');
         } else {
             $errorMessages = $form->getMessages();
         }
 
         return new ViewModel(['form' => $form, 'errorMessages' => $errorMessages]);
+    }
+
+    public function requestResetPasswordSuccessAction()
+    {
+        $this->flashMessenger()
+        ->setNamespace('request-reset-password-success')
+        ->addMessage('Request Reset Password Success');
+        return new ViewModel(['errorMessages' => $errorMessages]);
     }
 
     function resetPasswordAction()
@@ -119,7 +127,6 @@ class UserController extends AbstractActionController
             }
 
             if (! is_null($resetPasswordRequest)) {
-
                 $expiredAtObj = $resetPasswordRequest->getExpiredAt();
                 $expiredAt = date_format($expiredAtObj, "Y-m-d H:i:s");
                 $now = date_format(new \DateTime(), "Y-m-d H:i:s");
@@ -145,7 +152,7 @@ class UserController extends AbstractActionController
                      ->addMessage('Password Changed Successfully. Please login with new Password.');
             }
 
-            $this->redirect()->toRoute('zfcuser/reset_password', [
+            $this->redirect()->toRoute('home', [
                 "uuid" => $uuid
             ]);
         } else {

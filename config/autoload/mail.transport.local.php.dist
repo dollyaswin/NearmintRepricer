@@ -1,0 +1,22 @@
+<?php
+return [
+    'mail' => [
+        'transport' => [
+            'notification' => [
+                'sender' => [
+                    'from' => '',
+                ],
+                'options' => [
+                    'host'   => 'smtp.gmail.com',
+                    'connection_class'  => 'login',
+                    'connection_config' => [
+                        'username' => '',
+                        'password' => '',
+                        'ssl' => 'tls'
+                    ],
+                    'port' => 587
+                ]
+            ]
+        ]
+    ],
+];
