@@ -4,7 +4,6 @@ vendor/
 config/development.config.php
 phpunit.xml
 data/DoctrineORMModule/Proxy
-data/DoctrineORMModule/Migrations/*
 !data/DoctrineORMModule/Migrations/.gitkeep
 data/cache/*
 !data/cache/.gitkeep
