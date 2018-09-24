@@ -84,7 +84,6 @@ class UserController extends AbstractActionController
         $this->flashMessenger()
         ->setNamespace('request-reset-password-success')
         ->addMessage('Request Reset Password Success');
-        return new ViewModel(['errorMessages' => $errorMessages]);
     }
 
     function resetPasswordAction()
